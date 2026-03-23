@@ -1,0 +1,174 @@
+/* assets/css/main.css */
+:root {
+    /* ── Brand colours ─────────────────────────────── */
+    --primary: #6cb1ff;
+    --primary-dim: rgba(108, 177, 255, 0.12);
+    --primary-hover: rgba(108, 177, 255, 0.2);
+    --secondary: #ddebea;
+    --third: #3b8884;
+
+    /* ── Backgrounds ────────────────────────────────── */
+    --bg-dark: #0f0f0f;
+    --bg-panel: #1a1a1a;
+    --bg-card: #1e1e1e;
+    --bg-card-hover: #242424;
+    --bg-input: #2a2a2a;
+    --sidebar-bg: #141414;
+
+    /* ── Text ───────────────────────────────────────── */
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --text-muted: #666666;
+
+    /* ── State colours ──────────────────────────────── */
+    --error: #ff4d4f;
+    --error-bg: rgba(255, 77, 79, 0.1);
+    --success: #3b8884;
+    --success-bg: rgba(59, 136, 132, 0.12);
+    --warning: #e8a838;
+    --warning-bg: rgba(232, 168, 56, 0.12);
+
+    /* ── Borders ────────────────────────────────────── */
+    --border-color: #2e2e2e;
+    --border-subtle: #242424;
+
+    /* ── Legacy aliases (kept for existing components) ─ */
+    --input-bg: #2a2a2a;
+
+    /* ── App layout ─────────────────────────────────── */
+    --sidebar-width: 220px;
+    --sidebar-collapsed-width: 56px;
+    --topbar-height: 56px;
+
+    /* ── Radius & shadow ────────────────────────────── */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.4);
+    --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+        sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
+}
+
+a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+input,
+textarea,
+select {
+    font-family: inherit;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #444;
+}
+
+/* ── Utility helpers ──────────────────────────────────────────────────────── */
+.truncate {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
+/* ── Spinner animation (shared) ───────────────────────────────────────────── */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.4;
+    }
+}
+
+.spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-left-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+}
+
+/* ── Badge colours (used across dashboard) ────────────────────────────────── */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.6;
+}
+.badge-primary {
+    background: var(--primary-dim);
+    color: var(--primary);
+}
+.badge-success {
+    background: var(--success-bg);
+    color: var(--third);
+}
+.badge-warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+.badge-error {
+    background: var(--error-bg);
+    color: var(--error);
+}
+.badge-outline {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}

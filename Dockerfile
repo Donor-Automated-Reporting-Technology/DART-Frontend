@@ -9,6 +9,8 @@ RUN npm ci
 
 # Copy project files and build
 COPY . .
+ARG API_BASE_URL
+ENV API_BASE_URL=$API_BASE_URL
 RUN npm run build
 
 # Production stage

@@ -1,0 +1,144 @@
+ST-08
+
+
+
+
+Registration page — Nuxt.js frontend
+
+Priority: High
+
+The registration page is the first thing a new user sees. It must be clean, fast, and work perfectly on a 7-inch Android tablet in Chrome. 
+All validation must happen client-side before the API call, and API errors must display per field
+
+Field
+
+Input type
+
+Required
+
+Notes
+
+Organisation name
+
+Text
+
+Yes
+
+Autofocus on page load
+
+Organisation description
+
+Textarea
+
+No
+
+Max 1000 chars — show character counter — placeholder: 'Brief description of your organisation (optional)'
+
+Country
+
+Dropdown
+
+Yes
+
+Full country list — default empty — search/filter enabled
+
+Your full name
+
+Text
+
+Yes
+
+The person registering — becomes org_admin
+
+Email address
+
+Email
+
+Yes
+
+Lowercase on input
+
+Password
+
+Password
+
+Yes
+
+Show/hide toggle — strength indicator
+
+Confirm password
+
+Password
+
+Yes
+
+Validate matches password on blur
+
+Client-side validation rules — run before API call
+
+organisation.name:        present, length >= 2, length <= 255
+
+organisation.description: if provided, length <= 1000
+
+organisation.country:     selected from list — not empty string
+
+user.full_name:           present, length >= 2
+
+user.email:               valid email format — /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+user.password:            length >= 8, contains at least one digit /\d/
+
+user.confirm_password:    exactly matches user.password
+
+
+
+// Show errors inline below each field
+
+// Submit button disabled until all fields pass validation
+
+// On submit show loading spinner — disable button — prevent double submit
+
+// On 201 success:
+
+1. Store access_token in Pinia auth store (memory only — NOT localStorage)
+
+2. Refresh token is in httpOnly cookie — handled automatically by browser
+
+3. Redirect to /settings/organisation
+
+4. Show success banner: 'Welcome to DART — complete your organisation profile'
+
+
+
+// On 400 validation error:
+
+Display field-level errors from API response under each field
+
+Scroll to first error field
+
+
+
+// On 409 EMAIL_EXISTS:
+
+Highlight email field — error: 'An account with this email already exists'
+
+
+
+// On 429 RATE_LIMITED:
+
+Show toast: 'Too many attempts — please wait before trying again'
+
+
+
+// On network error:
+
+Show toast: 'Connection failed — check your internet connection and try again'
+
+
+Security note — token storage
+
+Never store the access token in localStorage or sessionStorage. These are accessible to any JavaScript on the page and vulnerable to XSS attacks. Store in Pinia (memory) only. The token is lost on page refresh but the Nuxt app plugin calls /api/v1/auth/refresh on initialisation to get a new one silently using the httpOnly cookie.
+
+Definition of done — ST-08
+
+Form renders correctly on desktop Chrome and Android Chrome on a 7-inch tablet. All client validation works before submission. Successful registration redirects to settings. API error messages display per field. Token is in Pinia store. Character counter works on description field. Page is fully responsive.
