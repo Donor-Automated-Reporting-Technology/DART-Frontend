@@ -47,66 +47,104 @@
       <!-- ── Navigation body ────────────────────────────────────────────────── -->
       <nav class="sidebar-nav" role="navigation">
 
-        <!-- Group: Platform ──────────────────────────────────────── -->
-        <div class="nav-group">
+        <!-- Group: Platform (Admin & Staff) ────────────────────────────── -->
+        <div class="nav-group" v-if="isAdmin || isStaff">
           <p class="nav-group-label">Platform</p>
 
           <NuxtLink
             to="/dashboard"
             class="nav-item"
             active-class="nav-item--active"
-            title="Dashboard"
+            title="Dashboard Insights"
             @click="closeSidebarOnMobile"
           >
-            <AppIcon name="home" :size="15" class="nav-icon" />
+            <AppIcon name="layout-dashboard" :size="15" class="nav-icon" />
             <span class="nav-label">Dashboard</span>
           </NuxtLink>
         </div>
 
-        <!-- Group: Management ────────────────────────────────────── -->
-        <div class="nav-group">
-          <p class="nav-group-label">Management</p>
+        <!-- Group: Activities ────────────────────────────────────── -->
+        <div class="nav-group" v-if="authStore.activities?.includes('Child Friendly Spaces')">
+          <p class="nav-group-label">Activities</p>
 
-          <span class="nav-item nav-item--soon" role="menuitem" aria-disabled="true" title="Donors">
-            <AppIcon name="users" :size="15" class="nav-icon" />
-            <span class="nav-label">Donors</span>
-            <span class="nav-soon-tag">Soon</span>
-          </span>
+          <NuxtLink
+            to="/cfs"
+            class="nav-item"
+            active-class="nav-item--active"
+            title="Child Friendly Spaces"
+            @click="closeSidebarOnMobile"
+          >
+            <AppIcon name="home" :size="15" class="nav-icon" />
+            <span class="nav-label">Child Friendly Spaces</span>
+          </NuxtLink>
 
-          <span class="nav-item nav-item--soon" role="menuitem" aria-disabled="true" title="Reports">
-            <AppIcon name="file-text" :size="15" class="nav-icon" />
-            <span class="nav-label">Reports</span>
-            <span class="nav-soon-tag">Soon</span>
-          </span>
-
-          <span class="nav-item nav-item--soon" role="menuitem" aria-disabled="true" title="Projects">
-            <AppIcon name="folder" :size="15" class="nav-icon" />
-            <span class="nav-label">Projects</span>
-            <span class="nav-soon-tag">Soon</span>
-          </span>
-
-          <span class="nav-item nav-item--soon" role="menuitem" aria-disabled="true" title="Organisation">
-            <AppIcon name="building" :size="15" class="nav-icon" />
-            <span class="nav-label">Organisation</span>
-            <span class="nav-soon-tag">Soon</span>
-          </span>
-        </div>
-
-        <!-- Group: System ────────────────────────────────────────── -->
-        <div class="nav-group">
-          <p class="nav-group-label">System</p>
-
-          <span class="nav-item nav-item--soon" role="menuitem" aria-disabled="true" title="Settings">
+          <!-- Configuration - Admin only -->
+          <NuxtLink
+            v-if="isAdmin"
+            to="/cfs/configuration"
+            class="nav-item nav-item--sub"
+            active-class="nav-item--active"
+            title="Configuration"
+            @click="closeSidebarOnMobile"
+          >
             <AppIcon name="settings" :size="15" class="nav-icon" />
-            <span class="nav-label">Settings</span>
-            <span class="nav-soon-tag">Soon</span>
-          </span>
+            <span class="nav-label">Configuration</span>
+          </NuxtLink>
+
+          <!-- Staff Management - Admin only -->
+          <NuxtLink
+            v-if="isAdmin"
+            to="/cfs/staff-management"
+            class="nav-item nav-item--sub"
+            active-class="nav-item--active"
+            title="Staff Management"
+            @click="closeSidebarOnMobile"
+          >
+            <AppIcon name="users" :size="15" class="nav-icon" />
+            <span class="nav-label">Staff Management</span>
+          </NuxtLink>
+
+          <!-- Registration - Staff only (facilitator, case_worker) -->
+          <NuxtLink
+            v-if="isStaff"
+            to="/cfs/registration"
+            class="nav-item nav-item--sub"
+            active-class="nav-item--active"
+            title="Registration"
+            @click="closeSidebarOnMobile"
+          >
+            <AppIcon name="user-plus" :size="15" class="nav-icon" />
+            <span class="nav-label">Registration</span>
+          </NuxtLink>
+
+          <!-- Attendance - Staff only (facilitator, case_worker) -->
+          <NuxtLink
+            v-if="isStaff"
+            to="/cfs/attendance"
+            class="nav-item nav-item--sub"
+            active-class="nav-item--active"
+            title="Attendance"
+            @click="closeSidebarOnMobile"
+          >
+            <AppIcon name="check-square" :size="15" class="nav-icon" />
+            <span class="nav-label">Attendance</span>
+          </NuxtLink>
         </div>
 
       </nav>
 
       <!-- ── User chip (footer) ─────────────────────────────────────────────── -->
       <div class="sidebar-footer">
+        <!-- CFS Location badge for staff -->
+        <div
+          v-if="isStaff && authStore.cfsLocationName"
+          class="cfs-location-badge"
+          :title="authStore.cfsLocationName"
+        >
+          <AppIcon name="map-pin" :size="13" class="cfs-location-icon" />
+          <span class="cfs-location-name truncate">{{ authStore.cfsLocationName }}</span>
+        </div>
+
         <button
           class="user-chip"
           type="button"
@@ -198,8 +236,19 @@
           </nav>
         </div>
 
-        <!-- Right side: onboarding pill (org_admin only, disappears when complete) -->
+        <!-- Right side: theme toggle + onboarding pill -->
         <div class="header-end">
+          <!-- Theme toggle button -->
+          <button
+            class="header-theme-btn"
+            type="button"
+            :title="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+            :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+            @click="toggleTheme"
+          >
+            <AppIcon :name="isDark ? 'moon' : 'sun'" :size="16" />
+          </button>
+
           <div
             v-if="showOnboardingPill"
             class="onboarding-pill"
@@ -229,8 +278,12 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useAuthStore }       from '../stores/auth';
 import { useOnboardingStore } from '../stores/onboarding';
+import { useTheme }           from '../composables/useTheme';
 import AppIcon from '../components/interfaces/AppIcon.vue';
 import type { Breadcrumb } from '../interfaces/dashboard';
+
+// ─── Theme ────────────────────────────────────────────────────────────────────
+const { isDark, toggleTheme } = useTheme();
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -259,6 +312,16 @@ const displayOrg = computed(() => authStore.orgName ?? 'DART');
  */
 const displaySub = computed(
   () => authStore.userEmail ?? authStore.orgName ?? 'DART',
+);
+
+// ─── Role-based access control ────────────────────────────────────────────────
+
+/** Check if user is admin (org_admin) */
+const isAdmin = computed(() => authStore.userRole === 'org_admin');
+
+/** Check if user is staff (facilitator, case_worker) */
+const isStaff = computed(() =>
+  authStore.userRole === 'facilitator' || authStore.userRole === 'case_worker'
 );
 
 // ─── Onboarding pill ──────────────────────────────────────────────────────────
@@ -327,14 +390,14 @@ const COLLAPSE_KEY = 'dart_sidebar_collapsed';
  * Initialised from localStorage so the preference persists across navigations.
  */
 const sidebarCollapsed = ref<boolean>(
-  process.client
+  import.meta.client
     ? localStorage.getItem(COLLAPSE_KEY) === 'true'
     : false,
 );
 
 /** Persist the collapsed preference whenever it changes. */
 watch(sidebarCollapsed, (val) => {
-  if (process.client) {
+  if (import.meta.client) {
     localStorage.setItem(COLLAPSE_KEY, String(val));
   }
 });
@@ -455,7 +518,7 @@ function toggleSidebar(): void {
 
 .mobile-close-btn:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--hover-bg);
 }
 
 /* ── Nav body ──────────────────────────────────────────────────────────────── */
@@ -517,14 +580,14 @@ function toggleSidebar(): void {
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--hover-bg-subtle);
   color: var(--text-primary);
   text-decoration: none;
 }
 
 /* Active / current page */
 .nav-item--active {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--hover-bg);
   color: var(--text-primary);
 }
 
@@ -536,6 +599,17 @@ function toggleSidebar(): void {
 /* Nav item text label */
 .nav-label {
   transition: opacity 0.15s ease;
+}
+
+/* Sub-item indentation */
+.nav-item--sub {
+  padding-left: 32px;
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.nav-item--sub .nav-icon {
+  font-size: 0.85rem;
 }
 
 /* "Coming soon" items — dimmed, non-interactive */
@@ -557,7 +631,7 @@ function toggleSidebar(): void {
   letter-spacing: 0.03em;
   padding: 2px 5px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--hover-bg);
   color: var(--text-muted);
   flex-shrink: 0;
   white-space: nowrap;
@@ -590,7 +664,7 @@ function toggleSidebar(): void {
 }
 
 .user-chip:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--hover-bg-subtle);
 }
 
 /* Avatar circle with primary-tinted initials */
@@ -607,7 +681,7 @@ function toggleSidebar(): void {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 1px solid rgba(108, 177, 255, 0.2);
+  border: 1px solid rgba(96, 165, 250, 0.15);
 }
 
 /* Text column next to avatar */
@@ -632,6 +706,59 @@ function toggleSidebar(): void {
   font-size: 0.67rem;
   color: var(--text-muted);
   line-height: 1.4;
+}
+
+/* ── CFS Location badge (staff only) ───────────────────────────────────────── */
+
+.cfs-location-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  background: var(--primary-dim);
+  border: 1px solid rgba(96, 165, 250, 0.12);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity 0.15s ease;
+}
+
+.cfs-location-icon {
+  flex-shrink: 0;
+  color: var(--primary);
+}
+
+.cfs-location-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--primary);
+  letter-spacing: 0.2px;
+}
+
+/* ── Header theme toggle ───────────────────────────────────────────────────── */
+
+.header-theme-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  background: var(--hover-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.header-theme-btn:hover {
+  background: var(--primary-dim);
+  color: var(--primary);
+  border-color: var(--primary);
+  transform: scale(1.05);
 }
 
 /* ── Mobile overlay backdrop ───────────────────────────────────────────────── */
@@ -669,7 +796,9 @@ function toggleSidebar(): void {
   top: 0;
   z-index: 100;
   height: var(--topbar-height);
-  background-color: var(--bg-dark);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
@@ -711,14 +840,14 @@ function toggleSidebar(): void {
 
 .sidebar-trigger:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--hover-bg-subtle);
 }
 
 /* Thin vertical rule between trigger and breadcrumbs */
 .header-separator {
   width: 1px;
   height: 16px;
-  background-color: #2a2a2a;
+  background-color: var(--border-color);
   flex-shrink: 0;
 }
 

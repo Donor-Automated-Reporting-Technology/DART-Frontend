@@ -193,9 +193,9 @@ function formatDate(isoDate: string): string {
 */
 
 .reports-card {
-  background-color: var(--bg-panel);
+  background: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 

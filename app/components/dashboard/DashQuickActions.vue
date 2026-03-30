@@ -98,13 +98,11 @@ function handleAction(action: Action) {
 /* ── Card shell ───────────────────────────────────────────────────────────── */
 
 .quick-actions-card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
-
-/* ── Header ───────────────────────────────────────────────────────────────── */
 
 .card-header {
   padding: 1.25rem 1.5rem 1rem;
@@ -164,9 +162,9 @@ function handleAction(action: Action) {
 /* ── Icon wrap ────────────────────────────────────────────────────────────── */
 
 .action-icon-wrap {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;

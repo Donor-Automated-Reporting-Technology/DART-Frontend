@@ -4,10 +4,12 @@ import { ref } from "vue";
 /**
  * Auth store
  *
- * Holds the in-memory authentication state for the current session.
- * The access token is NEVER written to localStorage — it lives here only.
- * On page refresh the Nuxt plugin calls /api/v1/auth/refresh (httpOnly cookie)
- * to silently restore the session.
+ * Holds the authentication state for the current session.
+ * The access token is persisted to localStorage so the user stays logged in
+ * across page refreshes and while offline, as long as the JWT hasn't expired.
+ * On page refresh the Nuxt plugin first checks the stored token's `exp` claim;
+ * if valid, it skips the network refresh call entirely (offline-safe).
+ * If expired, it attempts POST /api/v1/auth/refresh (httpOnly cookie).
  *
  * Non-sensitive display fields (userName, orgName, userEmail, orgId, userId,
  * userRole) ARE persisted to localStorage so they survive the refresh-token
@@ -15,12 +17,15 @@ import { ref } from "vue";
  */
 
 const STORAGE_KEYS = {
+  accessToken: "dart_access_token",
   userName: "dart_user_name",
   orgName: "dart_org_name",
   userEmail: "dart_user_email",
   orgId: "dart_org_id",
   userId: "dart_user_id",
   userRole: "dart_user_role",
+  activities: "dart_activities",
+  cfsLocationName: "dart_cfs_location_name",
 } as const;
 
 /** Read a key from localStorage safely (no-op on the server). */
@@ -45,11 +50,50 @@ function removeStored(key: string): void {
   }
 }
 
+/**
+ * Decode a base64url string (JWT segments use base64url, not standard base64).
+ */
+function base64UrlDecode(str: string): string {
+  // Replace URL-safe chars and pad to multiple of 4
+  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  const pad = base64.length % 4;
+  const padded = pad ? base64 + '='.repeat(4 - pad) : base64;
+  return atob(padded);
+}
+
+/**
+ * Decode the `exp` claim from a JWT without a library.
+ * Returns the expiry as a Unix timestamp (seconds), or null if the token
+ * is not a JWT or has no `exp` claim.
+ */
+function getTokenExp(token: string): number | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null; // not a JWT
+    const payload = JSON.parse(base64UrlDecode(parts[1]));
+    return typeof payload.exp === 'number' ? payload.exp : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Returns true when the token exists and is not expired.
+ * If the token has no decodable `exp` claim (opaque token), it is
+ * considered valid — the server will reject it if it's actually expired.
+ */
+export function isTokenValid(token: string | null): boolean {
+  if (!token) return false;
+  const exp = getTokenExp(token);
+  if (exp === null) return true; // can't determine expiry — trust it
+  return exp > Date.now() / 1000 + 30;
+}
+
 export const useAuthStore = defineStore("auth", () => {
   // ── State ────────────────────────────────────────────────────────────────
 
-  /** JWT access token — memory-only, never persisted */
-  const accessToken = ref<string | null>(null);
+  /** JWT access token — persisted to localStorage for offline survival */
+  const accessToken = ref<string | null>(getStored(STORAGE_KEYS.accessToken));
 
   /** User's full display name — persisted to localStorage */
   const userName = ref<string | null>(getStored(STORAGE_KEYS.userName));
@@ -74,6 +118,12 @@ export const useAuthStore = defineStore("auth", () => {
    */
   const userRole = ref<string | null>(getStored(STORAGE_KEYS.userRole));
 
+  /** Active activities selected for the organisation — persisted to localStorage */
+  const activities = ref<string[]>(JSON.parse(getStored(STORAGE_KEYS.activities) || '[]'));
+
+  /** CFS location name for staff users — persisted to localStorage */
+  const cfsLocationName = ref<string | null>(getStored(STORAGE_KEYS.cfsLocationName));
+
   // ── Computed helpers (kept as plain functions for simplicity) ────────────
 
   /** Two-letter initials derived from the stored display name. */
@@ -92,6 +142,7 @@ export const useAuthStore = defineStore("auth", () => {
   /** Store the JWT access token returned after login / register */
   function setToken(token: string): void {
     accessToken.value = token;
+    setStored(STORAGE_KEYS.accessToken, token);
   }
 
   /** Store the authenticated user's display name and persist it */
@@ -133,7 +184,28 @@ export const useAuthStore = defineStore("auth", () => {
     setStored(STORAGE_KEYS.userRole, role);
   }
 
+  /**
+   * Store the organisation's active activities and persist them.
+   */
+  function setActivities(acts: string[]): void {
+    activities.value = acts;
+    setStored(STORAGE_KEYS.activities, JSON.stringify(acts));
+  }
+
+  /**
+   * Store the staff user's CFS location name and persist it.
+   */
+  function setCfsLocationName(name: string): void {
+    cfsLocationName.value = name;
+    setStored(STORAGE_KEYS.cfsLocationName, name);
+  }
+
   // ── Session management ───────────────────────────────────────────────────
+
+  /** Returns true when the stored access token hasn't expired yet. */
+  function hasValidToken(): boolean {
+    return isTokenValid(accessToken.value);
+  }
 
   /** Clear all session state and remove every persisted key */
   function clearSession(): void {
@@ -144,6 +216,8 @@ export const useAuthStore = defineStore("auth", () => {
     orgId.value = null;
     userId.value = null;
     userRole.value = null;
+    activities.value = [];
+    cfsLocationName.value = null;
 
     Object.values(STORAGE_KEYS).forEach(removeStored);
   }
@@ -155,12 +229,34 @@ export const useAuthStore = defineStore("auth", () => {
    */
   function restoreFromStorage(): void {
     if (import.meta.client) {
+      // Restore token — keep it unless we can confirm it's expired
+      const storedToken = getStored(STORAGE_KEYS.accessToken);
+      if (storedToken) {
+        if (isTokenValid(storedToken)) {
+          accessToken.value = storedToken;
+        } else {
+          // Token is expired — clean up
+          removeStored(STORAGE_KEYS.accessToken);
+          accessToken.value = null;
+        }
+      }
+
       userName.value  = getStored(STORAGE_KEYS.userName) || userName.value;
       orgName.value   = getStored(STORAGE_KEYS.orgName) || orgName.value;
       userEmail.value = getStored(STORAGE_KEYS.userEmail) || userEmail.value;
       orgId.value     = getStored(STORAGE_KEYS.orgId) || orgId.value;
       userId.value    = getStored(STORAGE_KEYS.userId) || userId.value;
       userRole.value  = getStored(STORAGE_KEYS.userRole) || userRole.value;
+      cfsLocationName.value = getStored(STORAGE_KEYS.cfsLocationName) || cfsLocationName.value;
+      
+      const storedActs = getStored(STORAGE_KEYS.activities);
+      if (storedActs) {
+        try {
+          activities.value = JSON.parse(storedActs);
+        } catch {
+          activities.value = [];
+        }
+      }
     }
   }
 
@@ -173,8 +269,12 @@ export const useAuthStore = defineStore("auth", () => {
     orgId,
     userId,
     userRole,
+    activities,
+    cfsLocationName,
     // helpers
     getInitials,
+    // helpers
+    hasValidToken,
     // setters
     setToken,
     setUserName,
@@ -183,6 +283,8 @@ export const useAuthStore = defineStore("auth", () => {
     setOrgId,
     setUserId,
     setUserRole,
+    setActivities,
+    setCfsLocationName,
     // session
     clearSession,
     restoreFromStorage,

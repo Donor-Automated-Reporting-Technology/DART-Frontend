@@ -23,13 +23,9 @@ import AppIcon from '../interfaces/AppIcon.vue';
 
 const authStore = useAuthStore();
 
-/** User display name with fallback */
 const displayName = computed(() => authStore.userName ?? 'User');
-
-/** Organisation name with fallback */
 const displayOrg = computed(() => authStore.orgName ?? 'Your Organisation');
 
-/** Time-of-day greeting */
 const greeting = computed(() => {
   const h = new Date().getHours();
   if (h < 12) return 'Good morning';
@@ -37,7 +33,6 @@ const greeting = computed(() => {
   return 'Good evening';
 });
 
-/** e.g. "Monday, 24 March 2025" */
 const todayLabel = computed(() =>
   new Date().toLocaleDateString('en-GB', {
     weekday: 'long',
@@ -55,13 +50,23 @@ const todayLabel = computed(() =>
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
-  padding: 1.25rem 1.5rem;
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
+  padding: 1.5rem 1.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
 }
 
-/* ── Left ─────────────────────────────────────────────────────────────────── */
+.dash-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--gradient-brand);
+}
 
 .header-left {
   display: flex;
@@ -78,7 +83,11 @@ const todayLabel = computed(() =>
 }
 
 .header-name {
-  color: var(--text-primary);
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
 }
 
 .header-org {
@@ -88,16 +97,14 @@ const todayLabel = computed(() =>
   font-weight: 400;
 }
 
-/* ── Right ────────────────────────────────────────────────────────────────── */
-
 .header-date {
   display: flex;
   align-items: center;
   gap: 0.45rem;
   padding: 0.45rem 0.85rem;
-  background-color: var(--bg-panel);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
   color: var(--text-secondary);
   white-space: nowrap;
 }
@@ -114,17 +121,13 @@ const todayLabel = computed(() =>
   font-weight: 500;
 }
 
-/* ── Responsive ───────────────────────────────────────────────────────────── */
-
 @media (max-width: 480px) {
   .dash-header {
-    padding: 1rem;
+    padding: 1rem 1.25rem;
   }
-
   .header-greeting {
     font-size: 1.15rem;
   }
-
   .header-date {
     width: 100%;
     justify-content: center;

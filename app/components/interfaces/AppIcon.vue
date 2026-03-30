@@ -214,6 +214,95 @@
       <line x1="16" y1="9" x2="16" y2="15" />
     </template>
 
+    <!-- Sun (light mode icon) -->
+    <template v-else-if="name === 'sun'">
+      <circle cx="12" cy="12" r="5" />
+      <line x1="12" y1="1" x2="12" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="23" />
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+      <line x1="1" y1="12" x2="3" y2="12" />
+      <line x1="21" y1="12" x2="23" y2="12" />
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+    </template>
+
+    <!-- Moon (dark mode icon) -->
+    <template v-else-if="name === 'moon'">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </template>
+
+    <!-- Bar chart -->
+    <template v-else-if="name === 'bar-chart'">
+      <line x1="12" y1="20" x2="12" y2="10" />
+      <line x1="18" y1="20" x2="18" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="16" />
+    </template>
+
+    <!-- Check square -->
+    <template v-else-if="name === 'check-square'">
+      <polyline points="9 11 12 14 22 4" />
+      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+    </template>
+
+    <!-- Target -->
+    <template v-else-if="name === 'target'">
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
+    </template>
+
+    <!-- Clipboard check -->
+    <template v-else-if="name === 'clipboard-check'">
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+      <polyline points="9 14 11 16 15 12" />
+    </template>
+
+    <!-- Layout list -->
+    <template v-else-if="name === 'layout-list'">
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <line x1="14" y1="4" x2="21" y2="4" />
+      <line x1="14" y1="9" x2="21" y2="9" />
+      <line x1="14" y1="15" x2="21" y2="15" />
+      <line x1="14" y1="20" x2="21" y2="20" />
+    </template>
+
+    <!-- User (single) -->
+    <template v-else-if="name === 'user'">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </template>
+
+    <!-- Layout grid -->
+    <template v-else-if="name === 'layout-grid'">
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+    </template>
+
+    <!-- Map -->
+    <template v-else-if="name === 'map'">
+      <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+      <line x1="8" y1="2" x2="8" y2="18" />
+      <line x1="16" y1="6" x2="16" y2="22" />
+    </template>
+
+    <!-- Heart -->
+    <template v-else-if="name === 'heart'">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.72-8.72 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    </template>
+
+    <!-- Layout dashboard -->
+    <template v-else-if="name === 'layout-dashboard'">
+      <rect x="3" y="3" width="7" height="9" rx="1" />
+      <rect x="14" y="3" width="7" height="5" rx="1" />
+      <rect x="14" y="12" width="7" height="9" rx="1" />
+      <rect x="3" y="16" width="7" height="5" rx="1" />
+    </template>
+
     <!-- Fallback: render a small square so nothing is invisible -->
     <template v-else>
       <rect x="4" y="4" width="16" height="16" rx="2" />
@@ -231,7 +320,10 @@
  *
  * Available names: home, users, file-text, building, settings, plus,
  * chevron-right, arrow-up, arrow-down, check-circle, alert-circle,
- * clock, refresh, menu, x, calendar, activity, folder, eye
+ * clock, refresh, menu, x, calendar, activity, folder, eye,
+ * map-pin, trash, zap, send, user-plus, toggle-on, toggle-off,
+ * skip-forward, sun, moon, bar-chart, check-square, target,
+ * clipboard-check, layout-list, user, layout-grid, map, heart, layout-dashboard
  */
 withDefaults(
   defineProps<{

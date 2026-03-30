@@ -1,186 +1,184 @@
 <template>
-  <!--
-    DashStatCard — shadcn SectionCards style
-    ───────────────────────────────────────────────────────────────────────────
-    Layout (top → bottom):
-      ┌─────────────────────────────┐
-      │ ALL-CAPS LABEL   [▲ +3 pill]│
-      │                             │
-      │  28                         │
-      │                             │
-      │ Small muted description     │
-      └─────────────────────────────┘
+  <div class="stat-card" :class="{ 'stat-card--accent': accent }">
 
-    Props:
-      label  — section heading shown in ALL-CAPS muted text
-      value  — primary metric (large bold number)
-      sub    — optional description shown below the value
-      trend  — optional number; positive → green ↑ pill, negative → red ↓ pill
-  -->
-  <div class="stat-card">
-
-    <!-- Top row: label (left) + optional trend badge (right) -->
+    <!-- Top row: icon (left) + optional trend badge (right) -->
     <div class="stat-card__top">
-      <span class="stat-card__label">{{ label }}</span>
-
-      <!--
-        Trend badge — rendered only when the `trend` prop is provided.
-        Uses Unicode arrows so no extra icon component is needed.
-      -->
+      <div v-if="icon" class="stat-card__icon" :class="`stat-card__icon--${iconColor || 'primary'}`">
+        <AppIcon :name="icon" :size="18" />
+      </div>
       <span
         v-if="trend !== undefined"
         class="stat-card__trend"
         :class="trend >= 0 ? 'stat-card__trend--up' : 'stat-card__trend--down'"
-        aria-label="`Trend: ${trend >= 0 ? 'up' : 'down'} ${Math.abs(trend)}`"
       >
-        <!-- Arrow character: ↑ for positive, ↓ for negative -->
-        {{ trend >= 0 ? '↑' : '↓' }}
-        <!-- Numeric magnitude without a sign — direction is shown by the arrow -->
-        {{ Math.abs(trend) }}
+        {{ trend >= 0 ? '\u2191' : '\u2193' }}
+        {{ Math.abs(trend) }}%
       </span>
     </div>
 
-    <!-- Primary metric value — large and bold -->
+    <!-- Primary metric value -->
     <div class="stat-card__value">{{ value }}</div>
 
-    <!-- Optional description line below the value -->
+    <!-- Label -->
+    <span class="stat-card__label">{{ label }}</span>
+
+    <!-- Optional description line -->
     <p v-if="sub" class="stat-card__sub">{{ sub }}</p>
 
   </div>
 </template>
 
 <script setup lang="ts">
-/**
- * DashStatCard
- *
- * A single summary metric card rendered in the dashboard stats grid.
- * Styled to match the shadcn/ui SectionCards pattern: dark panel,
- * uppercase label, large number, and an optional directional trend pill.
- *
- * Usage:
- *   <DashStatCard
- *     label="Reports Submitted"
- *     :value="23"
- *     sub="This period"
- *     :trend="3"
- *   />
- */
+import AppIcon from '../interfaces/AppIcon.vue';
 
 defineProps<{
-  /** Section heading — rendered in small ALL-CAPS muted style */
   label: string;
-
-  /** Primary displayed metric — the large bold number */
   value: string | number;
-
-  /** Optional description rendered in small muted text below the value */
   sub?: string;
-
-  /**
-   * Optional trend indicator.
-   *   Positive value  → green pill with ↑ arrow
-   *   Negative value  → red   pill with ↓ arrow
-   *   Omitted / undefined → no badge shown
-   */
   trend?: number;
+  icon?: string;
+  iconColor?: 'primary' | 'success' | 'warning' | 'accent';
+  accent?: boolean;
 }>();
 </script>
 
 <style scoped>
-/* ── Card shell ───────────────────────────────────────────────────────────── */
-
 .stat-card {
-  background-color: var(--bg-panel);
+  position: relative;
+  background: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  padding: 20px 24px;
+  border-radius: var(--radius-lg);
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  /* Smooth hover lift */
-  transition: border-color 0.16s, box-shadow 0.16s;
+  gap: 6px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-card);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
 }
 
 .stat-card:hover {
   border-color: var(--border-color);
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-card), var(--shadow-glow);
+  transform: translateY(-1px);
 }
 
-/* ── Top row: label + trend badge ────────────────────────────────────────── */
+.stat-card:hover::before {
+  opacity: 1;
+}
 
+.stat-card--accent {
+  border-color: var(--border-color);
+}
+
+.stat-card--accent::before {
+  opacity: 1;
+}
+
+/* Top row */
 .stat-card__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  margin-bottom: 8px;
 }
 
-/* ALL-CAPS muted label, 12 px */
+/* Icon circle */
+.stat-card__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-card__icon--primary {
+  background: var(--primary-dim);
+  color: var(--primary);
+}
+
+.stat-card__icon--success {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.stat-card__icon--warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.stat-card__icon--accent {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+/* Label */
 .stat-card__label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--text-muted);
-  user-select: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.3;
 }
 
-/* ── Trend pill badge ────────────────────────────────────────────────────── */
-
+/* Trend pill */
 .stat-card__trend {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 3px 8px;
-  border-radius: 20px;       /* pill shape */
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  gap: 2px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
   line-height: 1;
 }
 
-/* Positive trend: green background + text */
 .stat-card__trend--up {
   background-color: var(--success-bg);
-  color: var(--third);       /* var(--third) = #3b8884 (teal/green) */
+  color: var(--success);
 }
 
-/* Negative trend: red background + text */
 .stat-card__trend--down {
   background-color: var(--error-bg);
   color: var(--error);
 }
 
-/* ── Primary value — large bold number ───────────────────────────────────── */
-
+/* Value */
 .stat-card__value {
-  font-size: 1.75rem;        /* ~28 px */
+  font-size: 2rem;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1;
   letter-spacing: -0.5px;
 }
 
-/* ── Description — small muted text ─────────────────────────────────────── */
-
+/* Description */
 .stat-card__sub {
-  margin: 0;
+  margin: 2px 0 0;
   font-size: 0.75rem;
   color: var(--text-muted);
   line-height: 1.4;
 }
 
-/* ── Responsive: smaller padding on mobile ───────────────────────────────── */
-
 @media (max-width: 480px) {
   .stat-card {
-    padding: 16px 18px;
+    padding: 18px;
   }
-
   .stat-card__value {
-    font-size: 1.5rem;
+    font-size: 1.65rem;
   }
 }
 </style>

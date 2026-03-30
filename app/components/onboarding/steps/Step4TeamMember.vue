@@ -143,6 +143,7 @@ interface RoleOption {
 const roleOptions: RoleOption[] = [
   { value: 'program_manager',  label: 'Program Manager',  hint: 'Manages programmes and donor relationships' },
   { value: 'field_officer',    label: 'Field Officer',    hint: 'Collects data and implements activities in the field' },
+  { value: 'facilitator',      label: 'Facilitator',      hint: 'Facilitates child-friendly space sessions and activities' },
   { value: 'case_worker',      label: 'Case Worker',      hint: 'Works directly with beneficiaries on individual cases' },
   { value: 'finance_officer',  label: 'Finance Officer',  hint: 'Manages budgets and financial reporting' },
 ]

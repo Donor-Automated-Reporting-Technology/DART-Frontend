@@ -122,6 +122,7 @@ export type TeamMemberRole =
   | 'field_officer'
   | 'case_worker'
   | 'finance_officer'
+  | 'facilitator'
 
 /** Payload sent to POST /api/v1/users */
 export interface NewTeamMemberPayload {
