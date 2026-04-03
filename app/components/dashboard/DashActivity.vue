@@ -92,13 +92,11 @@ function iconColor(type: ActivityType): string {
 /* ── Card shell ───────────────────────────────────────────────────────────── */
 
 .activity-card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
-
-/* ── Header ───────────────────────────────────────────────────────────────── */
 
 .card-header {
   padding: 1.25rem 1.5rem 1rem;

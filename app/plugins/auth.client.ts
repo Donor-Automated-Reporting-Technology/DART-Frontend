@@ -19,6 +19,9 @@ import { useAuthStore } from '../stores/auth'
 
 interface RefreshResponse {
   data?: {
+    user?: {
+      role?: string
+    }
     tokens?: {
       access_token?: string
     }
@@ -28,30 +31,33 @@ interface RefreshResponse {
 export default defineNuxtPlugin(async () => {
   const authStore = useAuthStore()
 
-  // 1. Force-restore localStorage fields before route middleware runs
-  // to prevent Pinia's SSR hydration from wiping them with `null`.
+  // 1. Force-restore localStorage fields (including token) before route
+  //    middleware runs — prevents Pinia's SSR hydration from wiping state.
   authStore.restoreFromStorage()
 
-  // Already authenticated in this session — nothing to restore
-  if (authStore.accessToken) return
+  // If the restored token is still valid (not expired), skip the refresh
+  // call entirely. This keeps the user logged in offline and on hard refresh.
+  if (authStore.hasValidToken()) return
 
+  // Token missing or expired — try a silent refresh via httpOnly cookie.
+  // This will fail when offline, which is fine: if the token was valid above
+  // we already returned, and if it's expired there's nothing to do offline.
   try {
     const rawData = await $fetch<RefreshResponse>('/api/v1/auth/refresh', {
       method: 'POST',
       credentials: 'include',
     })
 
-    // Hydrate access token (memory only — never persisted)
     if (rawData?.data?.tokens?.access_token) {
       authStore.setToken(rawData.data.tokens.access_token)
     }
 
-    // Refresh endpoint only returns tokens. User/org display fields survive the refresh
-    // transparently via localStorage, loaded on authStore initialization.
+    if (rawData?.data?.user?.role) {
+      authStore.setUserRole(rawData.data.user.role)
+    }
   } catch {
-    // Refresh failed — the httpOnly cookie is absent or expired.
-    // Route middleware will redirect unauthenticated users to /login.
-    // We intentionally swallow the error here to avoid unhandled
-    // promise rejections on public pages (login, register).
+    // Refresh failed — offline or cookie expired.
+    // If we still have a non-expired token from localStorage the user
+    // stays logged in. Otherwise middleware will redirect to /login.
   }
 })

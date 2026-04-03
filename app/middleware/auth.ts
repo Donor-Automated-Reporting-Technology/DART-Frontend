@@ -27,10 +27,8 @@ export default defineNuxtRouteMiddleware(() => {
 
   const authStore = useAuthStore();
 
-  // Authenticated = live token in memory OR a persisted role (session exists).
-  const authenticated = !!authStore.accessToken || !!authStore.userRole;
-
-  if (!authenticated) {
+  // Authenticated = valid non-expired token (survives refresh + offline).
+  if (!authStore.hasValidToken()) {
     return navigateTo('/login');
   }
 });

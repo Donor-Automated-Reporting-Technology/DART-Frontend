@@ -68,6 +68,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import { cfsApi } from '../services/cfsApi';
 import InputField from '../components/interfaces/InputField.vue';
 import PasswordInput from '../components/interfaces/PasswordInput.vue';
 import ErrorModal from '../components/interfaces/ErrorModal.vue';
@@ -136,12 +137,38 @@ const handleLogin = async () => {
     if (payload?.user?.role) authStore.setUserRole(payload.user.role);
     if (payload?.user?.organisation?.name) authStore.setOrgName(payload.user.organisation.name);
     if (payload?.user?.organisation?.id) authStore.setOrgId(payload.user.organisation.id);
+    if (Array.isArray(payload?.user?.organisation?.activities)) {
+      authStore.setActivities(payload.user.organisation.activities);
+    }
 
     // Prefer the email returned by the API; fall back to the form value
     // (which is guaranteed to be correct since the login just succeeded).
     authStore.setUserEmail(payload?.user?.email ?? email.value);
 
-    router.push('/dashboard');
+    // ── Fetch CFS location name for staff users ───────────────────────────
+    const userRole = payload?.user?.role;
+    const userId = payload?.user?.id;
+    if (userRole && userRole !== 'org_admin' && userId) {
+      try {
+        const staffData = await cfsApi.getStaffAssignments(payload.tokens.access_token);
+        const myAssignment = staffData?.assignments?.find(
+          (a: any) => a.user_id === userId && a.is_active
+        );
+        if (myAssignment?.location_name) {
+          authStore.setCfsLocationName(myAssignment.location_name);
+        }
+      } catch {
+        // Non-critical — location name won't show but login still succeeds
+      }
+    }
+
+    // Redirect based on user role
+    if (userRole === 'org_admin') {
+      router.push('/dashboard');
+    } else {
+      // Staff (facilitator, case_worker, etc.) go to CFS
+      router.push('/cfs');
+    }
   } catch (e: any) {
     apiError.value = 'Connection failed — check your internet connection and try again';
   } finally {
