@@ -131,6 +131,22 @@
           </NuxtLink>
         </div>
 
+        <!-- Group: Reports (all users) ───────────────────────────────── -->
+        <div class="nav-group">
+          <p class="nav-group-label">Reports</p>
+
+          <NuxtLink
+            to="/reports"
+            class="nav-item"
+            active-class="nav-item--active"
+            title="Reports"
+            @click="closeSidebarOnMobile"
+          >
+            <AppIcon name="file-text" :size="15" class="nav-icon" />
+            <span class="nav-label">Reports</span>
+          </NuxtLink>
+        </div>
+
       </nav>
 
       <!-- ── User chip (footer) ─────────────────────────────────────────────── -->
@@ -145,11 +161,19 @@
           <span class="cfs-location-name truncate">{{ authStore.cfsLocationName }}</span>
         </div>
 
+        <!-- Logout link -->
         <button
+          class="logout-btn"
+          @click="handleLogout"
+          title="Log out"
+        >
+          <AppIcon name="log-out" :size="15" class="logout-btn-icon" />
+          <span class="nav-label">Log out</span>
+        </button>
+
+        <div
           class="user-chip"
-          type="button"
           :title="displayName"
-          aria-label="Account options"
         >
           <!-- Avatar circle with initials -->
           <div class="user-avatar" aria-hidden="true">{{ userInitials }}</div>
@@ -159,7 +183,7 @@
             <span class="user-display-name truncate">{{ displayName }}</span>
             <span class="user-display-sub truncate">{{ displaySub }}</span>
           </div>
-        </button>
+        </div>
       </div>
 
     </aside>
@@ -415,6 +439,15 @@ function toggleSidebar(): void {
     sidebarCollapsed.value = !sidebarCollapsed.value;
   }
 }
+
+// ─── Logout ───────────────────────────────────────────────────────────────────
+
+const router = useRouter();
+
+async function handleLogout(): Promise<void> {
+  authStore.clearSession();
+  await router.push('/login');
+}
 </script>
 
 <style scoped>
@@ -646,25 +679,44 @@ function toggleSidebar(): void {
   flex-shrink: 0;
 }
 
-/* Full-width button that looks like a user row */
+/* Logout button — rendered inline in the footer */
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 4px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s;
+  white-space: nowrap;
+}
+
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.logout-btn-icon {
+  flex-shrink: 0;
+}
+
+/* Full-width row that looks like a user display */
 .user-chip {
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
   padding: 8px;
-  background: none;
-  border: none;
   border-radius: var(--radius-sm);
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.14s, justify-content 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 0;
   white-space: nowrap;
-}
-
-.user-chip:hover {
-  background: var(--hover-bg-subtle);
 }
 
 /* Avatar circle with primary-tinted initials */
@@ -964,6 +1016,14 @@ function toggleSidebar(): void {
 
   .app-shell.sidebar-collapsed .user-chip {
     justify-content: center;
+    gap: 0;
+  }
+
+  /* ── Centre the logout icon when collapsed ─────────────────────────────── */
+
+  .app-shell.sidebar-collapsed .logout-btn {
+    justify-content: center;
+    padding: 8px 0;
     gap: 0;
   }
 

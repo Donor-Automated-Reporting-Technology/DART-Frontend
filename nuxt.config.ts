@@ -11,7 +11,7 @@ export default defineNuxtConfig({
     },
   },
   routeRules: {
-    '/api/**': { proxy: process.env.API_BASE_URL ? `${process.env.API_BASE_URL}/**` : 'http://localhost:8090/api/**' }
+    '/api/**': { proxy: process.env.API_BASE_URL ? `${process.env.API_BASE_URL}/**` : 'http://ec2-16-16-207-103.eu-north-1.compute.amazonaws.com/api/**' }
   },
   pwa: {
     registerType: 'autoUpdate',

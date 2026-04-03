@@ -89,8 +89,8 @@
           </div>
         </NuxtLink>
 
-        <!-- Reports Card (Coming Soon) -->
-        <div class="dashboard-card dashboard-card--disabled">
+        <!-- Reports Card -->
+        <NuxtLink to="/reports" class="dashboard-card">
           <div class="card-icon">
             <AppIcon name="file-text" :size="24" />
           </div>
@@ -100,8 +100,10 @@
               Generate and export CFS activity reports
             </p>
           </div>
-          <span class="card-badge">Soon</span>
-        </div>
+          <div class="card-arrow">
+            <AppIcon name="chevron-right" :size="20" />
+          </div>
+        </NuxtLink>
       </div>
     </div>
   </NuxtLayout>
