@@ -1,16 +1,16 @@
 <template>
   <!--
     Step3ActivityConfirm.vue — Onboarding Step 3
-    Compact activity list with instant per-row toggles.
-    Calls PATCH /api/v1/onboarding/activities/:id immediately on toggle.
-    Confirm re-fetches status; step complete if ≥ 1 activity is active.
+    Activity list with instant per-row toggles.
+    Calls PATCH /api/v1/onboarding/activities/:id on toggle.
+    Step complete if >= 1 activity is active.
   -->
   <div class="s3-wrap">
 
     <!-- Info banner -->
     <div class="info-bar">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <span>You can change these at any time in <strong>Settings › Activities</strong></span>
+      <span>You can change these at any time in <strong>Settings › Framework</strong></span>
     </div>
 
     <!-- Loading -->
@@ -45,9 +45,8 @@
           class="act-row"
           :class="{ 'act-row--off': !act.is_active }"
         >
-          <!-- Left: donor badge + name + description -->
+          <!-- Left: name + description -->
           <div class="act-body">
-            <span class="donor-badge">{{ act.donor }}</span>
             <span class="act-name">{{ act.name }}</span>
             <span class="act-desc">{{ act.description }}</span>
           </div>
@@ -285,21 +284,6 @@ async function confirm() {
   gap: 2px;
   flex: 1;
   min-width: 0;
-}
-
-.donor-badge {
-  display: inline-flex;
-  align-self: flex-start;
-  padding: 1px 7px;
-  background: var(--success-bg);
-  border: 1px solid var(--third);
-  border-radius: 20px;
-  font-size: 0.62rem;
-  font-weight: 600;
-  color: var(--third);
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-  margin-bottom: 1px;
 }
 
 .act-name {

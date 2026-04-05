@@ -1,15 +1,14 @@
 /**
  * stores/onboarding.ts
  *
- * Pinia store for the ST-06 progressive onboarding flow.
+ * Pinia store for the framework-based 3-step onboarding flow.
  *
- * Manages:
- *  - The four-step completion state
- *  - Banner expanded / collapsed toggle
- *  - Organisation profile data (pre-fills Step 1)
- *  - Server-sync via GET /api/v1/onboarding/status
+ * Steps:
+ *   1. Organisation profile (name + country + locations)
+ *   2. Framework setup (type + project details)
+ *   3. Activity confirmation (enable at least 1 activity)
  *
- * Actions follow the interface defined in the ST-06 spec:
+ * Actions:
  *   fetchStatus()   — syncs state from the server
  *   openStep(n)     — expands step n, collapses all others
  *   markComplete(n) — marks step n done, auto-opens step n+1
@@ -22,14 +21,15 @@ import type { OnboardingStep, OrgProfileData } from '../interfaces/onboarding'
 import { fetchOnboardingStatus } from '../services/onboardingApi'
 import { useAuthStore } from './auth'
 
-// ─── Step labels (display order matches step numbers 1–4) ────────────────────
+// ─── Step labels (display order matches step numbers 1–3) ────────────────────
 
 const STEP_LABELS: string[] = [
-  'Organisation profile',
-  'Donor selection',
-  'Activity confirmation',
-  'Add first team member',
+  'Set your org name and country',
+  'Choose your framework and project details',
+  'Enable at least one activity',
 ]
+
+const TOTAL_STEPS = 3
 
 /** Returns a fresh default steps array — all incomplete, none active */
 const buildDefaultSteps = (): OnboardingStep[] =>
@@ -46,34 +46,34 @@ export const useOnboardingStore = defineStore('onboarding', () => {
 
   // ── State ──────────────────────────────────────────────────────────────────
 
-  /** The four step entries — completion and active-panel state live here */
+  /** The three step entries — completion and active-panel state live here */
   const steps = ref<OnboardingStep[]>(buildDefaultSteps())
 
-  /** True once all four steps are complete — hides the banner permanently */
+  /** True once all three steps are complete — hides the banner permanently */
   const onboarding_complete = ref(false)
 
   /** True while a server request is in flight */
   const loading = ref(false)
 
   /** Controls whether the expanded step list is visible */
-  const bannerExpanded = ref(false)   // collapsed by default per spec
+  const bannerExpanded = ref(false)
 
   /** Organisation profile pre-loaded from the status endpoint for Step 1 */
   const orgProfile = ref<OrgProfileData | null>(null)
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
-  /** Number of steps that have been marked complete (0–4) */
+  /** Number of steps that have been marked complete (0–3) */
   const completedCount = computed<number>(
     () => steps.value.filter((s) => s.complete).length,
   )
 
   /** How many steps are still outstanding */
-  const remainingCount = computed<number>(() => 4 - completedCount.value)
+  const remainingCount = computed<number>(() => TOTAL_STEPS - completedCount.value)
 
   /** 0–100 integer used to drive the progress bar width */
   const progressPercent = computed<number>(
-    () => (completedCount.value / 4) * 100,
+    () => Math.round((completedCount.value / TOTAL_STEPS) * 100),
   )
 
   /** The step whose inline panel is currently expanded, or null */
@@ -95,8 +95,6 @@ export const useOnboardingStore = defineStore('onboarding', () => {
    *   - step completion flags
    *   - onboarding_complete flag
    *   - orgProfile (used to pre-fill Step 1)
-   *
-   * Safe to call multiple times — idempotent read.
    */
   async function fetchStatus(): Promise<void> {
     const authStore = useAuthStore()
@@ -128,10 +126,7 @@ export const useOnboardingStore = defineStore('onboarding', () => {
   }
 
   /**
-   * openStep
-   *
-   * Expands the banner and sets step `n` as the active (expanded) step,
-   * closing all other step panels.
+   * openStep — expands step `n`, closing all other step panels.
    */
   function openStep(n: number): void {
     bannerExpanded.value = true
@@ -142,28 +137,23 @@ export const useOnboardingStore = defineStore('onboarding', () => {
   }
 
   /**
-   * markComplete
-   *
-   * Marks step `n` as complete and automatically opens step `n+1`.
-   * If `n` is 4 the overall onboarding_complete flag is set to true.
+   * markComplete — marks step `n` as complete and auto-opens step `n+1`.
+   * If `n` is the last step, onboarding_complete is set to true.
    */
   function markComplete(n: number): void {
     steps.value = steps.value.map((s) => ({
       ...s,
-      complete: s.step === n   ? true        : s.complete,
-      active:   s.step === n + 1 && n < 4,
+      complete: s.step === n ? true : s.complete,
+      active:   s.step === n + 1 && n < TOTAL_STEPS,
     }))
 
-    if (n === 4) {
+    if (n === TOTAL_STEPS) {
       onboarding_complete.value = true
     }
   }
 
   /**
-   * dismiss
-   *
-   * Collapses the banner panel without permanently hiding it.
-   * The user can re-open via the "Continue setup" button.
+   * dismiss — collapses the banner panel without permanently hiding it.
    */
   function dismiss(): void {
     bannerExpanded.value = false
@@ -173,19 +163,16 @@ export const useOnboardingStore = defineStore('onboarding', () => {
   // ── Public API ─────────────────────────────────────────────────────────────
 
   return {
-    // state
     steps,
     onboarding_complete,
     loading,
     bannerExpanded,
     orgProfile,
-    // derived
     completedCount,
     remainingCount,
     progressPercent,
     activeStep,
     firstIncomplete,
-    // actions
     fetchStatus,
     openStep,
     markComplete,

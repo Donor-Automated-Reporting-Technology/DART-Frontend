@@ -2,17 +2,14 @@
   <!--
     OnboardingBanner.vue
     ─────────────────────────────────────────────────────────────────────────────
-    ST-06 — Progressive onboarding banner.
+    Framework-based 3-step onboarding flow.
 
-    Visible only to org_admin users while onboarding_complete = false.
+    Steps:
+      1. Organisation — "Set your org name and country"
+      2. Framework    — "Choose your framework and project details"
+      3. Activities   — "Enable at least one activity"
 
-    States:
-      Collapsed  — shows progress bar + step count + "Continue setup" button.
-      Expanded   — shows all four step rows; clicking a row opens its inline panel.
-      Completing — green flash shown for 3 s then the banner self-hides.
-
-    The component is driven by useOnboarding() composable + useOnboardingStore().
-    Each step panel emits 'complete' which is handled by onStepComplete().
+    Post-completion: shows "Get Started" checklist (Locations, Staff, Register).
   -->
   <Transition name="banner-fade">
     <div
@@ -25,15 +22,28 @@
 
       <!-- ══════════════════════════════════════════════════════════════════════
            COMPLETION SCREEN
-           Shown for 3 seconds after step 4 completes, then fades permanently.
            ══════════════════════════════════════════════════════════════════════ -->
       <div v-if="showCompletion" class="banner-complete">
         <AppIcon name="check-circle" :size="18" class="complete-icon" />
-        <span>DART is ready — your team can now log in</span>
+        <div class="complete-content">
+          <span class="complete-title">DART is ready — your organisation is set up!</span>
+          <div class="checklist">
+            <p class="checklist-title">Get started:</p>
+            <NuxtLink to="/settings/locations" class="checklist-item" @click="showCompletion = false">
+              <AppIcon name="map-pin" :size="13" /> Add your locations and CFS centres
+            </NuxtLink>
+            <NuxtLink to="/staff" class="checklist-item" @click="showCompletion = false">
+              <AppIcon name="users" :size="13" /> Invite your team members
+            </NuxtLink>
+            <NuxtLink to="/beneficiaries/register" class="checklist-item" @click="showCompletion = false">
+              <AppIcon name="user-plus" :size="13" /> Register your first beneficiary
+            </NuxtLink>
+          </div>
+        </div>
       </div>
 
       <!-- ══════════════════════════════════════════════════════════════════════
-           COLLAPSED BAR  (always visible while banner is shown)
+           COLLAPSED BAR
            ══════════════════════════════════════════════════════════════════════ -->
       <div v-else class="banner-bar">
 
@@ -46,20 +56,28 @@
               role="progressbar"
               :aria-valuenow="store.completedCount"
               aria-valuemin="0"
-              aria-valuemax="4"
+              aria-valuemax="3"
             />
           </div>
 
           <span class="bar-label">
             <span class="bar-count">{{ store.completedCount }}</span>
             &thinsp;of&thinsp;
-            <span class="bar-count">4</span>
+            <span class="bar-count">3</span>
             steps complete
           </span>
         </div>
 
-        <!-- Right: collapse/expand toggle -->
+        <!-- Right: skip + collapse/expand toggle -->
         <div class="bar-right">
+          <button
+            type="button"
+            class="skip-btn"
+            @click="handleSkip"
+            title="Complete setup later in Settings"
+          >
+            Skip
+          </button>
           <button
             type="button"
             class="continue-btn"
@@ -137,18 +155,13 @@
                   v-if="step.step === 1"
                   @complete="handleStepComplete(1)"
                 />
-                <Step2DonorSelection
+                <Step2Framework
                   v-else-if="step.step === 2"
                   @complete="handleStepComplete(2)"
                 />
                 <Step3ActivityConfirm
                   v-else-if="step.step === 3"
                   @complete="handleStepComplete(3)"
-                />
-                <Step4TeamMember
-                  v-else-if="step.step === 4"
-                  @complete="handleStepComplete(4)"
-                  @skip="handleStepComplete(4)"
                 />
               </div>
             </Transition>
@@ -163,23 +176,13 @@
 </template>
 
 <script setup lang="ts">
-/**
- * OnboardingBanner — script
- *
- * Orchestrates the four-step onboarding flow.
- * Delegates state to useOnboarding() composable and useOnboardingStore().
- * Handles expand/collapse, step navigation and the 3-second completion screen.
- */
 import { ref, watch, onMounted } from 'vue'
 import { useOnboarding }     from '../../composables/useOnboarding'
 import AppIcon               from '../interfaces/AppIcon.vue'
 import Step1OrgProfile       from './steps/Step1OrgProfile.vue'
-import Step2DonorSelection   from './steps/Step2DonorSelection.vue'
+import Step2Framework        from './steps/Step2Framework.vue'
 import Step3ActivityConfirm  from './steps/Step3ActivityConfirm.vue'
-import Step4TeamMember       from './steps/Step4TeamMember.vue'
 import type { OnboardingStep } from '../../interfaces/onboarding'
-
-// ── Composable & store ────────────────────────────────────────────────────────
 
 const {
   store,
@@ -193,12 +196,6 @@ const {
 
 // ── Completion screen ─────────────────────────────────────────────────────────
 
-/**
- * Controls the 3-second green completion flash.
- * Set to true when all 4 steps are done; auto-resets after 3 000 ms so the
- * banner fades out permanently (shouldShowBanner becomes false because
- * onboarding_complete is now true).
- */
 const showCompletion = ref(false)
 
 watch(
@@ -206,9 +203,6 @@ watch(
   (done) => {
     if (done) {
       showCompletion.value = true
-      setTimeout(() => {
-        showCompletion.value = false
-      }, 3000)
     }
   },
 )
@@ -220,19 +214,23 @@ function handleToggle(): void {
     store.dismiss()
   } else {
     store.bannerExpanded = true
-    // Re-open first incomplete step when expanding
     const first = store.firstIncomplete
     if (first) store.openStep(first.step)
   }
 }
 
+// ── Skip ──────────────────────────────────────────────────────────────────────
+
+function handleSkip(): void {
+  store.dismiss()
+}
+
 // ── Step row click ────────────────────────────────────────────────────────────
 
 function handleStepClick(step: OnboardingStep): void {
-  if (step.complete) return   // completed steps are not interactive
+  if (step.complete) return
 
   if (step.active) {
-    // Collapse already-open panel
     store.dismiss()
     store.bannerExpanded = true
   } else {
@@ -274,9 +272,9 @@ onMounted(() => {
 
 .banner-complete {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 20px;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 20px;
   background: var(--success-bg);
   color: var(--third);
   font-size: 0.9rem;
@@ -287,6 +285,48 @@ onMounted(() => {
 .complete-icon {
   flex-shrink: 0;
   color: var(--third);
+  margin-top: 1px;
+}
+
+.complete-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.complete-title {
+  color: var(--third);
+  font-weight: 600;
+}
+
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.checklist-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--primary);
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+}
+
+.checklist-item:hover {
+  background: var(--primary-dim);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -301,8 +341,6 @@ onMounted(() => {
   padding: 12px 20px;
   flex-wrap: wrap;
 }
-
-/* ── Left side ─────────────────────────────────────────────────────────────── */
 
 .bar-left {
   display: flex;
@@ -322,9 +360,7 @@ onMounted(() => {
 }
 
 @media (max-width: 480px) {
-  .progress-track {
-    width: 90px;
-  }
+  .progress-track { width: 90px; }
 }
 
 .progress-fill {
@@ -344,10 +380,28 @@ onMounted(() => {
   color: var(--text-primary);
 }
 
-/* ── Right side ────────────────────────────────────────────────────────────── */
-
 .bar-right {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.skip-btn {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.skip-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-secondary);
 }
 
 .continue-btn {
@@ -387,8 +441,6 @@ onMounted(() => {
   border-top: 1px solid var(--border-subtle);
 }
 
-/* ── Step header row ──────────────────────────────────────────────────────── */
-
 .step-row {
   display: flex;
   align-items: center;
@@ -400,28 +452,11 @@ onMounted(() => {
   user-select: none;
 }
 
-.step-row:last-child {
-  border-bottom: none;
-}
-
-.step-row--complete {
-  cursor: default;
-}
-
-.step-row:not(.step-row--complete):hover {
-  background: var(--bg-card-hover);
-}
-
-.step-row--active {
-  background: var(--bg-card);
-}
-
-.step-row:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: -2px;
-}
-
-/* ── Step circle ──────────────────────────────────────────────────────────── */
+.step-row:last-child { border-bottom: none; }
+.step-row--complete { cursor: default; }
+.step-row:not(.step-row--complete):hover { background: var(--bg-card-hover); }
+.step-row--active { background: var(--bg-card); }
+.step-row:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
 
 .step-circle {
   width: 26px;
@@ -439,25 +474,19 @@ onMounted(() => {
   transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
-/* Complete: green circle with checkmark */
 .step-circle.step-indicator--complete {
   background: var(--success-bg);
   border-color: var(--success);
   color: var(--third);
 }
 
-/* Active: blue circle with number */
 .step-circle.step-indicator--active {
   background: var(--primary-dim);
   border-color: var(--primary);
   color: var(--primary);
 }
 
-.step-num {
-  line-height: 1;
-}
-
-/* ── Step label ───────────────────────────────────────────────────────────── */
+.step-num { line-height: 1; }
 
 .step-label {
   flex: 1;
@@ -467,16 +496,8 @@ onMounted(() => {
   line-height: 1.3;
 }
 
-.step-row--complete .step-label {
-  color: var(--text-muted);
-}
-
-.step-row--active .step-label {
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
-/* ── Step chevron ─────────────────────────────────────────────────────────── */
+.step-row--complete .step-label { color: var(--text-muted); }
+.step-row--active .step-label { color: var(--text-primary); font-weight: 600; }
 
 .step-chevron {
   color: var(--text-muted);
@@ -488,8 +509,6 @@ onMounted(() => {
   transform: rotate(90deg);
   color: var(--primary);
 }
-
-/* ── Done pill ────────────────────────────────────────────────────────────── */
 
 .step-done-pill {
   padding: 2px 8px;
@@ -503,8 +522,6 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-/* ── Inline step panel wrapper ────────────────────────────────────────────── */
-
 .step-panel-wrap {
   padding: 0 20px 20px;
   border-bottom: 1px solid var(--border-subtle);
@@ -515,44 +532,27 @@ onMounted(() => {
    TRANSITIONS
    ══════════════════════════════════════════════════════════════════════════════ */
 
-/* Banner mount/unmount fade */
-.banner-fade-enter-active,
-.banner-fade-leave-active {
+.banner-fade-enter-active, .banner-fade-leave-active {
   transition: opacity 0.35s ease, transform 0.35s ease;
 }
-
-.banner-fade-enter-from,
-.banner-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);
+.banner-fade-enter-from, .banner-fade-leave-to {
+  opacity: 0; transform: translateY(-6px);
 }
 
-/* Steps list slide */
-.steps-slide-enter-active,
-.steps-slide-leave-active {
+.steps-slide-enter-active, .steps-slide-leave-active {
   transition: max-height 0.28s ease, opacity 0.22s ease;
-  overflow: hidden;
-  max-height: 600px;
+  overflow: hidden; max-height: 600px;
+}
+.steps-slide-enter-from, .steps-slide-leave-to {
+  max-height: 0; opacity: 0;
 }
 
-.steps-slide-enter-from,
-.steps-slide-leave-to {
-  max-height: 0;
-  opacity: 0;
-}
-
-/* Per-step panel slide */
-.panel-slide-enter-active,
-.panel-slide-leave-active {
+.panel-slide-enter-active, .panel-slide-leave-active {
   transition: max-height 0.25s ease, opacity 0.2s ease;
-  overflow: hidden;
-  max-height: 800px;
+  overflow: hidden; max-height: 800px;
 }
-
-.panel-slide-enter-from,
-.panel-slide-leave-to {
-  max-height: 0;
-  opacity: 0;
+.panel-slide-enter-from, .panel-slide-leave-to {
+  max-height: 0; opacity: 0;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -560,17 +560,8 @@ onMounted(() => {
    ══════════════════════════════════════════════════════════════════════════════ */
 
 @media (max-width: 640px) {
-  .banner-bar {
-    padding: 10px 14px;
-    gap: 10px;
-  }
-
-  .step-row {
-    padding: 12px 14px;
-  }
-
-  .step-panel-wrap {
-    padding: 0 14px 16px;
-  }
+  .banner-bar { padding: 10px 14px; gap: 10px; }
+  .step-row { padding: 12px 14px; }
+  .step-panel-wrap { padding: 0 14px 16px; }
 }
 </style>

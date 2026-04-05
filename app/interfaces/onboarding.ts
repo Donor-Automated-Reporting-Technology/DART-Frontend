@@ -1,10 +1,14 @@
 /**
  * interfaces/onboarding.ts
  *
- * All TypeScript types for the ST-06 progressive onboarding flow.
- * Covers the Pinia store shape, API request/response contracts,
- * and the four step panel data models.
+ * TypeScript types for the framework-based 3-step onboarding flow.
+ * Steps:
+ *   1. Organisation profile (name + country)
+ *   2. Framework setup (type + project details)
+ *   3. Activity confirmation (enable at least 1)
  */
+
+import type { FrameworkType } from './framework'
 
 // ─── Store / UI types ─────────────────────────────────────────────────────────
 
@@ -75,59 +79,31 @@ export interface UpdateOrgPayload {
   locations: Omit<OperatingLocation, 'id'>[]
 }
 
-// ─── Step 2 — Donor selection ─────────────────────────────────────────────────
+// ─── Step 2 — Framework setup ─────────────────────────────────────────────────
 
-/** A donor card returned from GET /api/v1/donors */
-export interface Donor {
-  id: string
-  name: string
-  /** Short description shown on the card */
-  description: string
-  /** When true the card is clickable and selectable */
-  is_active: boolean
-  /** When true a "Coming soon" badge is shown; card is not interactive */
-  coming_soon: boolean
-  /** Number of activities that will be loaded if this donor is selected */
-  activity_count: number
-}
-
-/** Payload sent to POST /api/v1/onboarding/select-donor */
-export interface SelectDonorPayload {
-  donor_id: string
+/** Payload sent to POST /api/v1/onboarding/framework */
+export interface SetupFrameworkPayload {
+  framework_type: FrameworkType
+  project_name: string
+  partner_name: string
+  reporting_to: string
+  period_start: string
+  period_end: string
 }
 
 // ─── Step 3 — Activity confirmation ──────────────────────────────────────────
 
-/** An activity loaded for the selected donor (GET /api/v1/onboarding/activities) */
+/** An activity template returned for the chosen framework type */
 export interface OnboardingActivity {
   id: string
   name: string
+  code: string
   description: string
   /** Toggled immediately via PATCH; at least one must remain active */
   is_active: boolean
-  /** Donor name displayed as a badge on each card */
-  donor: string
 }
 
 /** Payload sent to PATCH /api/v1/onboarding/activities/:id */
 export interface ToggleActivityPayload {
   is_active: boolean
-}
-
-// ─── Step 4 — Add first team member ──────────────────────────────────────────
-
-/** Available roles for new team members — org_admin is excluded from the UI */
-export type TeamMemberRole =
-  | 'program_manager'
-  | 'field_officer'
-  | 'case_worker'
-  | 'finance_officer'
-  | 'facilitator'
-
-/** Payload sent to POST /api/v1/users */
-export interface NewTeamMemberPayload {
-  full_name: string
-  email: string
-  password?: string
-  role: TeamMemberRole
 }
