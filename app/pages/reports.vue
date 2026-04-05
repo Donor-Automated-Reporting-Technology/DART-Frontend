@@ -1,350 +1,210 @@
 <template>
-  <!--
-    reports.vue
-    ─────────────────────────────────────────────────────────────────────────────
-    Admin-only reports page.
-    Currently provides a beneficiaries data export (Excel download).
-  -->
-  <NuxtLayout name="app" :breadcrumbs="breadcrumbs">
+  <NuxtLayout name="app" :breadcrumbs="[{ title: 'Reports', href: '/reports', current: true }]">
     <div class="reports-page">
-
-      <!-- ── Page Header ────────────────────────────────────────────────────── -->
-      <div class="page-greeting">
-        <div class="greeting-body">
-          <h1 class="greeting-title">Reports</h1>
-          <p class="greeting-sub">Download and export program data.</p>
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Reports</h1>
+          <p class="page-subtitle">View disaggregation data and export programme reports.</p>
         </div>
-        <div class="greeting-accent" aria-hidden="true"></div>
       </div>
 
-      <!-- ── Downloads Section (Admin only) ─────────────────────────────────── -->
-      <div v-if="isAdmin" class="reports-section">
-        <h3 class="section-title">Data Exports</h3>
+      <!-- Period selector -->
+      <div class="period-bar">
+        <div class="field">
+          <label class="field-label">From</label>
+          <input v-model="periodStart" type="date" class="field-input" />
+        </div>
+        <div class="field">
+          <label class="field-label">To</label>
+          <input v-model="periodEnd" type="date" class="field-input" />
+        </div>
+        <button class="btn-outline" @click="fetchReport">Refresh</button>
+      </div>
 
-        <div class="reports-grid">
+      <!-- Error -->
+      <p v-if="error" class="error-msg">{{ error }}</p>
 
-          <!-- Beneficiaries Export Card -->
-          <div class="report-card">
-            <div class="report-icon">
-              <AppIcon name="file-spreadsheet" :size="24" />
-            </div>
-            <div class="report-content">
-              <h4 class="report-title">Download Beneficiaries Data</h4>
-              <p class="report-description">
-                Export the full beneficiaries database as an Excel spreadsheet.
-                Includes demographics, registration details, and CFS location data.
-              </p>
-            </div>
-            <button
-              class="btn-download"
-              :disabled="isDownloading"
-              @click="handleExport"
-            >
-              <AppIcon v-if="!isDownloading" name="download" :size="16" />
-              <span v-if="isDownloading" class="spinner" aria-hidden="true"></span>
-              {{ isDownloading ? 'Downloading…' : 'Download Excel' }}
+      <!-- Loading -->
+      <div v-if="loading" class="loading-state">Loading report data…</div>
+
+      <!-- Disaggregation table -->
+      <template v-else>
+        <div class="section">
+          <h3 class="section-title">Disaggregation Summary</h3>
+          <DisaggregationTable :rows="disaggRows" />
+        </div>
+
+        <!-- Export buttons -->
+        <div class="section">
+          <h3 class="section-title">Data Exports</h3>
+          <div class="export-grid">
+            <button class="export-card" @click="exportExcel('beneficiaries')">
+              <span class="export-icon">📊</span>
+              <span class="export-label">Beneficiaries Excel</span>
+            </button>
+            <button class="export-card" @click="exportExcel('disaggregation')">
+              <span class="export-icon">📋</span>
+              <span class="export-label">Disaggregation Table</span>
+            </button>
+            <button class="export-card" @click="exportExcel('attendance')">
+              <span class="export-icon">📝</span>
+              <span class="export-label">Attendance Records</span>
+            </button>
+            <button class="export-card" @click="exportExcel('5w')">
+              <span class="export-icon">🗂️</span>
+              <span class="export-label">UNICEF 5W Format</span>
             </button>
           </div>
-
         </div>
-
-        <!-- Error feedback -->
-        <div v-if="errorMessage" class="report-error">
-          <AppIcon name="alert-circle" :size="16" />
-          <span>{{ errorMessage }}</span>
-        </div>
-
-        <!-- Success feedback -->
-        <div v-if="successMessage" class="report-success">
-          <AppIcon name="check-circle" :size="16" />
-          <span>{{ successMessage }}</span>
-        </div>
-
-      </div>
-
-      <!-- ── Coming Soon (non-admin) ─────────────────────────────────────────── -->
-      <div v-if="!isAdmin" class="reports-coming-soon">
-        <AppIcon name="file-text" :size="40" />
-        <h3>Reports Coming Soon</h3>
-        <p>Detailed activity reports and data exports will be available here shortly.</p>
-      </div>
-
+      </template>
     </div>
   </NuxtLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useAuthStore } from '../stores/auth';
-import { cfsApi } from '../services/cfsApi';
-import AppIcon from '../components/interfaces/AppIcon.vue';
-import type { Breadcrumb } from '../interfaces/dashboard';
+import { ref, onMounted } from 'vue'
+import { getActivePinia } from 'pinia'
+import { ApiError } from '../services/api'
+import DisaggregationTable from '../components/reports/DisaggregationTable.vue'
+import type { DisaggregationRow } from '../components/reports/DisaggregationTable.vue'
 
-// ── Page metadata ──────────────────────────────────────────────────────────────
-definePageMeta({
-  middleware: ['auth'],
-  layout: false,
-});
+definePageMeta({ layout: false, middleware: ['auth'] })
 
-useHead({ title: 'Reports — DART' });
+const BASE_URL = '/api/v1'
 
-// ── Breadcrumbs ────────────────────────────────────────────────────────────────
-const breadcrumbs: Breadcrumb[] = [
-  { title: 'Home',    href: '/' },
-  { title: 'Dashboard', href: '/dashboard' },
-  { title: 'Reports', href: '/reports', current: true },
-];
-
-// ── Auth ────────────────────────────────────────────────────────────────────────
-const authStore = useAuthStore();
-const isAdmin = computed(() => authStore.userRole === 'org_admin');
-
-// ── State ───────────────────────────────────────────────────────────────────────
-const isDownloading = ref(false);
-const errorMessage = ref('');
-const successMessage = ref('');
-
-// ── Export handler ──────────────────────────────────────────────────────────────
-async function handleExport() {
-  isDownloading.value = true;
-  errorMessage.value = '';
-  successMessage.value = '';
-
+function resolveToken(): string | undefined {
   try {
-    await cfsApi.exportBeneficiaries(authStore.accessToken || undefined);
-    successMessage.value = 'Beneficiaries data downloaded successfully.';
+    const pinia = getActivePinia()
+    const authState = pinia?.state.value?.['auth'] as { accessToken?: string | null } | undefined
+    return authState?.accessToken ?? undefined
+  } catch { return undefined }
+}
+
+const now = new Date()
+const qStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1)
+const periodStart = ref(qStart.toISOString().slice(0, 10))
+const periodEnd = ref(now.toISOString().slice(0, 10))
+
+const loading = ref(false)
+const error = ref<string | null>(null)
+const disaggRows = ref<DisaggregationRow[]>([])
+
+async function fetchReport() {
+  loading.value = true
+  error.value = null
+  try {
+    const token = resolveToken()
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
+    const qs = new URLSearchParams()
+    qs.set('period_start', periodStart.value)
+    qs.set('period_end', periodEnd.value)
+
+    const res = await fetch(`${BASE_URL}/dashboard?${qs}`, { headers })
+    const raw = await res.json().catch(() => ({}))
+    if (!res.ok) throw new ApiError(res.status, raw?.message ?? 'Failed', raw)
+
+    const body = raw?.data ?? raw
+
+    // Map activity_summary to disaggregation rows
+    // The dashboard response has activity_summary[]; we'll adapt it
+    const activities = body?.activity_summary ?? []
+    disaggRows.value = activities.map((a: any) => ({
+      code: a.code,
+      name: a.name,
+      girls: a.girls ?? 0,
+      boys: a.boys ?? 0,
+      women: a.women ?? 0,
+      men: a.men ?? 0,
+      disability_male: a.disability_male ?? 0,
+      disability_female: a.disability_female ?? 0,
+    }))
   } catch (e: any) {
-    errorMessage.value = e?.message || 'Failed to download beneficiaries data.';
+    error.value = e?.message ?? 'Failed to load report data'
   } finally {
-    isDownloading.value = false;
+    loading.value = false
   }
 }
+
+async function exportExcel(type: string) {
+  try {
+    const token = resolveToken()
+    const headers: Record<string, string> = {}
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
+    const qs = new URLSearchParams()
+    qs.set('period_start', periodStart.value)
+    qs.set('period_end', periodEnd.value)
+    qs.set('format', type)
+
+    const res = await fetch(`${BASE_URL}/reports/export?${qs}`, { headers })
+    if (!res.ok) {
+      const raw = await res.json().catch(() => ({}))
+      throw new Error(raw?.message ?? 'Export failed')
+    }
+
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `dart-${type}-${periodStart.value}-${periodEnd.value}.xlsx`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  } catch (e: any) {
+    error.value = e?.message ?? 'Export failed'
+  }
+}
+
+onMounted(fetchReport)
 </script>
 
 <style scoped>
-.reports-page {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  max-width: 900px;
-  margin: 0 auto;
-  animation: fadeIn 0.35s ease-out;
+.reports-page { max-width: 1000px; }
+
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+.page-title { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin: 0 0 4px; }
+.page-subtitle { font-size: 0.82rem; color: var(--text-muted); margin: 0; }
+
+.period-bar { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 22px; }
+
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+
+.field-input {
+  padding: 9px 12px; background: var(--bg-input); border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.82rem; font-family: inherit;
+}
+.field-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-dim); }
+
+.btn-outline { padding: 9px 16px; background: transparent; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.82rem; color: var(--text-muted); cursor: pointer; }
+.btn-outline:hover { border-color: var(--text-primary); color: var(--text-primary); }
+
+.error-msg { font-size: 0.82rem; color: var(--error); margin: 0 0 12px; }
+.loading-state { text-align: center; padding: 32px; color: var(--text-muted); font-size: 0.85rem; }
+
+.section { margin-bottom: 28px; }
+.section-title { font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); margin: 0 0 12px; }
+
+.export-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px;
 }
 
-/* ── Page Header ──────────────────────────────────────────────────────────── */
-.page-greeting {
-  position: relative;
-  padding: 2rem 2rem 1.75rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
+.export-card {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 20px; background: var(--bg-card); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg); cursor: pointer; transition: all 0.15s;
 }
 
-.greeting-body { position: relative; z-index: 1; }
+.export-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 
-.greeting-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-}
+.export-icon { font-size: 1.5rem; }
+.export-label { font-size: 0.82rem; font-weight: 500; color: var(--text-primary); text-align: center; }
 
-.greeting-sub {
-  margin: 0.35rem 0 0;
-  font-size: 0.88rem;
-  color: var(--text-secondary);
-}
-
-.greeting-accent {
-  position: absolute;
-  top: -40%;
-  right: -6%;
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  background: var(--accent-gradient, linear-gradient(135deg, rgba(99,102,241,.15), rgba(168,85,247,.10)));
-  filter: blur(50px);
-  pointer-events: none;
-}
-
-/* ── Section ──────────────────────────────────────────────────────────────── */
-.reports-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.section-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-/* ── Reports Grid ─────────────────────────────────────────────────────────── */
-.reports-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.report-card {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  padding: 1.5rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.report-card:hover {
-  border-color: var(--border-color);
-  box-shadow: var(--shadow-card);
-}
-
-.report-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-md);
-  background: rgba(99, 102, 241, 0.10);
-  color: #818cf8;
-  flex-shrink: 0;
-}
-
-.report-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.report-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.report-description {
-  font-size: 0.82rem;
-  color: var(--text-secondary);
-  margin: 0.3rem 0 0;
-  line-height: 1.45;
-}
-
-/* ── Download Button ──────────────────────────────────────────────────────── */
-.btn-download {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1.25rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #fff;
-  background: var(--color-primary, #6366f1);
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: background 0.2s ease, opacity 0.2s ease;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.btn-download:hover:not(:disabled) {
-  background: var(--color-primary-hover, #4f46e5);
-}
-
-.btn-download:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* ── Spinner ──────────────────────────────────────────────────────────────── */
-.spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* ── Feedback Messages ────────────────────────────────────────────────────── */
-.report-error,
-.report-success {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-md);
-  font-size: 0.84rem;
-}
-
-.report-error {
-  background: rgba(239, 68, 68, 0.08);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.15);
-}
-
-.report-success {
-  background: rgba(34, 197, 94, 0.08);
-  color: #22c55e;
-  border: 1px solid rgba(34, 197, 94, 0.15);
-}
-
-/* ── Responsive ───────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .report-card {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .btn-download {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ── Coming Soon (non-admin) ──────────────────────────────────────────────── */
-.reports-coming-soon {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 4rem 2rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  text-align: center;
-  color: var(--text-secondary);
-}
-
-.reports-coming-soon h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.reports-coming-soon p {
-  font-size: 0.88rem;
-  margin: 0;
-  max-width: 360px;
-  line-height: 1.5;
+  .period-bar { flex-direction: column; align-items: stretch; }
+  .export-grid { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
