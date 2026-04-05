@@ -20,6 +20,47 @@ export interface DashboardStats {
   pendingReports: number;
 }
 
+// ─── Multi-activity dashboard (new) ───────────────────────────────────────────
+
+/** Full dashboard response from GET /api/v1/dashboard */
+export interface DashboardResponse {
+  demographics: DemographicsSummary;
+  activity_summary: ActivitySummary[];
+  locations: LocationSummary[];
+  recent_sessions: RecentSession[];
+}
+
+export interface DemographicsSummary {
+  total_beneficiaries: number;
+  girls_women: number;
+  boys_men: number;
+  with_disability: number;
+}
+
+export interface ActivitySummary {
+  code: string;
+  name: string;
+  actual: number;
+  target: number;
+  percentage: number;
+}
+
+export interface LocationSummary {
+  id: string;
+  name: string;
+  children_count: number;
+  centre_count: number;
+}
+
+export interface RecentSession {
+  id: string;
+  activity_name: string;
+  location_name: string;
+  session_date: string;
+  present_count: number;
+  total_count: number;
+}
+
 // ─── Reports ──────────────────────────────────────────────────────────────────
 
 export type ReportStatus = "draft" | "submitted" | "approved" | "overdue";

@@ -10,6 +10,7 @@
 
 import type {
   DashboardStats,
+  DashboardResponse,
   Report,
   ActivityItem,
 } from "../interfaces/dashboard";
@@ -53,6 +54,28 @@ export const dashboardApi = {
    */
   async getStats(): Promise<DashboardStats> {
     return apiFetch<DashboardStats>("/dashboard/stats");
+  },
+
+  /**
+   * Fetch the multi-activity dashboard data.
+   *
+   * GET /api/v1/dashboard
+   */
+  async getDashboard(params?: { period_start?: string; period_end?: string }): Promise<DashboardResponse> {
+    const qs = new URLSearchParams();
+    if (params?.period_start) qs.set('period_start', params.period_start);
+    if (params?.period_end) qs.set('period_end', params.period_end);
+    const query = qs.toString() ? `?${qs.toString()}` : '';
+    return apiFetch<DashboardResponse>(`/dashboard${query}`);
+  },
+
+  /**
+   * Fetch location-specific dashboard.
+   *
+   * GET /api/v1/dashboard/location/:id
+   */
+  async getLocationDashboard(locationId: string): Promise<DashboardResponse> {
+    return apiFetch<DashboardResponse>(`/dashboard/location/${locationId}`);
   },
 
   /**

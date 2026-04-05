@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { ref, computed } from "vue";
+import type { FrameworkActivity, Framework } from '../interfaces/framework'
 
 /**
  * Auth store
@@ -26,6 +27,8 @@ const STORAGE_KEYS = {
   userRole: "dart_user_role",
   activities: "dart_activities",
   cfsLocationName: "dart_cfs_location_name",
+  frameworkActivities: "dart_framework_activities",
+  activeFramework: "dart_active_framework",
 } as const;
 
 /** Read a key from localStorage safely (no-op on the server). */
@@ -124,6 +127,28 @@ export const useAuthStore = defineStore("auth", () => {
   /** CFS location name for staff users — persisted to localStorage */
   const cfsLocationName = ref<string | null>(getStored(STORAGE_KEYS.cfsLocationName));
 
+  /** Framework activities with template info — drives sidebar navigation */
+  const frameworkActivities = ref<FrameworkActivity[]>(
+    JSON.parse(getStored(STORAGE_KEYS.frameworkActivities) || '[]'),
+  );
+
+  /** Active framework for the organisation */
+  const activeFramework = ref<Framework | null>(
+    JSON.parse(getStored(STORAGE_KEYS.activeFramework) || 'null'),
+  );
+
+  /** Codes of active activities — drives sidebar menu items */
+  const activeActivityCodes = computed<string[]>(() =>
+    frameworkActivities.value
+      .filter((fa) => fa.is_active && fa.template?.code)
+      .map((fa) => fa.template!.code),
+  );
+
+  /** Check if a specific activity is enabled by template code */
+  function hasActivity(code: string): boolean {
+    return activeActivityCodes.value.includes(code)
+  }
+
   // ── Computed helpers (kept as plain functions for simplicity) ────────────
 
   /** Two-letter initials derived from the stored display name. */
@@ -200,6 +225,18 @@ export const useAuthStore = defineStore("auth", () => {
     setStored(STORAGE_KEYS.cfsLocationName, name);
   }
 
+  /** Store framework activities (with template info) and persist. */
+  function setFrameworkActivities(acts: FrameworkActivity[]): void {
+    frameworkActivities.value = acts;
+    setStored(STORAGE_KEYS.frameworkActivities, JSON.stringify(acts));
+  }
+
+  /** Store the active framework and persist. */
+  function setActiveFramework(fw: Framework | null): void {
+    activeFramework.value = fw;
+    setStored(STORAGE_KEYS.activeFramework, JSON.stringify(fw));
+  }
+
   // ── Session management ───────────────────────────────────────────────────
 
   /** Returns true when the stored access token hasn't expired yet. */
@@ -218,6 +255,8 @@ export const useAuthStore = defineStore("auth", () => {
     userRole.value = null;
     activities.value = [];
     cfsLocationName.value = null;
+    frameworkActivities.value = [];
+    activeFramework.value = null;
 
     Object.values(STORAGE_KEYS).forEach(removeStored);
   }
@@ -257,6 +296,24 @@ export const useAuthStore = defineStore("auth", () => {
           activities.value = [];
         }
       }
+
+      const storedFwActs = getStored(STORAGE_KEYS.frameworkActivities);
+      if (storedFwActs) {
+        try {
+          frameworkActivities.value = JSON.parse(storedFwActs);
+        } catch {
+          frameworkActivities.value = [];
+        }
+      }
+
+      const storedFw = getStored(STORAGE_KEYS.activeFramework);
+      if (storedFw) {
+        try {
+          activeFramework.value = JSON.parse(storedFw);
+        } catch {
+          activeFramework.value = null;
+        }
+      }
     }
   }
 
@@ -271,10 +328,13 @@ export const useAuthStore = defineStore("auth", () => {
     userRole,
     activities,
     cfsLocationName,
+    frameworkActivities,
+    activeFramework,
+    activeActivityCodes,
     // helpers
     getInitials,
-    // helpers
     hasValidToken,
+    hasActivity,
     // setters
     setToken,
     setUserName,
@@ -285,6 +345,8 @@ export const useAuthStore = defineStore("auth", () => {
     setUserRole,
     setActivities,
     setCfsLocationName,
+    setFrameworkActivities,
+    setActiveFramework,
     // session
     clearSession,
     restoreFromStorage,

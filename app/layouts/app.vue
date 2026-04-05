@@ -48,7 +48,7 @@
       <nav class="sidebar-nav" role="navigation">
 
         <!-- Group: Platform (Admin & Staff) ────────────────────────────── -->
-        <div class="nav-group" v-if="isAdmin || isStaff">
+        <div class="nav-group" v-if="isAdmin || isStaff || isManager">
           <p class="nav-group-label">Platform</p>
 
           <NuxtLink
@@ -63,76 +63,58 @@
           </NuxtLink>
         </div>
 
-        <!-- Group: Activities ────────────────────────────────────── -->
-        <div class="nav-group" v-if="authStore.activities?.includes('Child Friendly Spaces')">
+        <!-- Group: Beneficiaries ────────────────────────────────────── -->
+        <div class="nav-group" v-if="isAdmin || isStaff || isManager">
+          <p class="nav-group-label">Beneficiaries</p>
+
+          <NuxtLink
+            to="/beneficiaries"
+            class="nav-item"
+            active-class="nav-item--active"
+            title="Beneficiary Registry"
+            @click="closeSidebarOnMobile"
+          >
+            <AppIcon name="user-plus" :size="15" class="nav-icon" />
+            <span class="nav-label">Beneficiaries</span>
+          </NuxtLink>
+        </div>
+
+        <!-- Group: Activities (dynamic from framework) ──────────────── -->
+        <div class="nav-group" v-if="hasActivities">
           <p class="nav-group-label">Activities</p>
 
           <NuxtLink
-            to="/cfs"
+            v-for="activity in sidebarActivities"
+            :key="activity.code"
+            :to="activity.route"
             class="nav-item"
             active-class="nav-item--active"
-            title="Child Friendly Spaces"
+            :title="activity.label"
             @click="closeSidebarOnMobile"
           >
-            <AppIcon name="home" :size="15" class="nav-icon" />
-            <span class="nav-label">Child Friendly Spaces</span>
+            <AppIcon :name="activity.icon" :size="15" class="nav-icon" />
+            <span class="nav-label">{{ activity.label }}</span>
           </NuxtLink>
+        </div>
 
-          <!-- Configuration - Admin only -->
-          <NuxtLink
-            v-if="isAdmin"
-            to="/cfs/configuration"
-            class="nav-item nav-item--sub"
-            active-class="nav-item--active"
-            title="Configuration"
-            @click="closeSidebarOnMobile"
-          >
-            <AppIcon name="settings" :size="15" class="nav-icon" />
-            <span class="nav-label">Configuration</span>
-          </NuxtLink>
+        <!-- Group: Staff (Admin/Manager only) ──────────────────────── -->
+        <div class="nav-group" v-if="isAdmin || isManager">
+          <p class="nav-group-label">Staff</p>
 
-          <!-- Staff Management - Admin only -->
           <NuxtLink
-            v-if="isAdmin"
-            to="/cfs/staff-management"
-            class="nav-item nav-item--sub"
+            to="/staff"
+            class="nav-item"
             active-class="nav-item--active"
             title="Staff Management"
             @click="closeSidebarOnMobile"
           >
             <AppIcon name="users" :size="15" class="nav-icon" />
-            <span class="nav-label">Staff Management</span>
-          </NuxtLink>
-
-          <!-- Registration - Staff only (facilitator, case_worker) -->
-          <NuxtLink
-            v-if="isStaff"
-            to="/cfs/registration"
-            class="nav-item nav-item--sub"
-            active-class="nav-item--active"
-            title="Registration"
-            @click="closeSidebarOnMobile"
-          >
-            <AppIcon name="user-plus" :size="15" class="nav-icon" />
-            <span class="nav-label">Registration</span>
-          </NuxtLink>
-
-          <!-- Attendance - Staff only (facilitator, case_worker) -->
-          <NuxtLink
-            v-if="isStaff"
-            to="/cfs/attendance"
-            class="nav-item nav-item--sub"
-            active-class="nav-item--active"
-            title="Attendance"
-            @click="closeSidebarOnMobile"
-          >
-            <AppIcon name="check-square" :size="15" class="nav-icon" />
-            <span class="nav-label">Attendance</span>
+            <span class="nav-label">Staff</span>
           </NuxtLink>
         </div>
 
         <!-- Group: Reports (all users) ───────────────────────────────── -->
-        <div class="nav-group">
+        <div class="nav-group" v-if="isAdmin || isManager">
           <p class="nav-group-label">Reports</p>
 
           <NuxtLink
@@ -144,6 +126,22 @@
           >
             <AppIcon name="file-text" :size="15" class="nav-icon" />
             <span class="nav-label">Reports</span>
+          </NuxtLink>
+        </div>
+
+        <!-- Group: Settings (Admin/Manager only) ──────────────────── -->
+        <div class="nav-group" v-if="isAdmin || isManager">
+          <p class="nav-group-label">Settings</p>
+
+          <NuxtLink
+            to="/settings"
+            class="nav-item"
+            active-class="nav-item--active"
+            title="Settings"
+            @click="closeSidebarOnMobile"
+          >
+            <AppIcon name="settings" :size="15" class="nav-icon" />
+            <span class="nav-label">Settings</span>
           </NuxtLink>
         </div>
 
@@ -304,6 +302,7 @@ import { useAuthStore }       from '../stores/auth';
 import { useOnboardingStore } from '../stores/onboarding';
 import { useTheme }           from '../composables/useTheme';
 import AppIcon from '../components/interfaces/AppIcon.vue';
+import { ACTIVITY_CONFIG }    from '../utils/activityConfig';
 import type { Breadcrumb } from '../interfaces/dashboard';
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
@@ -347,6 +346,39 @@ const isAdmin = computed(() => authStore.userRole === 'org_admin');
 const isStaff = computed(() =>
   authStore.userRole === 'facilitator' || authStore.userRole === 'case_worker'
 );
+
+/** Check if user is a manager (program_manager) or admin */
+const isManager = computed(() =>
+  authStore.userRole === 'org_admin' || authStore.userRole === 'program_manager'
+);
+
+/**
+ * Dynamic sidebar activity items built from the auth store's frameworkActivities.
+ * Falls back to the old `activities` array for backward compat during migration.
+ */
+const sidebarActivities = computed(() => {
+  // New framework-based approach
+  if (authStore.frameworkActivities.length > 0) {
+    return authStore.frameworkActivities
+      .filter((fa) => fa.is_active && fa.template?.code)
+      .map((fa) => {
+        const code = fa.template!.code
+        const config = ACTIVITY_CONFIG[code]
+        return config ? { code, ...config } : null
+      })
+      .filter(Boolean) as Array<{ code: string; icon: string; label: string; route: string }>
+  }
+  // Backward compat: old activities array (string[])
+  if (authStore.activities?.includes('Child Friendly Spaces')) {
+    return [
+      { code: 'CFS_ATTENDANCE', icon: 'check-square', label: 'Attendance', route: '/cfs/attendance' },
+    ]
+  }
+  return []
+});
+
+/** Whether the user has any activities to show */
+const hasActivities = computed(() => sidebarActivities.value.length > 0);
 
 // ─── Onboarding pill ──────────────────────────────────────────────────────────
 

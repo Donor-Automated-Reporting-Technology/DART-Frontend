@@ -23,6 +23,17 @@ import type {
   NewTeamMemberPayload,
 } from "../interfaces/onboarding";
 
+// ─── Framework setup request (replaces donor selection) ───────────────────────
+
+export interface SetupFrameworkRequest {
+  framework_type: string;
+  project_name: string;
+  partner_name: string;
+  reporting_to: string;
+  period_start: string;
+  period_end: string;
+}
+
 // ─── Base URL ─────────────────────────────────────────────────────────────────
 
 const BASE = "/api/v1";
@@ -137,10 +148,28 @@ export const fetchDonors = async (token?: string) => {
  *
  * Confirms the chosen donor and triggers the platform to load that donor's
  * activities so they appear in Step 3.
+ * @deprecated Use setupFramework() for the new framework-based onboarding flow.
  */
 export const selectDonor = (payload: SelectDonorPayload, token?: string) =>
   request(
     `${BASE}/onboarding/select-donor`,
+    { method: "POST", body: JSON.stringify(payload) },
+    token,
+  );
+
+/**
+ * POST /api/v1/onboarding/framework
+ *
+ * Sets up the organisation's framework (replaces donor selection in new flow).
+ * Creates a framework with the specified type and project details, then
+ * auto-loads the matching activity templates for Step 3.
+ */
+export const setupFramework = (
+  payload: SetupFrameworkRequest,
+  token?: string,
+) =>
+  request(
+    `${BASE}/onboarding/framework`,
     { method: "POST", body: JSON.stringify(payload) },
     token,
   );
