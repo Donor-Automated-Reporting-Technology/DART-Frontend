@@ -35,11 +35,6 @@
             {{ sp.name }}
           </option>
         </select>
-        <select v-model="list.beneficiaryType.value" class="field-input filter-select" @change="list.applyFilter">
-          <option value="">All Types</option>
-          <option value="child">Child</option>
-          <option value="adult">Adult</option>
-        </select>
       </div>
 
       <!-- Error -->

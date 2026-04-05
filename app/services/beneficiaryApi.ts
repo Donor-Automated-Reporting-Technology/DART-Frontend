@@ -36,7 +36,7 @@ async function request<T>(url: string, options: RequestInit = {}, token?: string
 
 export const beneficiaryApi = {
   async register(payload: RegisterBeneficiaryRequest, token?: string) {
-    return request(`${BASE_URL}/beneficiaries`, {
+    return request(`${BASE_URL}/cfs/beneficiaries`, {
       method: 'POST',
       body: JSON.stringify(payload),
     }, token)
@@ -44,22 +44,21 @@ export const beneficiaryApi = {
 
   async list(params?: BeneficiaryFilter, token?: string): Promise<BeneficiaryListResponse> {
     const qs = new URLSearchParams()
-    if (params?.centre_id) qs.set('centre_id', params.centre_id)
+    if (params?.cfs_location_id) qs.set('cfs_location_id', params.cfs_location_id)
     if (params?.search) qs.set('search', params.search)
-    if (params?.beneficiary_type) qs.set('beneficiary_type', params.beneficiary_type)
     if (params?.page) qs.set('page', String(params.page))
     if (params?.page_size) qs.set('page_size', String(params.page_size))
     const query = qs.toString() ? `?${qs.toString()}` : ''
-    return request<BeneficiaryListResponse>(`${BASE_URL}/beneficiaries${query}`, { method: 'GET' }, token)
+    return request<BeneficiaryListResponse>(`${BASE_URL}/cfs/beneficiaries/list${query}`, { method: 'GET' }, token)
   },
 
   async exportExcel(params?: BeneficiaryFilter, token?: string): Promise<Blob> {
     const resolved = resolveToken(token)
     const qs = new URLSearchParams()
-    if (params?.centre_id) qs.set('centre_id', params.centre_id)
+    if (params?.cfs_location_id) qs.set('cfs_location_id', params.cfs_location_id)
     if (params?.search) qs.set('search', params.search)
     const query = qs.toString() ? `?${qs.toString()}` : ''
-    const response = await fetch(`${BASE_URL}/beneficiaries/export${query}`, {
+    const response = await fetch(`${BASE_URL}/cfs/beneficiaries/export${query}`, {
       headers: {
         ...(resolved ? { Authorization: `Bearer ${resolved}` } : {}),
       },
@@ -71,9 +70,9 @@ export const beneficiaryApi = {
   },
 
   async assignToServicePoint(beneficiaryId: string, servicePointId: string, token?: string) {
-    return request(`${BASE_URL}/beneficiaries/${beneficiaryId}/register`, {
+    return request(`${BASE_URL}/cfs/registrations`, {
       method: 'POST',
-      body: JSON.stringify({ cfs_location_id: servicePointId }),
+      body: JSON.stringify({ beneficiary_id: beneficiaryId }),
     }, token)
   },
 }

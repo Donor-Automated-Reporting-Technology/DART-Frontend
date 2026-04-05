@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { beneficiaryApi } from '../services/beneficiaryApi'
-import type { Beneficiary, BeneficiaryFilter, BeneficiaryType } from '../interfaces/beneficiary'
+import type { Beneficiary, BeneficiaryFilter } from '../interfaces/beneficiary'
 
 export function useBeneficiaryList() {
   const beneficiaries = ref<Beneficiary[]>([])
@@ -9,7 +9,6 @@ export function useBeneficiaryList() {
   const pageSize = ref(20)
   const search = ref('')
   const centreId = ref('')
-  const beneficiaryType = ref<BeneficiaryType | ''>('')
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -24,11 +23,10 @@ export function useBeneficiaryList() {
         page_size: pageSize.value,
       }
       if (search.value.trim()) params.search = search.value.trim()
-      if (centreId.value) params.centre_id = centreId.value
-      if (beneficiaryType.value) params.beneficiary_type = beneficiaryType.value
+      if (centreId.value) params.cfs_location_id = centreId.value
       const res = await beneficiaryApi.list(params)
       beneficiaries.value = res.beneficiaries ?? []
-      total.value = res.total ?? 0
+      total.value = res.pagination?.total_items ?? 0
     } catch (e: any) {
       error.value = e?.message ?? 'Failed to load beneficiaries'
     } finally {
@@ -64,7 +62,7 @@ export function useBeneficiaryList() {
     try {
       const params: BeneficiaryFilter = {}
       if (search.value.trim()) params.search = search.value.trim()
-      if (centreId.value) params.centre_id = centreId.value
+      if (centreId.value) params.cfs_location_id = centreId.value
       const blob = await beneficiaryApi.exportExcel(params)
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -84,7 +82,6 @@ export function useBeneficiaryList() {
     pageSize,
     search,
     centreId,
-    beneficiaryType,
     loading,
     error,
     totalPages,

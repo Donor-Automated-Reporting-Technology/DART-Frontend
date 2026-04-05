@@ -9,30 +9,10 @@
     <div class="register-page">
       <div class="page-header">
         <h1 class="page-title">Register Beneficiary</h1>
-        <p class="page-subtitle">Add a new child or adult beneficiary to the registry.</p>
+        <p class="page-subtitle">Add a new beneficiary to the registry.</p>
       </div>
 
       <form class="reg-form" @submit.prevent="submit">
-        <!-- Type toggle -->
-        <div class="type-toggle">
-          <button
-            type="button"
-            class="type-btn"
-            :class="{ 'type-btn--active': form.beneficiary_type === 'child' }"
-            @click="form.beneficiary_type = 'child'"
-          >
-            Child
-          </button>
-          <button
-            type="button"
-            class="type-btn"
-            :class="{ 'type-btn--active': form.beneficiary_type === 'adult' }"
-            @click="form.beneficiary_type = 'adult'"
-          >
-            Adult
-          </button>
-        </div>
-
         <!-- Personal section -->
         <fieldset class="section">
           <legend class="section-title">Personal Information</legend>
@@ -91,8 +71,7 @@
         <fieldset class="section">
           <legend class="section-title">
             Guardian Information
-            <span v-if="form.beneficiary_type === 'child'" class="req">required for children</span>
-            <span v-else class="optional">optional for adults</span>
+            <span class="req">*</span>
           </legend>
           <div class="form-grid">
             <div class="field">
@@ -143,7 +122,6 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { beneficiaryApi } from '../../services/beneficiaryApi'
 import { ApiError } from '../../services/api'
-import type { BeneficiaryType } from '../../interfaces/beneficiary'
 
 definePageMeta({
   layout: false,
@@ -164,7 +142,6 @@ const form = reactive({
   sex: '',
   language: '',
   disability_status: 'none',
-  beneficiary_type: 'child' as BeneficiaryType,
   guardian_name: '',
   guardian_phone: '',
   known_medical_issues: '',
@@ -178,10 +155,7 @@ function validate(): boolean {
   if (!form.father_name.trim()) { errors.father_name = 'Required'; ok = false }
   if (!form.age_at_registration || form.age_at_registration < 0) { errors.age = 'Valid age required'; ok = false }
   if (!form.sex) { errors.sex = 'Required'; ok = false }
-  if (form.beneficiary_type === 'child' && !form.guardian_name.trim()) {
-    errors.guardian_name = 'Required for children'
-    ok = false
-  }
+  if (!form.guardian_name.trim()) { errors.guardian_name = 'Required'; ok = false }
   return ok
 }
 
@@ -200,8 +174,7 @@ async function submit() {
       sex: form.sex,
       language: form.language.trim() || 'Arabic',
       disability_status: form.disability_status,
-      beneficiary_type: form.beneficiary_type,
-      guardian_name: form.guardian_name.trim() || undefined,
+      guardian_name: form.guardian_name.trim(),
       guardian_phone: form.guardian_phone.trim() || undefined,
       known_medical_issues: form.known_medical_issues.trim() || undefined,
       additional_notes: form.additional_notes.trim() || undefined,

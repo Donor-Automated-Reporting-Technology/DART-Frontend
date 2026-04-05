@@ -7,7 +7,7 @@
           <th>Age</th>
           <th>Gender</th>
           <th>Disability</th>
-          <th>Type</th>
+          <th>Location</th>
           <th>Registered</th>
         </tr>
       </thead>
@@ -16,8 +16,8 @@
           <td colspan="6" class="empty-cell">No beneficiaries found.</td>
         </tr>
         <tr v-for="b in beneficiaries" :key="b.id" class="ben-row">
-          <td class="cell-name">{{ b.full_name }}</td>
-          <td>{{ b.age }}</td>
+          <td class="cell-name">{{ formatName(b) }}</td>
+          <td>{{ b.age_at_registration }}</td>
           <td>{{ b.sex }}</td>
           <td>
             <span v-if="b.disability_status && b.disability_status !== 'none'" class="disability-badge">
@@ -25,12 +25,8 @@
             </span>
             <span v-else class="text-muted">—</span>
           </td>
-          <td>
-            <span class="type-badge" :class="'type-badge--' + b.beneficiary_type">
-              {{ b.beneficiary_type }}
-            </span>
-          </td>
-          <td class="text-muted">{{ formatDate(b.created_at) }}</td>
+          <td>{{ b.cfs_location?.name ?? '—' }}</td>
+          <td class="text-muted">{{ formatDate(b.registration_date) }}</td>
         </tr>
       </tbody>
     </table>
@@ -40,11 +36,11 @@
       <div v-if="beneficiaries.length === 0" class="empty-cell">No beneficiaries found.</div>
       <div v-for="b in beneficiaries" :key="b.id" class="ben-card">
         <div class="card-top">
-          <span class="card-name">{{ b.full_name }}</span>
-          <span class="type-badge" :class="'type-badge--' + b.beneficiary_type">{{ b.beneficiary_type }}</span>
+          <span class="card-name">{{ formatName(b) }}</span>
+          <span class="location-label">{{ b.cfs_location?.name ?? '' }}</span>
         </div>
         <div class="card-meta">
-          <span>Age {{ b.age }}</span>
+          <span>Age {{ b.age_at_registration }}</span>
           <span>{{ b.sex }}</span>
           <span v-if="b.disability_status && b.disability_status !== 'none'">{{ b.disability_status }}</span>
         </div>
@@ -59,6 +55,12 @@ import type { Beneficiary } from '../../interfaces/beneficiary'
 defineProps<{
   beneficiaries: Beneficiary[]
 }>()
+
+function formatName(b: Beneficiary): string {
+  return [b.personal_name, b.father_name, b.grandfather_name, b.family_name]
+    .filter(Boolean)
+    .join(' ')
+}
 
 function formatDate(iso: string): string {
   if (!iso) return '—'
@@ -123,23 +125,9 @@ function formatDate(iso: string): string {
   border-radius: 10px;
 }
 
-.type-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  font-size: 0.68rem;
-  font-weight: 600;
-  border-radius: 10px;
-  text-transform: capitalize;
-}
-
-.type-badge--child {
-  background: color-mix(in srgb, var(--primary) 12%, transparent);
-  color: var(--primary);
-}
-
-.type-badge--adult {
-  background: color-mix(in srgb, var(--success) 12%, transparent);
-  color: var(--success);
+.location-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
 }
 
 /* Mobile card */
