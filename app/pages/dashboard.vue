@@ -72,33 +72,68 @@
           <!-- ─── CENTER COLUMN: Primary data ─────────────────────────── -->
           <div class="dashboard-center">
 
-            <!-- Bento metrics grid -->
+            <!-- Bento metrics grid — targets & actuals first -->
             <div class="bento-grid">
-              <DashStatCard
-                class="bento-item bento-hero"
-                label="Total Beneficiaries"
-                :value="demographics.total_beneficiaries"
-                sub="Registered across all locations"
-                icon="users"
-                icon-color="primary"
-                :accent="true"
-              />
-              <DashStatCard
-                class="bento-item"
-                label="Active Activities"
-                :value="activitySummary.length"
-                sub="In current period"
-                icon="activity"
-                icon-color="success"
-              />
-              <DashStatCard
-                class="bento-item"
-                label="Locations"
-                :value="locations.length"
-                sub="Service points"
-                icon="map-pin"
-                icon-color="accent"
-              />
+              <div class="bento-item bento-hero metric-card">
+                <div class="metric-primary">
+                  <span class="metric-big">{{ demographics.total_beneficiaries }}</span>
+                  <span class="metric-label">Total Beneficiaries</span>
+                </div>
+                <div class="metric-splits">
+                  <div class="metric-split">
+                    <span class="split-value">{{ demographics.girls_women }}</span>
+                    <span class="split-label">Girls & Women</span>
+                  </div>
+                  <div class="metric-divider"></div>
+                  <div class="metric-split">
+                    <span class="split-value">{{ demographics.boys_men }}</span>
+                    <span class="split-label">Boys & Men</span>
+                  </div>
+                  <div class="metric-divider"></div>
+                  <div class="metric-split">
+                    <span class="split-value">{{ demographics.with_disability }}</span>
+                    <span class="split-label">With Disability</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Per-activity target vs actual cards -->
+              <div
+                v-for="a in activitySummary.slice(0, 4)"
+                :key="a.code"
+                class="bento-item metric-card metric-card--activity"
+              >
+                <div class="metric-card-head">
+                  <span class="metric-label">{{ a.name }}</span>
+                  <span class="metric-pct-pill">{{ a.percentage }}%</span>
+                </div>
+                <div class="metric-target-row">
+                  <div class="metric-target-block">
+                    <span class="target-number">{{ a.actual }}</span>
+                    <span class="target-caption">Actual</span>
+                  </div>
+                  <span class="target-slash">/</span>
+                  <div class="metric-target-block">
+                    <span class="target-number target-number--muted">{{ a.target }}</span>
+                    <span class="target-caption">Target</span>
+                  </div>
+                </div>
+                <div class="metric-bar">
+                  <div class="metric-bar-fill" :style="{ width: Math.min(a.percentage, 100) + '%' }"></div>
+                </div>
+              </div>
+
+              <!-- Summary cards row -->
+              <div class="bento-item metric-card metric-card--compact">
+                <span class="compact-value">{{ activitySummary.length }}</span>
+                <span class="compact-label">Active Activities</span>
+                <span class="compact-sub">Current period</span>
+              </div>
+              <div class="bento-item metric-card metric-card--compact">
+                <span class="compact-value">{{ locations.length }}</span>
+                <span class="compact-label">Locations</span>
+                <span class="compact-sub">Service points</span>
+              </div>
             </div>
 
             <!-- Activity Progress — with Deep Dive toggle -->
@@ -117,19 +152,25 @@
                 </button>
               </div>
 
-              <!-- Compact view -->
+              <!-- Compact view — actual vs target priority -->
               <div v-if="!activityDeepDive" class="activity-compact">
                 <div v-for="a in activitySummary" :key="a.code" class="activity-row">
-                  <span class="activity-name">{{ a.name }}</span>
-                  <div class="activity-bar-group">
+                  <div class="activity-row-top">
+                    <span class="activity-name">{{ a.name }}</span>
+                    <div class="activity-numbers">
+                      <span class="activity-actual">{{ a.actual }}</span>
+                      <span class="activity-sep">/</span>
+                      <span class="activity-target">{{ a.target }}</span>
+                    </div>
+                  </div>
+                  <div class="activity-row-bottom">
                     <div class="activity-bar">
                       <div
                         class="activity-bar-fill"
-                        :class="barColor(a.percentage)"
                         :style="{ width: Math.min(a.percentage, 100) + '%' }"
                       />
                     </div>
-                    <span class="activity-pct" :class="barColor(a.percentage)">{{ a.percentage }}%</span>
+                    <span class="activity-pct">{{ a.percentage }}%</span>
                   </div>
                 </div>
                 <div v-if="activitySummary.length === 0" class="activity-empty">
@@ -174,41 +215,44 @@
           <!-- ─── RIGHT COLUMN: At-a-Glance Insights ──────────────────── -->
           <aside class="dashboard-insights">
 
-            <!-- Beneficiary Snapshot -->
+            <!-- Beneficiary Snapshot — big numbers first -->
             <div class="insight-card">
               <h4 class="insight-title">Beneficiary Snapshot</h4>
-
-              <div class="insight-metric">
-                <div class="insight-row">
+              <div class="insight-hero">
+                <span class="insight-hero-num">{{ demographics.total_beneficiaries }}</span>
+                <span class="insight-hero-label">Total Registered</span>
+              </div>
+              <div class="insight-breakdown">
+                <div class="insight-row-item">
+                  <div class="insight-row-top">
+                    <span class="insight-value">{{ demographics.girls_women }}</span>
+                    <span class="insight-pct">{{ girlsPct }}%</span>
+                  </div>
                   <span class="insight-label">Girls & Women</span>
-                  <span class="insight-value">{{ demographics.girls_women }}</span>
+                  <div class="insight-bar">
+                    <div class="insight-bar-fill" :style="{ width: girlsPct + '%' }"></div>
+                  </div>
                 </div>
-                <div class="insight-bar">
-                  <div class="insight-bar-fill" :style="{ width: girlsPct + '%' }"></div>
-                </div>
-                <span class="insight-pct">{{ girlsPct }}% of total</span>
-              </div>
-
-              <div class="insight-metric">
-                <div class="insight-row">
+                <div class="insight-row-item">
+                  <div class="insight-row-top">
+                    <span class="insight-value">{{ demographics.boys_men }}</span>
+                    <span class="insight-pct">{{ boysPct }}%</span>
+                  </div>
                   <span class="insight-label">Boys & Men</span>
-                  <span class="insight-value">{{ demographics.boys_men }}</span>
+                  <div class="insight-bar">
+                    <div class="insight-bar-fill insight-bar-fill--alt" :style="{ width: boysPct + '%' }"></div>
+                  </div>
                 </div>
-                <div class="insight-bar">
-                  <div class="insight-bar-fill insight-bar-fill--alt" :style="{ width: boysPct + '%' }"></div>
-                </div>
-                <span class="insight-pct">{{ boysPct }}% of total</span>
-              </div>
-
-              <div class="insight-metric">
-                <div class="insight-row">
+                <div class="insight-row-item">
+                  <div class="insight-row-top">
+                    <span class="insight-value">{{ demographics.with_disability }}</span>
+                    <span class="insight-pct">{{ disabilityPct }}%</span>
+                  </div>
                   <span class="insight-label">With Disability</span>
-                  <span class="insight-value">{{ demographics.with_disability }}</span>
+                  <div class="insight-bar">
+                    <div class="insight-bar-fill insight-bar-fill--warn" :style="{ width: disabilityPct + '%' }"></div>
+                  </div>
                 </div>
-                <div class="insight-bar">
-                  <div class="insight-bar-fill insight-bar-fill--warn" :style="{ width: disabilityPct + '%' }"></div>
-                </div>
-                <span class="insight-pct">{{ disabilityPct }}% inclusive reach</span>
               </div>
             </div>
 
@@ -217,17 +261,23 @@
               <h4 class="insight-title">Performance Snapshots</h4>
               <div class="perf-list">
                 <div v-for="a in activitySummary" :key="a.code" class="perf-item">
+                  <div class="perf-left">
+                    <div
+                      class="perf-trend"
+                      :class="a.percentage >= 50 ? 'perf-trend--up' : 'perf-trend--down'"
+                    >
+                      {{ a.percentage >= 50 ? '\u2191' : '\u2193' }}
+                    </div>
+                  </div>
                   <div class="perf-info">
                     <span class="perf-name">{{ a.name }}</span>
-                    <span class="perf-detail">{{ a.actual }} / {{ a.target }}</span>
+                    <div class="perf-numbers">
+                      <span class="perf-actual">{{ a.actual }}</span>
+                      <span class="perf-sep">/</span>
+                      <span class="perf-target">{{ a.target }}</span>
+                    </div>
                   </div>
-                  <div
-                    class="perf-trend"
-                    :class="a.percentage >= 50 ? 'perf-trend--up' : 'perf-trend--down'"
-                  >
-                    <span class="perf-arrow">{{ a.percentage >= 50 ? '\u2191' : '\u2193' }}</span>
-                    <span class="perf-pct">{{ a.percentage }}%</span>
-                  </div>
+                  <span class="perf-pct-badge">{{ a.percentage }}%</span>
                 </div>
                 <div v-if="activitySummary.length === 0" class="perf-empty">
                   No performance data yet.
@@ -278,7 +328,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useDashboard } from '../composables/useDashboard'
-import DashStatCard from '../components/dashboard/DashStatCard.vue'
 import ActivitySummaryTable from '../components/dashboard/ActivitySummaryTable.vue'
 import LocationBreakdown from '../components/dashboard/LocationBreakdown.vue'
 import OnboardingBanner from '../components/onboarding/OnboardingBanner.vue'
@@ -342,12 +391,6 @@ const disabilityPct = computed(() => {
   if (!demographics.value.total_beneficiaries) return 0
   return Math.round((demographics.value.with_disability / demographics.value.total_beneficiaries) * 100)
 })
-
-function barColor(pct: number): string {
-  if (pct >= 80) return 'clr-green'
-  if (pct >= 50) return 'clr-yellow'
-  return 'clr-red'
-}
 
 onMounted(fetchDashboard)
 </script>
@@ -545,11 +588,11 @@ onMounted(fetchDashboard)
   min-width: 0;
 }
 
-/* \u2500\u2500 Bento Grid \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ── Bento Grid ──────────────────────────────────────── */
 .bento-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 20px;
   animation: fadeIn 0.35s ease-out;
 }
 
@@ -564,34 +607,187 @@ onMounted(fetchDashboard)
   .bento-hero { grid-column: auto; }
 }
 
-/* \u2500\u2500 Section cards (Activity Progress, Sessions) \u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ── Metric cards ────────────────────────────────────── */
+.metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color, #E5E5EA);
+  border-radius: var(--radius-lg, 20px);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.metric-card:hover {
+  box-shadow: var(--shadow-elevated);
+  transform: translateY(-1px);
+}
+
+/* Hero: big number + demographic splits */
+.metric-primary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+.metric-big {
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: var(--text-primary, #1D1D1F);
+  line-height: 1;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+.metric-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-secondary, #86868B);
+}
+.metric-splits {
+  display: flex;
+  align-items: stretch;
+}
+.metric-split {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: center;
+}
+.metric-divider {
+  width: 1px;
+  background: var(--border-color, #E5E5EA);
+  margin: 0 16px;
+  align-self: stretch;
+}
+.split-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary, #1D1D1F);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.split-label {
+  font-size: 0.7rem;
+  color: var(--text-muted, #AEAEB2);
+  font-weight: 500;
+}
+
+/* Activity target/actual cards */
+.metric-card--activity {
+  gap: 14px;
+}
+.metric-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.metric-pct-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-dim);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.metric-target-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1;
+}
+.metric-target-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.target-number {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 1;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+.target-number--muted {
+  color: var(--text-muted, #AEAEB2);
+}
+.target-caption {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-muted, #AEAEB2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.target-slash {
+  font-size: 1.4rem;
+  font-weight: 300;
+  color: var(--text-muted, #AEAEB2);
+  line-height: 1;
+  margin-bottom: 14px;
+}
+.metric-bar {
+  height: 5px;
+  background: var(--hover-bg, rgba(0,0,0,0.03));
+  border-radius: 3px;
+  overflow: hidden;
+}
+.metric-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--primary);
+  transition: width 0.5s ease;
+}
+
+/* Compact summary cards */
+.metric-card--compact {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 4px;
+  padding: 28px 24px;
+}
+.compact-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary, #1D1D1F);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.compact-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary, #1D1D1F);
+}
+.compact-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted, #AEAEB2);
+}
+
+/* ── Section cards (Activity Progress, Sessions) ─────── */
 .section-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
-
 .section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 18px 22px;
 }
-
 .section-header-left {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-
 .section-title {
   font-size: 0.92rem;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
 }
-
 .section-count {
   font-size: 0.72rem;
   color: var(--text-muted);
@@ -599,7 +795,6 @@ onMounted(fetchDashboard)
   padding: 2px 8px;
   border-radius: 10px;
 }
-
 .section-empty {
   padding: 32px;
   text-align: center;
@@ -627,63 +822,78 @@ onMounted(fetchDashboard)
   background: var(--primary-hover);
 }
 
-/* \u2500\u2500 Compact activity rows \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ── Activity compact rows (actual/target priority) ──── */
 .activity-compact {
   padding: 4px 22px 18px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-
-.activity-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   gap: 16px;
 }
-
+.activity-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.activity-row-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
 .activity-name {
   font-size: 0.82rem;
   font-weight: 500;
   color: var(--text-primary);
+}
+.activity-numbers {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
   flex-shrink: 0;
 }
-
-.activity-bar-group {
+.activity-actual {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+.activity-sep {
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: var(--text-muted);
+}
+.activity-target {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-muted, #AEAEB2);
+  font-variant-numeric: tabular-nums;
+}
+.activity-row-bottom {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex: 1;
-  max-width: 280px;
 }
-
 .activity-bar {
   flex: 1;
-  height: 6px;
-  background: var(--hover-bg);
+  height: 5px;
+  background: var(--hover-bg, rgba(0,0,0,0.03));
   border-radius: 3px;
   overflow: hidden;
 }
-
 .activity-bar-fill {
   height: 100%;
   border-radius: 3px;
+  background: var(--primary);
   transition: width 0.5s ease;
 }
-
-.activity-bar-fill.clr-green,
-.activity-bar-fill.clr-yellow,
-.activity-bar-fill.clr-red { background: var(--primary); }
-
 .activity-pct {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  width: 40px;
+  width: 36px;
   text-align: right;
   flex-shrink: 0;
   color: var(--primary);
 }
-
 .activity-empty {
   padding: 16px 0;
   text-align: center;
@@ -691,17 +901,16 @@ onMounted(fetchDashboard)
   font-size: 0.85rem;
 }
 
-/* \u2500\u2500 Deep Dive expanded \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* Deep Dive expanded */
 .activity-deep {
   animation: fadeIn 0.25s ease;
 }
 
-/* \u2500\u2500 Session list \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ── Session list ────────────────────────────────────── */
 .session-list {
   display: flex;
   flex-direction: column;
 }
-
 .session-item {
   display: flex;
   justify-content: space-between;
@@ -710,16 +919,14 @@ onMounted(fetchDashboard)
   transition: background 0.12s;
 }
 .session-item:hover { background: var(--hover-bg-subtle); }
-
 .session-info { display: flex; flex-direction: column; gap: 2px; }
 .session-activity { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); }
 .session-location { font-size: 0.72rem; color: var(--text-muted); }
-
 .session-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
 .session-presence { font-size: 0.82rem; font-weight: 600; color: var(--primary); }
 .session-date { font-size: 0.72rem; color: var(--text-muted); }
 
-/* \u2500\u2500 Right column: Insights panel \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ── Right column: Insights panel ────────────────────── */
 .dashboard-insights {
   display: flex;
   flex-direction: column;
@@ -727,7 +934,6 @@ onMounted(fetchDashboard)
   position: sticky;
   top: calc(var(--topbar-height, 56px) + 24px);
 }
-
 @media (max-width: 1100px) {
   .dashboard-insights {
     position: static;
@@ -736,7 +942,7 @@ onMounted(fetchDashboard)
   }
 }
 
-/* \u2500\u2500 Insight cards \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ── Insight cards ───────────────────────────────────── */
 .insight-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -746,12 +952,10 @@ onMounted(fetchDashboard)
   flex-direction: column;
   gap: 18px;
 }
-
 .insight-card--highlight {
   background: var(--primary-dim);
   border-color: rgba(0, 122, 255, 0.12);
 }
-
 .insight-title {
   font-size: 0.82rem;
   font-weight: 600;
@@ -760,44 +964,66 @@ onMounted(fetchDashboard)
   letter-spacing: -0.01em;
 }
 
-/* \u2500\u2500 Insight metrics \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
-.insight-metric {
+/* Insight hero number */
+.insight-hero {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 0;
+}
+.insight-hero-num {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--text-primary, #1D1D1F);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+.insight-hero-label {
+  font-size: 0.72rem;
+  color: var(--text-muted, #AEAEB2);
+  font-weight: 500;
 }
 
-.insight-row {
+/* Insight breakdown rows */
+.insight-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.insight-row-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.insight-row-top {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
 }
-
 .insight-label {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--text-secondary, #86868B);
 }
-
 .insight-value {
-  font-size: 0.92rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
-
 .insight-pct {
-  font-size: 0.7rem;
-  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--primary);
 }
-
 .insight-bar {
   height: 4px;
   background: var(--hover-bg);
   border-radius: 2px;
   overflow: hidden;
 }
-
 .insight-bar-fill {
   height: 100%;
   border-radius: 2px;
@@ -807,27 +1033,45 @@ onMounted(fetchDashboard)
 .insight-bar-fill--alt { background: var(--primary); opacity: 0.7; }
 .insight-bar-fill--warn { background: var(--primary); opacity: 0.5; }
 
-/* \u2500\u2500 Performance Snapshots (YouTube-style) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ── Performance Snapshots ───────────────────────────── */
 .perf-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
-
 .perf-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
 }
-
+.perf-left {
+  flex-shrink: 0;
+}
+.perf-trend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.perf-trend--up {
+  background: var(--primary-dim);
+  color: var(--primary);
+}
+.perf-trend--down {
+  background: rgba(0, 122, 255, 0.06);
+  color: var(--text-muted);
+}
 .perf-info {
   display: flex;
   flex-direction: column;
   gap: 1px;
+  flex: 1;
   min-width: 0;
 }
-
 .perf-name {
   font-size: 0.78rem;
   font-weight: 500;
@@ -836,35 +1080,35 @@ onMounted(fetchDashboard)
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
-.perf-detail {
-  font-size: 0.68rem;
+.perf-numbers {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+.perf-actual {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+.perf-sep {
+  font-size: 0.72rem;
+  font-weight: 300;
+  color: var(--text-muted);
+}
+.perf-target {
+  font-size: 0.72rem;
+  font-weight: 500;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
-
-.perf-trend {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  white-space: nowrap;
+.perf-pct-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
-
-.perf-trend--up {
-  background: var(--primary-dim);
-  color: var(--primary);
-}
-
-.perf-trend--down {
-  background: rgba(0, 122, 255, 0.06);
-  color: var(--text-muted);
-}
-
 .perf-empty {
   text-align: center;
   color: var(--text-muted);
@@ -872,36 +1116,31 @@ onMounted(fetchDashboard)
   padding: 8px 0;
 }
 
-/* \u2500\u2500 Overall Progress ring \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ── Overall Progress ring ───────────────────────────── */
 .overall-block {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
 }
-
 .overall-ring {
   position: relative;
   width: 80px;
   height: 80px;
 }
-
 .ring-svg {
   width: 100%;
   height: 100%;
   transform: rotate(-90deg);
 }
-
 .ring-bg {
   stroke: var(--hover-bg);
 }
-
 .ring-fill {
   stroke: var(--primary);
   stroke-linecap: round;
   transition: stroke-dasharray 0.6s ease;
 }
-
 .ring-label {
   position: absolute;
   inset: 0;
@@ -912,29 +1151,26 @@ onMounted(fetchDashboard)
   font-weight: 700;
   color: var(--text-primary);
 }
-
 .overall-sub {
   font-size: 0.72rem;
   color: var(--text-muted);
   text-align: center;
 }
 
-/* \u2500\u2500 Animations \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ── Animations ──────────────────────────────────────── */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
-
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* \u2500\u2500 Responsive \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ── Responsive ──────────────────────────────────────── */
 @media (max-width: 1024px) {
   .skeleton-grid { grid-template-columns: repeat(2, 1fr); }
 }
-
 @media (max-width: 640px) {
   .skeleton-grid { grid-template-columns: 1fr; }
   .dashboard-page { gap: 20px; }
