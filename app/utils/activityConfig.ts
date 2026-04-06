@@ -12,12 +12,25 @@ export interface ActivityConfigEntry {
   route: string
 }
 
+/**
+ * MVP: Only CFS_ATTENDANCE is active.
+ * All other activities are defined but disabled — they will show
+ * "Coming Soon" in the UI and are excluded from sidebar navigation.
+ */
 export const ACTIVITY_CONFIG: Record<string, ActivityConfigEntry> = {
   CFS_ATTENDANCE: {
     icon: 'check-square',
     label: 'Attendance',
     route: '/activities/attendance',
   },
+}
+
+/**
+ * Full activity registry including future activities (disabled in MVP).
+ * Kept here so the codes are documented; will be merged back into
+ * ACTIVITY_CONFIG when each activity is implemented.
+ */
+export const FUTURE_ACTIVITIES: Record<string, ActivityConfigEntry> = {
   TEAMUP: {
     icon: 'users',
     label: 'TeamUp',
