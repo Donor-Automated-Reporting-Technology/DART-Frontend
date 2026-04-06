@@ -111,8 +111,9 @@
                 </div>
               </div>
 
-              <!-- Per-activity target vs actual cards -->
+              <!-- Per-activity target vs actual cards (admin only) -->
               <div
+                v-if="isAdmin"
                 v-for="a in activitySummary.slice(0, 4)"
                 :key="a.code"
                 class="bento-item metric-card metric-card--activity"
@@ -137,21 +138,23 @@
                 </div>
               </div>
 
-              <!-- Summary cards row -->
-              <div class="bento-item metric-card metric-card--compact">
-                <span class="compact-value">{{ activitySummary.length }}</span>
-                <span class="compact-label">Active Activities</span>
-                <span class="compact-sub">Current period</span>
-              </div>
-              <div class="bento-item metric-card metric-card--compact">
-                <span class="compact-value">{{ locations.length }}</span>
-                <span class="compact-label">Locations</span>
-                <span class="compact-sub">Service points</span>
-              </div>
+              <!-- Summary cards row (admin only) -->
+              <template v-if="isAdmin">
+                <div class="bento-item metric-card metric-card--compact">
+                  <span class="compact-value">{{ activitySummary.length }}</span>
+                  <span class="compact-label">Active Activities</span>
+                  <span class="compact-sub">Current period</span>
+                </div>
+                <div class="bento-item metric-card metric-card--compact">
+                  <span class="compact-value">{{ locations.length }}</span>
+                  <span class="compact-label">Locations</span>
+                  <span class="compact-sub">Service points</span>
+                </div>
+              </template>
             </div>
 
-            <!-- Activity Progress — with Deep Dive toggle -->
-            <div class="section-card">
+            <!-- Activity Progress — admin only -->
+            <div v-if="isAdmin" class="section-card">
               <div class="section-header">
                 <div class="section-header-left">
                   <h3 class="section-title">Activity Progress</h3>
@@ -270,8 +273,8 @@
               </div>
             </div>
 
-            <!-- Performance Snapshots (YouTube-style trends) -->
-            <div class="insight-card">
+            <!-- Performance Snapshots (admin only) -->
+            <div v-if="isAdmin" class="insight-card">
               <h4 class="insight-title">Performance Snapshots</h4>
               <div class="perf-list">
                 <div v-for="a in activitySummary" :key="a.code" class="perf-item">
@@ -299,8 +302,8 @@
               </div>
             </div>
 
-            <!-- Overall Progress ring -->
-            <div class="insight-card insight-card--highlight">
+            <!-- Overall Progress ring (admin only) -->
+            <div v-if="isAdmin" class="insight-card insight-card--highlight">
               <h4 class="insight-title">Overall Progress</h4>
               <div class="overall-block">
                 <div class="overall-ring">
@@ -362,6 +365,10 @@ const breadcrumbs = [
 ]
 
 const authStore = useAuthStore()
+
+const isAdmin = computed(() =>
+  authStore.userRole === 'org_admin' || authStore.userRole === 'program_manager',
+)
 
 const {
   isLoading,
