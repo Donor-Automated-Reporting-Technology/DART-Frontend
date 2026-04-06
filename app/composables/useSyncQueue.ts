@@ -77,6 +77,18 @@ export const useSyncQueue = () => {
     idMap.clear();
 
     try {
+      // ── Pre-populate idMap from previously-synced records ────────────────
+      // Ensures registrations/attendance can resolve server IDs even if
+      // the parent record was synced in a prior flush.
+      const syncedBens = await db.beneficiaries.where('syncStatus').equals('synced').toArray();
+      for (const b of syncedBens) {
+        if (b.serverId && b.serverId !== b.id) idMap.set(b.id, b.serverId);
+      }
+      const syncedSessions = await db.cfsSessions.where('syncStatus').equals('synced').toArray();
+      for (const s of syncedSessions) {
+        if (s.serverId && s.serverId !== s.id) idMap.set(s.id, s.serverId);
+      }
+
       // ── Step 1: Sync beneficiaries ──────────────────────────────────────
       const pendingBeneficiaries = await getPendingBeneficiaries();
       if (pendingBeneficiaries.length) {
