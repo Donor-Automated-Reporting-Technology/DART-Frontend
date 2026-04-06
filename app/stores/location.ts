@@ -32,7 +32,33 @@ export const useLocationStore = defineStore('location', () => {
     error.value = null
     try {
       const res = await locationApi.listLocations()
-      locations.value = res.locations ?? []
+      // Backend returns flat { id, name, service_points, created_at } objects.
+      // Map to the LocationWithServicePoints shape the UI expects.
+      const raw = (res as any).locations ?? []
+      locations.value = raw.map((item: any) => {
+        // If already in { location, service_points } shape, pass through
+        if (item.location) return item
+        return {
+          location: {
+            id: item.id,
+            organisation_id: item.organisation_id ?? '',
+            name: item.name,
+            created_at: item.created_at ?? '',
+            updated_at: item.updated_at ?? '',
+          },
+          service_points: (item.service_points ?? []).map((sp: any) => ({
+            id: sp.id,
+            organisation_id: sp.organisation_id ?? '',
+            name: sp.name,
+            sector: sp.sector ?? null,
+            geographic_area: sp.geographic_area ?? null,
+            location_id: sp.location_id ?? item.id,
+            language: sp.language ?? null,
+            created_at: sp.created_at ?? '',
+            updated_at: sp.updated_at ?? '',
+          })),
+        }
+      })
     } catch (e: any) {
       error.value = e.message ?? 'Failed to load locations'
     } finally {

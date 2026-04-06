@@ -62,19 +62,20 @@ defineEmits<{
 <style scoped>
 .activity-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   transition: border-color 0.15s, opacity 0.15s;
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
 .activity-row--active {
   opacity: 1;
   border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 3%, var(--bg-panel));
 }
 
 /* ── Toggle ───────────────────────────────────────────────────────────────── */
@@ -127,19 +128,26 @@ defineEmits<{
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  overflow: hidden;
 }
 
 .activity-name {
-  font-size: 0.845rem;
+  font-size: 0.86rem;
   font-weight: 600;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .activity-desc {
   font-size: 0.72rem;
   color: var(--text-muted);
   line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Target ────────────────────────────────────────────────────────────────── */
@@ -151,8 +159,8 @@ defineEmits<{
 }
 
 .target-input {
-  width: 72px;
-  padding: 5px 8px;
+  width: 80px;
+  padding: 7px 10px;
   background: var(--bg-input);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
@@ -169,7 +177,7 @@ defineEmits<{
 }
 
 .target-unit {
-  padding: 5px 24px 5px 8px;
+  padding: 7px 28px 7px 10px;
   background: var(--bg-input);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
@@ -177,16 +185,22 @@ defineEmits<{
   font-size: 0.8rem;
   font-family: inherit;
   appearance: none;
+  cursor: pointer;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 4px center;
+  background-position: right 6px center;
   background-repeat: no-repeat;
-  background-size: 14px;
+  background-size: 16px;
+  min-width: 110px;
 }
 
 .target-unit:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 2px var(--primary-dim);
+}
+
+.target-unit:hover {
+  border-color: var(--text-muted);
 }
 
 @media (max-width: 600px) {

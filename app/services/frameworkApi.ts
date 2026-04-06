@@ -88,7 +88,7 @@ export const frameworkApi = {
     token?: string,
   ): Promise<FrameworkActivity> {
     return request<FrameworkActivity>(
-      `${BASE_URL}/frameworks/${frameworkId}/activities/${activityId}/target`,
+      `${BASE_URL}/frameworks/${frameworkId}/activities/${activityId}`,
       { method: 'PATCH', body: JSON.stringify(payload) },
       token,
     )
