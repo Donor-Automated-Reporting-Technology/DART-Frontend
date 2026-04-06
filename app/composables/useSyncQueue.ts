@@ -117,9 +117,11 @@ export const useSyncQueue = () => {
             await updateBeneficiarySyncStatus(b.id, 'synced', serverId);
             syncLog.value.push(`✓ Beneficiary ${b.personalName} synced`);
           } catch (e: any) {
-            if (e instanceof ApiError && e.status === 409) {
-              await updateBeneficiarySyncStatus(b.id, 'conflict');
-              syncLog.value.push(`⚠ Beneficiary ${b.personalName} conflict`);
+            const isDuplicate = (e instanceof ApiError && e.status === 409)
+              || (e?.message?.includes('duplicate key') || e?.message?.includes('23505'));
+            if (isDuplicate) {
+              await updateBeneficiarySyncStatus(b.id, 'synced');
+              syncLog.value.push(`✓ Beneficiary ${b.personalName} already exists — marked synced`);
             } else {
               syncLog.value.push(`✗ Beneficiary ${b.personalName}: ${e.message}`);
             }
@@ -140,9 +142,11 @@ export const useSyncQueue = () => {
             await updateCfsRegistrationSyncStatus(reg.id, 'synced');
             syncLog.value.push(`✓ Registration for ${serverBenId} synced`);
           } catch (e: any) {
-            if (e instanceof ApiError && e.status === 409) {
-              await updateCfsRegistrationSyncStatus(reg.id, 'conflict');
-              syncLog.value.push(`⚠ Registration conflict`);
+            const isDuplicate = (e instanceof ApiError && e.status === 409)
+              || (e?.message?.includes('duplicate key') || e?.message?.includes('23505'));
+            if (isDuplicate) {
+              await updateCfsRegistrationSyncStatus(reg.id, 'synced');
+              syncLog.value.push(`✓ Registration already exists — marked synced`);
             } else {
               syncLog.value.push(`✗ Registration: ${e.message}`);
             }
@@ -166,9 +170,11 @@ export const useSyncQueue = () => {
             await updateSessionSyncStatus(session.id, 'synced', serverSessionId);
             syncLog.value.push(`✓ Session ${session.sessionDate} synced`);
           } catch (e: any) {
-            if (e instanceof ApiError && e.status === 409) {
-              await updateSessionSyncStatus(session.id, 'conflict');
-              syncLog.value.push(`⚠ Session ${session.sessionDate} conflict — duplicate date/type`);
+            const isDuplicate = (e instanceof ApiError && e.status === 409)
+              || (e?.message?.includes('duplicate key') || e?.message?.includes('23505'));
+            if (isDuplicate) {
+              await updateSessionSyncStatus(session.id, 'synced');
+              syncLog.value.push(`✓ Session ${session.sessionDate} already exists — marked synced`);
             } else {
               syncLog.value.push(`✗ Session: ${e.message}`);
             }
