@@ -18,13 +18,6 @@
           <label class="field-label">Date</label>
           <input v-model="date" type="date" class="field-input" />
         </div>
-        <div class="field">
-          <label class="field-label">CFS Centre</label>
-          <select v-model="centreId" class="field-input">
-            <option value="" disabled>Select centre</option>
-            <option v-for="sp in servicePoints" :key="sp.id" :value="sp.id">{{ sp.name }}</option>
-          </select>
-        </div>
       </div>
 
       <!-- Submitted banner -->
@@ -98,8 +91,8 @@
       </div>
 
       <!-- Empty -->
-      <div v-else-if="centreId && !loading && !submitted" class="empty-state">
-        No beneficiaries registered at this centre.
+      <div v-else-if="!loading && !submitted" class="empty-state">
+        No beneficiaries registered at your assigned location.
       </div>
     </div>
   </NuxtLayout>
@@ -108,21 +101,17 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useAttendance } from '../../composables/useAttendance'
-import { useLocationStore } from '../../stores/location'
 
 definePageMeta({ layout: false, middleware: ['auth'] })
 
-const locationStore = useLocationStore()
-const servicePoints = locationStore.allServicePoints
-
 const {
-  date, centreId, rows, loading, submitting, submitted, error,
+  date, rows, loading, submitting, submitted, error,
   presentCount, absentCount, genderBreakdown, disabilityCount,
   fetchBeneficiaries, toggleBeneficiary, selectAll, deselectAll, submitAttendance,
 } = useAttendance()
 
 onMounted(() => {
-  if (!locationStore.locations.length) locationStore.fetchLocations()
+  fetchBeneficiaries()
 })
 </script>
 

@@ -42,16 +42,11 @@ export const useAttendance = () => {
   )
 
   async function fetchBeneficiaries() {
-    if (!centreId.value) return
     loading.value = true
     error.value = null
     submitted.value = false
     try {
-      const list = await activityApi.getAttendanceBeneficiaries({
-        date: date.value,
-        centre_id: centreId.value,
-        session_type: 'attendance',
-      }) as AttendanceBeneficiary[]
+      const list = await activityApi.getAttendanceBeneficiaries()
       rows.value = (Array.isArray(list) ? list : []).map(b => ({
         ...b,
         selected: b.already_present,
@@ -72,18 +67,16 @@ export const useAttendance = () => {
   function deselectAll() { rows.value.forEach(r => { r.selected = false }) }
 
   async function submitAttendance() {
-    if (!centreId.value) return
     submitting.value = true
     error.value = null
     try {
       const session = await activityApi.createSession({
-        cfs_location_id: centreId.value,
         session_date: date.value,
-        session_type: 'attendance',
-      }) as { id: string }
+        session_type: 'general_group_activity',
+      }) as { session: { id: string } }
 
       await activityApi.recordAttendance({
-        session_id: session.id,
+        session_id: session.session.id,
         records: rows.value.map(r => ({
           beneficiary_id: r.id,
           status: r.selected ? 'present' as const : 'absent' as const,
@@ -97,8 +90,8 @@ export const useAttendance = () => {
     }
   }
 
-  watch([date, centreId], () => {
-    if (centreId.value) fetchBeneficiaries()
+  watch([date], () => {
+    fetchBeneficiaries()
   })
 
   return {

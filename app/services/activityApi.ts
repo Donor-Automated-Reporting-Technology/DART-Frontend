@@ -30,16 +30,25 @@ async function request<T>(url: string, options: RequestInit = {}, token?: string
 }
 
 export interface CreateSessionRequest {
-  cfs_location_id: string
   session_date: string
   session_type: string
-  framework_activity_id?: string
-  activity_context?: Record<string, unknown>
 }
 
 export interface RecordAttendanceRequest {
   session_id: string
   records: Array<{ beneficiary_id: string; status: 'present' | 'absent' }>
+}
+
+/** Raw shape returned by GET /cfs/beneficiaries */
+interface BeneficiaryListItem {
+  id: string
+  personal_name: string
+  father_name: string
+  grandfather_name?: string
+  family_name?: string
+  age_at_registration: number
+  sex: string
+  disability_status: string
 }
 
 export interface AttendanceBeneficiary {
@@ -67,13 +76,23 @@ export const activityApi = {
   },
 
   async getAttendanceBeneficiaries(
-    params: { date: string; centre_id: string; session_type?: string },
+    _params?: { date?: string; centre_id?: string; session_type?: string },
     token?: string,
-  ) {
-    const qs = new URLSearchParams()
-    qs.set('date', params.date)
-    qs.set('centre_id', params.centre_id)
-    if (params.session_type) qs.set('session_type', params.session_type)
-    return request(`${BASE_URL}/cfs/attendance?${qs.toString()}`, { method: 'GET' }, token)
+  ): Promise<AttendanceBeneficiary[]> {
+    const raw = await request<BeneficiaryListItem[]>(
+      `${BASE_URL}/cfs/beneficiaries`,
+      { method: 'GET' },
+      token,
+    )
+    return (Array.isArray(raw) ? raw : []).map((b) => ({
+      id: b.id,
+      full_name: [b.personal_name, b.father_name, b.grandfather_name, b.family_name]
+        .filter(Boolean)
+        .join(' '),
+      age: b.age_at_registration,
+      sex: b.sex,
+      disability_status: b.disability_status,
+      already_present: false,
+    }))
   },
 }

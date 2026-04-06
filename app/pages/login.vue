@@ -140,6 +140,9 @@ const handleLogin = async () => {
     if (Array.isArray(payload?.user?.organisation?.activities)) {
       authStore.setActivities(payload.user.organisation.activities);
     }
+    if (Array.isArray(payload?.user?.organisation?.framework_activities)) {
+      authStore.setFrameworkActivities(payload.user.organisation.framework_activities);
+    }
 
     // Prefer the email returned by the API; fall back to the form value
     // (which is guaranteed to be correct since the login just succeeded).
@@ -166,8 +169,8 @@ const handleLogin = async () => {
     if (userRole === 'org_admin') {
       router.push('/dashboard');
     } else {
-      // Staff (facilitator, case_worker, etc.) go to CFS
-      router.push('/cfs');
+      // Staff (facilitator, case_worker, etc.) go to dashboard
+      router.push('/dashboard');
     }
   } catch (e: any) {
     apiError.value = 'Connection failed — check your internet connection and try again';
