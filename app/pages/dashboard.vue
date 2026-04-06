@@ -74,25 +74,32 @@
 
             <!-- Bento metrics grid — targets & actuals first -->
             <div class="bento-grid">
-              <div class="bento-item bento-hero metric-card">
+              <div class="bento-item bento-hero metric-card hero-modern">
+                <div class="hero-top">
+                  <div class="hero-icon-wrap">
+                    <AppIcon name="users" :size="20" />
+                  </div>
+                  <span class="hero-badge">{{ period === 'month' ? 'This Month' : period === 'quarter' ? 'This Quarter' : 'This Year' }}</span>
+                </div>
                 <div class="metric-primary">
                   <span class="metric-big">{{ demographics.total_beneficiaries }}</span>
                   <span class="metric-label">Total Beneficiaries</span>
                 </div>
-                <div class="metric-splits">
-                  <div class="metric-split">
-                    <span class="split-value">{{ demographics.girls_women }}</span>
-                    <span class="split-label">Girls & Women</span>
+                <div class="metric-splits-modern">
+                  <div class="split-card">
+                    <div class="split-card-dot"></div>
+                    <span class="split-card-value">{{ demographics.girls_women }}</span>
+                    <span class="split-card-label">Girls & Women</span>
                   </div>
-                  <div class="metric-divider"></div>
-                  <div class="metric-split">
-                    <span class="split-value">{{ demographics.boys_men }}</span>
-                    <span class="split-label">Boys & Men</span>
+                  <div class="split-card">
+                    <div class="split-card-dot split-card-dot--alt"></div>
+                    <span class="split-card-value">{{ demographics.boys_men }}</span>
+                    <span class="split-card-label">Boys & Men</span>
                   </div>
-                  <div class="metric-divider"></div>
-                  <div class="metric-split">
-                    <span class="split-value">{{ demographics.with_disability }}</span>
-                    <span class="split-label">With Disability</span>
+                  <div class="split-card">
+                    <div class="split-card-dot split-card-dot--muted"></div>
+                    <span class="split-card-value">{{ demographics.with_disability }}</span>
+                    <span class="split-card-label">With Disability</span>
                   </div>
                 </div>
               </div>
@@ -622,12 +629,53 @@ onMounted(fetchDashboard)
   transform: translateY(-1px);
 }
 
-/* Hero: big number + demographic splits */
+/* Hero: modern top card */
+.hero-modern {
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(0, 122, 255, 0.03) 100%);
+  position: relative;
+  overflow: hidden;
+}
+.hero-modern::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle, rgba(0, 122, 255, 0.06) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.hero-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--primary-dim);
+  color: var(--primary);
+}
+.hero-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted, #AEAEB2);
+  background: var(--hover-bg, rgba(0,0,0,0.03));
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.02em;
+}
 .metric-primary {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 }
 .metric-big {
   font-size: 2.8rem;
@@ -642,34 +690,53 @@ onMounted(fetchDashboard)
   font-weight: 500;
   color: var(--text-secondary, #86868B);
 }
-.metric-splits {
-  display: flex;
-  align-items: stretch;
+
+/* Demographic split mini-cards */
+.metric-splits-modern {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 }
-.metric-split {
-  flex: 1;
+.split-card {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  text-align: center;
+  gap: 4px;
+  padding: 14px 12px;
+  background: var(--bg-input, rgba(0,0,0,0.02));
+  border-radius: var(--radius-md, 16px);
+  transition: background 0.15s;
 }
-.metric-divider {
-  width: 1px;
-  background: var(--border-color, #E5E5EA);
-  margin: 0 16px;
-  align-self: stretch;
+.split-card:hover {
+  background: rgba(0, 122, 255, 0.04);
 }
-.split-value {
-  font-size: 1.4rem;
+.split-card-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  margin-bottom: 2px;
+}
+.split-card-dot--alt {
+  background: var(--primary);
+  opacity: 0.6;
+}
+.split-card-dot--muted {
+  background: var(--text-muted, #AEAEB2);
+}
+.split-card-value {
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--text-primary, #1D1D1F);
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
 }
-.split-label {
-  font-size: 0.7rem;
+.split-card-label {
+  font-size: 0.68rem;
   color: var(--text-muted, #AEAEB2);
   font-weight: 500;
+}
+@media (max-width: 480px) {
+  .metric-splits-modern { grid-template-columns: 1fr; }
 }
 
 /* Activity target/actual cards */
@@ -736,6 +803,7 @@ onMounted(fetchDashboard)
   height: 100%;
   border-radius: 3px;
   background: var(--primary);
+  opacity: 0.45;
   transition: width 0.5s ease;
 }
 
@@ -884,6 +952,7 @@ onMounted(fetchDashboard)
   height: 100%;
   border-radius: 3px;
   background: var(--primary);
+  opacity: 0.45;
   transition: width 0.5s ease;
 }
 .activity-pct {
@@ -1028,10 +1097,11 @@ onMounted(fetchDashboard)
   height: 100%;
   border-radius: 2px;
   background: var(--primary);
+  opacity: 0.45;
   transition: width 0.5s ease;
 }
-.insight-bar-fill--alt { background: var(--primary); opacity: 0.7; }
-.insight-bar-fill--warn { background: var(--primary); opacity: 0.5; }
+.insight-bar-fill--alt { background: var(--primary); opacity: 0.35; }
+.insight-bar-fill--warn { background: var(--primary); opacity: 0.25; }
 
 /* ── Performance Snapshots ───────────────────────────── */
 .perf-list {
