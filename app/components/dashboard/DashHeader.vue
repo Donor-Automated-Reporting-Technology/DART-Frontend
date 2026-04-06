@@ -65,7 +65,7 @@ const todayLabel = computed(() =>
   left: 0;
   right: 0;
   height: 3px;
-  background: var(--gradient-brand);
+  background: linear-gradient(90deg, var(--data-teal) 0%, var(--data-purple) 100%);
 }
 
 .header-left {
@@ -109,7 +109,7 @@ const todayLabel = computed(() =>
 .date-icon {
   display: flex;
   align-items: center;
-  color: var(--primary);
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 

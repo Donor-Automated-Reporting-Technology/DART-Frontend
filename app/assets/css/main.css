@@ -44,6 +44,15 @@
   --warning: #fbbf24;
   --warning-bg: rgba(251, 191, 36, 0.1);
 
+  /* ── Data visualisation palette ─────────────────── */
+  --data-teal: #2dd4bf;
+  --data-teal-dim: rgba(45, 212, 191, 0.10);
+  --data-purple: #a78bfa;
+  --data-purple-dim: rgba(167, 139, 250, 0.10);
+  --progress-high: #34d399;
+  --progress-mid: #fbbf24;
+  --progress-low: #fb7185;
+
   /* ── Borders ────────────────────────────────────── */
   --border-color: rgba(255, 255, 255, 0.08);
   --border-subtle: rgba(255, 255, 255, 0.05);
@@ -127,6 +136,15 @@
   --success-bg: rgba(52, 199, 89, 0.06);
   --warning: #FF9500;
   --warning-bg: rgba(255, 149, 0, 0.06);
+
+  /* ── Data visualisation palette ─────────── */
+  --data-teal: #0d9488;
+  --data-teal-dim: rgba(13, 148, 136, 0.08);
+  --data-purple: #7c3aed;
+  --data-purple-dim: rgba(124, 58, 237, 0.08);
+  --progress-high: #22c55e;
+  --progress-mid: #f59e0b;
+  --progress-low: #ef4444;
 
   /* ── Borders (Apple-style subtle) ──────── */
   --border-color: #E5E5EA;

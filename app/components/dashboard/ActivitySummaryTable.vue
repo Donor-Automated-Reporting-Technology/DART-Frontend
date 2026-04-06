@@ -113,9 +113,9 @@ function barColor(pct: number): string {
   transition: width 0.5s ease;
 }
 
-.bar-fill.clr-green,
-.bar-fill.clr-yellow,
-.bar-fill.clr-red { background: var(--primary); }
+.bar-fill.clr-green { background: var(--progress-high); }
+.bar-fill.clr-yellow { background: var(--progress-mid); }
+.bar-fill.clr-red { background: var(--progress-low); }
 
 .pct {
   font-size: 0.75rem;
@@ -123,8 +123,10 @@ function barColor(pct: number): string {
   width: 40px;
   text-align: right;
   flex-shrink: 0;
-  color: var(--text-primary);
 }
+.pct.clr-green { color: var(--progress-high); }
+.pct.clr-yellow { color: var(--progress-mid); }
+.pct.clr-red { color: var(--progress-low); }
 
 .empty {
   padding: 32px;

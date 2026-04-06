@@ -129,14 +129,14 @@ defineProps<{
 }
 
 .stat-card__trend--up {
-  background-color: var(--primary-dim);
-  color: var(--text-primary);
+  background-color: var(--success-bg);
+  color: var(--success);
   font-weight: 700;
 }
 
 .stat-card__trend--down {
-  background-color: rgba(0, 122, 255, 0.06);
-  color: var(--text-muted);
+  background-color: var(--warning-bg);
+  color: var(--warning);
 }
 
 /* Value */

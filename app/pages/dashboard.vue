@@ -438,7 +438,7 @@ onMounted(fetchDashboard)
 }
 
 .greeting-name {
-  color: var(--primary);
+  color: var(--text-primary);
 }
 
 .greeting-sub {
@@ -631,7 +631,7 @@ onMounted(fetchDashboard)
 
 /* Hero: modern top card */
 .hero-modern {
-  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(0, 122, 255, 0.03) 100%);
+  background: var(--bg-card);
   position: relative;
   overflow: hidden;
 }
@@ -642,7 +642,7 @@ onMounted(fetchDashboard)
   right: -40px;
   width: 160px;
   height: 160px;
-  background: radial-gradient(circle, rgba(0, 122, 255, 0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--data-teal-dim) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -659,8 +659,8 @@ onMounted(fetchDashboard)
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: var(--primary-dim);
-  color: var(--primary);
+  background: var(--data-teal-dim);
+  color: var(--data-teal);
 }
 .hero-badge {
   font-size: 0.68rem;
@@ -707,18 +707,17 @@ onMounted(fetchDashboard)
   transition: background 0.15s;
 }
 .split-card:hover {
-  background: rgba(0, 122, 255, 0.04);
+  background: var(--hover-bg);
 }
 .split-card-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--primary);
+  background: var(--data-teal);
   margin-bottom: 2px;
 }
 .split-card-dot--alt {
-  background: var(--primary);
-  opacity: 0.6;
+  background: var(--data-purple);
 }
 .split-card-dot--muted {
   background: var(--text-muted, #AEAEB2);
@@ -751,8 +750,8 @@ onMounted(fetchDashboard)
 .metric-pct-pill {
   font-size: 0.72rem;
   font-weight: 700;
-  color: var(--primary);
-  background: var(--primary-dim);
+  color: var(--text-primary);
+  background: var(--hover-bg);
   padding: 3px 10px;
   border-radius: 20px;
   font-variant-numeric: tabular-nums;
@@ -771,7 +770,7 @@ onMounted(fetchDashboard)
 .target-number {
   font-size: 1.8rem;
   font-weight: 800;
-  color: var(--primary);
+  color: var(--text-primary);
   line-height: 1;
   letter-spacing: -0.5px;
   font-variant-numeric: tabular-nums;
@@ -802,8 +801,8 @@ onMounted(fetchDashboard)
 .metric-bar-fill {
   height: 100%;
   border-radius: 3px;
-  background: var(--primary);
-  opacity: 0.45;
+  background: var(--data-teal);
+  opacity: 0.55;
   transition: width 0.5s ease;
 }
 
@@ -876,8 +875,8 @@ onMounted(fetchDashboard)
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  background: var(--primary-dim);
-  color: var(--primary);
+  background: var(--data-teal-dim);
+  color: var(--data-teal);
   border: none;
   border-radius: var(--radius-sm);
   font-size: 0.78rem;
@@ -887,7 +886,7 @@ onMounted(fetchDashboard)
   font-family: inherit;
 }
 .deep-dive-btn:hover {
-  background: var(--primary-hover);
+  background: rgba(45, 212, 191, 0.16);
 }
 
 /* ── Activity compact rows (actual/target priority) ──── */
@@ -922,7 +921,7 @@ onMounted(fetchDashboard)
 .activity-actual {
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
 .activity-sep {
@@ -951,8 +950,8 @@ onMounted(fetchDashboard)
 .activity-bar-fill {
   height: 100%;
   border-radius: 3px;
-  background: var(--primary);
-  opacity: 0.45;
+  background: var(--data-teal);
+  opacity: 0.55;
   transition: width 0.5s ease;
 }
 .activity-pct {
@@ -961,7 +960,7 @@ onMounted(fetchDashboard)
   width: 36px;
   text-align: right;
   flex-shrink: 0;
-  color: var(--primary);
+  color: var(--text-secondary);
 }
 .activity-empty {
   padding: 16px 0;
@@ -992,7 +991,7 @@ onMounted(fetchDashboard)
 .session-activity { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); }
 .session-location { font-size: 0.72rem; color: var(--text-muted); }
 .session-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-.session-presence { font-size: 0.82rem; font-weight: 600; color: var(--primary); }
+.session-presence { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); }
 .session-date { font-size: 0.72rem; color: var(--text-muted); }
 
 /* ── Right column: Insights panel ────────────────────── */
@@ -1022,8 +1021,8 @@ onMounted(fetchDashboard)
   gap: 18px;
 }
 .insight-card--highlight {
-  background: var(--primary-dim);
-  border-color: rgba(0, 122, 255, 0.12);
+  background: var(--data-teal-dim);
+  border-color: rgba(45, 212, 191, 0.12);
 }
 .insight-title {
   font-size: 0.82rem;
@@ -1085,7 +1084,7 @@ onMounted(fetchDashboard)
 .insight-pct {
   font-size: 0.68rem;
   font-weight: 600;
-  color: var(--primary);
+  color: var(--text-secondary);
 }
 .insight-bar {
   height: 4px;
@@ -1096,12 +1095,12 @@ onMounted(fetchDashboard)
 .insight-bar-fill {
   height: 100%;
   border-radius: 2px;
-  background: var(--primary);
-  opacity: 0.45;
+  background: var(--data-teal);
+  opacity: 0.65;
   transition: width 0.5s ease;
 }
-.insight-bar-fill--alt { background: var(--primary); opacity: 0.35; }
-.insight-bar-fill--warn { background: var(--primary); opacity: 0.25; }
+.insight-bar-fill--alt { background: var(--data-purple); opacity: 0.55; }
+.insight-bar-fill--warn { background: var(--warning); opacity: 0.50; }
 
 /* ── Performance Snapshots ───────────────────────────── */
 .perf-list {
@@ -1128,12 +1127,12 @@ onMounted(fetchDashboard)
   font-weight: 700;
 }
 .perf-trend--up {
-  background: var(--primary-dim);
-  color: var(--primary);
+  background: var(--success-bg);
+  color: var(--success);
 }
 .perf-trend--down {
-  background: rgba(0, 122, 255, 0.06);
-  color: var(--text-muted);
+  background: var(--warning-bg);
+  color: var(--warning);
 }
 .perf-info {
   display: flex;
@@ -1158,7 +1157,7 @@ onMounted(fetchDashboard)
 .perf-actual {
   font-size: 0.82rem;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
 .perf-sep {
@@ -1175,7 +1174,7 @@ onMounted(fetchDashboard)
 .perf-pct-badge {
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
@@ -1207,7 +1206,7 @@ onMounted(fetchDashboard)
   stroke: var(--hover-bg);
 }
 .ring-fill {
-  stroke: var(--primary);
+  stroke: var(--data-teal);
   stroke-linecap: round;
   transition: stroke-dasharray 0.6s ease;
 }

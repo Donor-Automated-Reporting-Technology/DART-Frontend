@@ -123,10 +123,10 @@ function formatDate(isoDate: string): string {
  * Uses a small palette so repeated donors stay consistent.
  */
 const DONOR_COLOURS = [
-  'rgba(108, 177, 255, 0.18)',
-  'rgba(59,  136, 132, 0.18)',
-  'rgba(124, 111, 247, 0.18)',
+  'rgba(45, 212, 191, 0.18)',
+  'rgba(167, 139, 250, 0.18)',
   'rgba(232, 168,  56, 0.18)',
+  'rgba(59,  136, 132, 0.18)',
   'rgba(232,  88,  88, 0.18)',
 ];
 
@@ -281,7 +281,7 @@ function donorColor(donor: string): string {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--primary) 0%, rgba(108, 177, 255, 0.7) 100%);
+  background: linear-gradient(90deg, var(--data-teal) 0%, rgba(45, 212, 191, 0.6) 100%);
   border-radius: 3px;
   transition: width 0.3s ease;
 }

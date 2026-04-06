@@ -364,8 +364,8 @@ function formatDate(isoDate: string): string {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--primary-dim);
-  color: var(--primary);
+  background: var(--data-teal-dim);
+  color: var(--data-teal);
   font-size: 0.65rem;
   font-weight: 700;
   display: flex;
