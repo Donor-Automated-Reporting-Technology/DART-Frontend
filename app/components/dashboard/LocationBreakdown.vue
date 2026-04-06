@@ -42,8 +42,8 @@ defineProps<{ locations: LocationSummary[] }>()
 <style scoped>
 .location-breakdown {
   background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color, #E5E5EA);
+  border-radius: var(--radius-lg, 20px);
   overflow: hidden;
 }
 
@@ -51,52 +51,54 @@ defineProps<{ locations: LocationSummary[] }>()
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--border-subtle);
+  padding: 18px 22px;
 }
 
 .lb-title {
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-primary, #1D1D1F);
   margin: 0;
 }
 
 .lb-count {
   font-size: 0.72rem;
-  color: var(--text-muted);
+  color: var(--text-muted, #AEAEB2);
   background: var(--hover-bg);
-  padding: 3px 8px;
+  padding: 2px 8px;
   border-radius: 10px;
 }
 
 .loc-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1px;
-  background: var(--border-subtle);
+  gap: 24px;
+  padding: 4px 22px 22px;
 }
 
 .loc-card {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 16px 18px;
-  background: var(--bg-card);
+  padding: 18px;
+  background: var(--bg-surface, rgba(0,0,0,0.015));
+  border: 1px solid var(--border-color, #E5E5EA);
+  border-radius: var(--radius-md, 16px);
   text-decoration: none;
-  transition: background 0.15s;
+  transition: box-shadow 0.15s, transform 0.15s;
   cursor: pointer;
 }
 
 .loc-card:hover {
-  background: var(--hover-bg-subtle, rgba(255,255,255,0.02));
+  box-shadow: var(--shadow-elevated);
+  transform: translateY(-1px);
   text-decoration: none;
 }
 
 .loc-name {
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-primary, #1D1D1F);
 }
 
 .loc-stats {
@@ -113,7 +115,7 @@ defineProps<{ locations: LocationSummary[] }>()
 .stat-val {
   font-size: 1.05rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-primary, #1D1D1F);
   font-variant-numeric: tabular-nums;
 }
 
@@ -121,7 +123,7 @@ defineProps<{ locations: LocationSummary[] }>()
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--text-muted);
+  color: var(--text-muted, #AEAEB2);
 }
 
 .empty {

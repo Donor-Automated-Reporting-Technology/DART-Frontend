@@ -82,79 +82,79 @@
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.14);
 }
 
-/* ── Light theme ──────────────────────────────────────────────────────────── */
+/* ── Light theme — Apple HIG "Liquid Glass" ───────────────────────────────── */
 [data-theme="light"] {
   color-scheme: light;
 
-  /* ── Brand colours ─────────────────────── */
-  --primary: #2563eb;
-  --primary-dim: rgba(37, 99, 235, 0.06);
-  --primary-hover: rgba(37, 99, 235, 0.12);
+  /* ── Action Blue (single accent) ───────── */
+  --primary: #007AFF;
+  --primary-dim: rgba(0, 122, 255, 0.06);
+  --primary-hover: rgba(0, 122, 255, 0.10);
   --secondary: #e2eeec;
-  --third: #10b981;
-  --accent: #7c3aed;
-  --accent-dim: rgba(124, 58, 237, 0.06);
+  --third: #34C759;
+  --accent: #007AFF;
+  --accent-dim: rgba(0, 122, 255, 0.06);
 
-  /* ── Gradient accents ──────────────────────────── */
-  --gradient-brand: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
-  --gradient-card: linear-gradient(
-    135deg,
-    rgba(37, 99, 235, 0.03) 0%,
-    rgba(124, 58, 237, 0.02) 100%
-  );
-  --gradient-success: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  /* ── Gradient accents (subtle) ─────────── */
+  --gradient-brand: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+  --gradient-card: none;
+  --gradient-success: linear-gradient(135deg, #34C759 0%, #30D158 100%);
 
-  /* ── Backgrounds ──────────────────────── */
-  --bg-dark: #f8fafc;
-  --bg-panel: #ffffff;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f8fafc;
-  --bg-input: #ffffff;
-  --bg-surface: rgba(0, 0, 0, 0.02);
-  --sidebar-bg: #ffffff;
+  /* ── Backgrounds (clean whites) ────────── */
+  --bg-dark: #F5F5F7;
+  --bg-panel: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #FAFAFA;
+  --bg-input: #FFFFFF;
+  --bg-surface: rgba(0, 0, 0, 0.015);
+  --sidebar-bg: rgba(255, 255, 255, 0.72);
 
-  /* ── Text ───────────────────────────── */
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --text-placeholder: #94a3b8;
+  /* ── Text (Apple charcoal palette) ─────── */
+  --text-primary: #1D1D1F;
+  --text-secondary: #86868B;
+  --text-muted: #AEAEB2;
+  --text-placeholder: #AEAEB2;
 
-  /* ── State colours ──────────────────────────────── */
-  --error: #ef4444;
-  --error-bg: rgba(239, 68, 68, 0.06);
-  --success: #10b981;
-  --success-bg: rgba(16, 185, 129, 0.06);
-  --warning: #f59e0b;
-  --warning-bg: rgba(245, 158, 11, 0.06);
+  /* ── State colours ─────────────────────── */
+  --error: #FF3B30;
+  --error-bg: rgba(255, 59, 48, 0.06);
+  --success: #34C759;
+  --success-bg: rgba(52, 199, 89, 0.06);
+  --warning: #FF9500;
+  --warning-bg: rgba(255, 149, 0, 0.06);
 
-  /* ── Borders ────────────────────────────────────── */
-  --border-color: #e2e8f0;
-  --border-subtle: #f1f5f9;
+  /* ── Borders (Apple-style subtle) ──────── */
+  --border-color: #E5E5EA;
+  --border-subtle: #E5E5EA;
 
-  /* ── Legacy aliases ─────────────────────────────── */
-  --input-bg: #ffffff;
-  --input-border: #e2e8f0;
-  --input-border-hover: #cbd5e1;
+  /* ── Legacy aliases ────────────────────── */
+  --input-bg: #FFFFFF;
+  --input-border: #E5E5EA;
+  --input-border-hover: #D1D1D6;
   --input-border-focus: var(--primary);
-  --focus-ring: rgba(37, 99, 235, 0.2);
+  --focus-ring: rgba(0, 122, 255, 0.2);
 
-  /* ── Radius & shadow ────────────────────────────── */
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  /* ── Radius & shadow (liquid glass) ────── */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --shadow-card: 0 0.5px 1px rgba(0, 0, 0, 0.04),
+    0 1px 3px rgba(0, 0, 0, 0.03);
   --shadow-elevated:
-    0 4px 20px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.04);
-  --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.06);
+    0 2px 12px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.03);
+  --shadow-glow: none;
 
-  /* ── Glass effect ────────────────────────────────── */
-  --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-blur: 12px;
+  /* ── Glass effect (sidebar + header) ───── */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-blur: 20px;
 
-  /* ── Interactive ─────────────────────────────────── */
-  --hover-bg: rgba(0, 0, 0, 0.04);
-  --hover-bg-subtle: rgba(0, 0, 0, 0.02);
+  /* ── Interactive ────────────────────────── */
+  --hover-bg: rgba(0, 0, 0, 0.03);
+  --hover-bg-subtle: rgba(0, 0, 0, 0.015);
 
-  /* ── Scrollbar ──────────────────────────────────── */
-  --scrollbar-thumb: #cbd5e1;
-  --scrollbar-thumb-hover: #94a3b8;
+  /* ── Scrollbar ─────────────────────────── */
+  --scrollbar-thumb: #D1D1D6;
+  --scrollbar-thumb-hover: #AEAEB2;
 }
 
 /* ── Smooth theme transition ──────────────────────────────────────────────── */
@@ -181,9 +181,11 @@ body {
   margin: 0;
   padding: 0;
   font-family:
-    "Inter",
     -apple-system,
     BlinkMacSystemFont,
+    "SF Pro Display",
+    "SF Pro Text",
+    "Inter",
     "Segoe UI",
     Roboto,
     Helvetica,

@@ -53,33 +53,11 @@ function barColor(pct: number): string {
 
 <style scoped>
 .activity-summary {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
 .summary-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.summary-title {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.summary-count {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  background: var(--hover-bg);
-  padding: 3px 8px;
-  border-radius: 10px;
+  display: none;
 }
 
 .summary-table {
@@ -89,28 +67,30 @@ function barColor(pct: number): string {
 
 .summary-table th {
   text-align: left;
-  padding: 10px 18px;
+  padding: 12px 22px;
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-muted, #AEAEB2);
 }
 
 .summary-table td {
-  padding: 12px 18px;
+  padding: 14px 22px;
   font-size: 0.82rem;
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary, #86868B);
 }
 
-.summary-table tr:last-child td { border-bottom: none; }
-.summary-table tr:hover td { background: var(--hover-bg-subtle, rgba(255,255,255,0.02)); }
+.summary-table tbody tr {
+  transition: background 0.12s;
+}
+.summary-table tbody tr:hover td {
+  background: var(--hover-bg-subtle, rgba(0,0,0,0.015));
+}
 
 .col-num { text-align: right; width: 80px; }
 .col-progress { width: 200px; }
-.cell-name { font-weight: 500; color: var(--text-primary); }
+.cell-name { font-weight: 500; color: var(--text-primary, #1D1D1F); }
 .cell-num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 
 .cell-progress {
@@ -121,8 +101,8 @@ function barColor(pct: number): string {
 
 .bar-wrap {
   flex: 1;
-  height: 6px;
-  background: var(--hover-bg);
+  height: 5px;
+  background: var(--hover-bg, rgba(0,0,0,0.03));
   border-radius: 3px;
   overflow: hidden;
 }
@@ -130,12 +110,12 @@ function barColor(pct: number): string {
 .bar-fill {
   height: 100%;
   border-radius: 3px;
-  transition: width 0.4s ease;
+  transition: width 0.5s ease;
 }
 
-.bar-fill.clr-green { background: var(--success, #34d399); }
-.bar-fill.clr-yellow { background: var(--warning, #fbbf24); }
-.bar-fill.clr-red { background: var(--error, #f87171); }
+.bar-fill.clr-green { background: var(--success); }
+.bar-fill.clr-yellow { background: var(--warning); }
+.bar-fill.clr-red { background: var(--error); }
 
 .pct {
   font-size: 0.75rem;
@@ -145,9 +125,9 @@ function barColor(pct: number): string {
   flex-shrink: 0;
 }
 
-.pct.clr-green { color: var(--success, #34d399); }
-.pct.clr-yellow { color: var(--warning, #fbbf24); }
-.pct.clr-red { color: var(--error, #f87171); }
+.pct.clr-green { color: var(--success); }
+.pct.clr-yellow { color: var(--warning); }
+.pct.clr-red { color: var(--error); }
 
 .empty {
   padding: 32px;
@@ -158,6 +138,6 @@ function barColor(pct: number): string {
 
 @media (max-width: 640px) {
   .col-progress { width: 120px; }
-  .summary-table th, .summary-table td { padding: 10px 12px; }
+  .summary-table th, .summary-table td { padding: 10px 14px; }
 }
 </style>

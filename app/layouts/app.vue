@@ -500,6 +500,8 @@ async function handleLogout(): Promise<void> {
   inset: 0 auto 0 0;
   width: var(--sidebar-width);
   background-color: var(--sidebar-bg);
+  backdrop-filter: blur(var(--glass-blur, 20px));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 20px));
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;

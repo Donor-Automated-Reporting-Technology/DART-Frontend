@@ -46,42 +46,24 @@ defineProps<{
 .stat-card {
   position: relative;
   background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color, #E5E5EA);
+  border-radius: var(--radius-lg, 20px);
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
   overflow: hidden;
 }
 
-.stat-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--gradient-card);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  pointer-events: none;
-}
-
 .stat-card:hover {
-  border-color: var(--border-color);
-  box-shadow: var(--shadow-card), var(--shadow-glow);
+  box-shadow: var(--shadow-elevated);
   transform: translateY(-1px);
 }
 
-.stat-card:hover::before {
-  opacity: 1;
-}
-
 .stat-card--accent {
-  border-color: var(--border-color);
-}
-
-.stat-card--accent::before {
-  opacity: 1;
+  background: var(--primary-dim);
+  border-color: rgba(0, 122, 255, 0.10);
 }
 
 /* Top row */
@@ -97,7 +79,7 @@ defineProps<{
 .stat-card__icon {
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-md, 16px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -120,15 +102,15 @@ defineProps<{
 }
 
 .stat-card__icon--accent {
-  background: var(--accent-dim);
-  color: var(--accent);
+  background: var(--primary-dim);
+  color: var(--primary);
 }
 
 /* Label */
 .stat-card__label {
   font-size: 0.8rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--text-secondary, #86868B);
   line-height: 1.3;
 }
 
@@ -136,7 +118,7 @@ defineProps<{
 .stat-card__trend {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 0.72rem;
@@ -160,16 +142,17 @@ defineProps<{
 .stat-card__value {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-primary, #1D1D1F);
   line-height: 1;
   letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Description */
 .stat-card__sub {
   margin: 2px 0 0;
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--text-muted, #AEAEB2);
   line-height: 1.4;
 }
 
