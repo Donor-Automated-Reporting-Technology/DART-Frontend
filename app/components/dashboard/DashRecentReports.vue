@@ -238,8 +238,8 @@ function formatDate(isoDate: string): string {
   align-items: center;
   gap: 3px;
   font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--primary);
+  font-weight: 600;
+  color: var(--text-primary);
   text-decoration: none;
   white-space: nowrap;
   flex-shrink: 0;

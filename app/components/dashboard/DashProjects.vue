@@ -175,7 +175,8 @@ function donorColor(donor: string): string {
   align-items: center;
   gap: 2px;
   font-size: 0.78rem;
-  color: var(--primary);
+  color: var(--text-primary);
+  font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
   margin-top: 2px;

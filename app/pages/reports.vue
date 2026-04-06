@@ -47,7 +47,7 @@
             </div>
             <div class="rp-card-action">
               <span v-if="exporting" class="rp-spinner" />
-              <AppIcon v-else name="arrow-down" :size="16" />
+              <AppIcon v-else name="download" :size="16" />
             </div>
           </button>
 

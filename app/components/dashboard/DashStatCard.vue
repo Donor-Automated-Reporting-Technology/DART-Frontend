@@ -130,7 +130,8 @@ defineProps<{
 
 .stat-card__trend--up {
   background-color: var(--primary-dim);
-  color: var(--primary);
+  color: var(--text-primary);
+  font-weight: 700;
 }
 
 .stat-card__trend--down {

@@ -173,6 +173,103 @@
           </div>
         </div>
       </div>
+
+      <!-- Grant Targets section (CFS only) -->
+      <div v-if="store.currentFramework && store.currentFramework.framework_type === 'child_protection'" class="activities-section">
+        <form class="fw-form" @submit.prevent="saveGrantTargets">
+          <div class="form-section">
+            <div class="section-label">Grant Targets</div>
+            <p class="section-hint">Set the reporting period and target numbers for the CFS grant.</p>
+
+            <div class="section-card">
+              <div class="form-grid">
+                <div class="field">
+                  <label class="field-label" for="gt-start">Period start</label>
+                  <input
+                    id="gt-start"
+                    v-model="grantForm.period_start"
+                    type="date"
+                    class="field-input"
+                  />
+                </div>
+                <div class="field">
+                  <label class="field-label" for="gt-end">Period end</label>
+                  <input
+                    id="gt-end"
+                    v-model="grantForm.period_end"
+                    type="date"
+                    class="field-input"
+                  />
+                </div>
+                <div class="field">
+                  <label class="field-label" for="gt-total">Total children target</label>
+                  <input
+                    id="gt-total"
+                    v-model.number="grantForm.total_children"
+                    type="number"
+                    min="0"
+                    class="field-input"
+                    placeholder="e.g. 500"
+                  />
+                </div>
+                <div class="field">
+                  <label class="field-label" for="gt-girls">Girls sub-target</label>
+                  <input
+                    id="gt-girls"
+                    v-model.number="grantForm.girls"
+                    type="number"
+                    min="0"
+                    class="field-input"
+                    placeholder="e.g. 250"
+                  />
+                </div>
+                <div class="field">
+                  <label class="field-label" for="gt-disability">Children with disability target</label>
+                  <input
+                    id="gt-disability"
+                    v-model.number="grantForm.children_with_disability"
+                    type="number"
+                    min="0"
+                    class="field-input"
+                    placeholder="e.g. 50"
+                  />
+                </div>
+                <div class="field">
+                  <label class="field-label" for="gt-sessions">Sessions target</label>
+                  <input
+                    id="gt-sessions"
+                    v-model.number="grantForm.sessions"
+                    type="number"
+                    min="0"
+                    class="field-input"
+                    placeholder="e.g. 200"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grant targets error -->
+          <div v-if="gtError" class="api-err">
+            <AppIcon name="alert-circle" :size="14" />
+            {{ gtError }}
+          </div>
+
+          <div class="actions">
+            <button type="submit" class="btn-primary" :disabled="gtSaving">
+              <span v-if="gtSaving" class="btn-spinner" />
+              {{ gtSaving ? 'Saving…' : 'Save grant targets' }}
+            </button>
+          </div>
+
+          <Transition name="toast">
+            <div v-if="gtSuccess" class="toast-success">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Grant targets updated
+            </div>
+          </Transition>
+        </form>
+      </div>
     </div>
   </NuxtLayout>
 </template>
@@ -182,6 +279,7 @@ import { ref, reactive, watch, onMounted } from 'vue'
 import { useFrameworkStore } from '../../stores/framework'
 import { useAuthStore } from '../../stores/auth'
 import { frameworkApi } from '../../services/frameworkApi'
+import { cfsApi } from '../../services/cfsApi'
 import { ApiError } from '../../services/api'
 import type { FrameworkType } from '../../interfaces/framework'
 import ActivityTargetRow from '../../components/settings/ActivityTargetRow.vue'
@@ -221,6 +319,69 @@ function seedForm() {
   form.period_end = fw.period_end?.slice(0, 10) ?? ''
 }
 
+// ─── Grant Targets ────────────────────────────────────────────────────────────
+
+const gtSaving = ref(false)
+const gtError = ref('')
+const gtSuccess = ref(false)
+
+const grantForm = reactive({
+  period_start: '',
+  period_end: '',
+  total_children: 0,
+  girls: 0,
+  children_with_disability: 0,
+  sessions: 0,
+})
+
+async function loadGrantTargets() {
+  try {
+    const data = await cfsApi.getGrantTargets()
+    if (data) {
+      grantForm.period_start = data.period_start?.slice(0, 10) ?? ''
+      grantForm.period_end = data.period_end?.slice(0, 10) ?? ''
+      grantForm.total_children = data.target_values?.total_children ?? 0
+      grantForm.girls = data.target_values?.girls ?? 0
+      grantForm.children_with_disability = data.target_values?.children_with_disability ?? 0
+      grantForm.sessions = data.target_values?.sessions ?? 0
+    }
+  } catch { /* no existing targets — fields stay at defaults */ }
+}
+
+async function saveGrantTargets() {
+  gtError.value = ''
+  gtSuccess.value = false
+
+  if (!grantForm.period_start || !grantForm.period_end) {
+    gtError.value = 'Period start and end are required'
+    return
+  }
+  if (grantForm.period_end < grantForm.period_start) {
+    gtError.value = 'End date must be after start date'
+    return
+  }
+
+  gtSaving.value = true
+  try {
+    await cfsApi.upsertGrantTargets({
+      period_start: grantForm.period_start,
+      period_end: grantForm.period_end,
+      target_values: {
+        total_children: grantForm.total_children,
+        girls: grantForm.girls,
+        children_with_disability: grantForm.children_with_disability,
+        sessions: grantForm.sessions,
+      },
+    })
+    gtSuccess.value = true
+    setTimeout(() => { gtSuccess.value = false }, 3000)
+  } catch (e: any) {
+    gtError.value = e instanceof ApiError ? e.message : (e?.message ?? 'Save failed')
+  } finally {
+    gtSaving.value = false
+  }
+}
+
 watch(() => store.currentFramework, seedForm)
 
 onMounted(async () => {
@@ -228,6 +389,9 @@ onMounted(async () => {
   seedForm()
   if (store.currentFramework) {
     await store.fetchActivities()
+    if (store.currentFramework.framework_type === 'child_protection') {
+      await loadGrantTargets()
+    }
   }
 })
 

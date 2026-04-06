@@ -119,11 +119,11 @@ function barColor(pct: number): string {
 
 .pct {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   width: 40px;
   text-align: right;
   flex-shrink: 0;
-  color: var(--primary);
+  color: var(--text-primary);
 }
 
 .empty {

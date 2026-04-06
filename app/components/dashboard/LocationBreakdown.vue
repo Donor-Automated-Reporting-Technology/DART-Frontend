@@ -141,9 +141,9 @@ defineProps<{ locations: LocationSummary[] }>()
 
 .link-setup {
   font-size: 0.82rem;
-  color: var(--primary);
+  color: var(--text-primary);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .link-setup:hover { text-decoration: underline; }

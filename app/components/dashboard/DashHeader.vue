@@ -83,10 +83,7 @@ const todayLabel = computed(() =>
 }
 
 .header-name {
-  background: var(--gradient-brand);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
   font-weight: 700;
 }
 
