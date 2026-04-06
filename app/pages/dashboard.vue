@@ -16,11 +16,18 @@
           <p class="greeting-sub">Here's what's happening with your program today.</p>
         </div>
         <div class="greeting-actions">
-          <select v-model="period" class="period-select">
-            <option value="month">This Month</option>
-            <option value="quarter">This Quarter</option>
-            <option value="year">This Year</option>
-          </select>
+          <button
+            class="sync-btn"
+            :class="{ 'sync-btn--syncing': isSyncing }"
+            :disabled="isSyncing || !isOnline"
+            @click="handleSync"
+          >
+            <AppIcon name="refresh-cw" :size="14" :class="{ 'spin': isSyncing }" />
+            <span v-if="isSyncing">Syncing…</span>
+            <span v-else-if="!isOnline">Offline</span>
+            <span v-else-if="pendingCount > 0">Sync {{ pendingCount }}</span>
+            <span v-else>Synced</span>
+          </button>
         </div>
       </div>
 
@@ -79,7 +86,7 @@
                   <div class="hero-icon-wrap">
                     <AppIcon name="users" :size="20" />
                   </div>
-                  <span class="hero-badge">{{ period === 'month' ? 'This Month' : period === 'quarter' ? 'This Quarter' : 'This Year' }}</span>
+                  <span class="hero-badge">This Quarter</span>
                 </div>
                 <div class="metric-primary">
                   <span class="metric-big">{{ demographics.total_beneficiaries }}</span>
@@ -335,6 +342,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useDashboard } from '../composables/useDashboard'
+import { useSyncQueue } from '../composables/useSyncQueue'
+import { useOfflineStatus } from '../composables/useOfflineStatus'
 import ActivitySummaryTable from '../components/dashboard/ActivitySummaryTable.vue'
 import LocationBreakdown from '../components/dashboard/LocationBreakdown.vue'
 import OnboardingBanner from '../components/onboarding/OnboardingBanner.vue'
@@ -357,7 +366,6 @@ const authStore = useAuthStore()
 const {
   isLoading,
   error,
-  period,
   demographics,
   activitySummary,
   locations,
@@ -368,6 +376,14 @@ const {
   fetchDashboard,
   overallProgress,
 } = useDashboard()
+
+const { isOnline, pendingCount } = useOfflineStatus()
+const { isSyncing, flushQueue } = useSyncQueue()
+
+async function handleSync() {
+  await flushQueue()
+  await fetchDashboard()
+}
 
 // \u2500\u2500 Deep Dive toggle
 const activityDeepDive = ref(false)
@@ -449,27 +465,40 @@ onMounted(fetchDashboard)
 
 .greeting-actions { flex-shrink: 0; }
 
-.period-select {
-  padding: 8px 32px 8px 12px;
+.sync-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-size: 0.82rem;
+  font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2386868B' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 8px center;
-  background-repeat: no-repeat;
-  background-size: 16px;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, background 0.15s;
+}
+.sync-btn:hover:not(:disabled) {
+  border-color: var(--data-teal);
+  background: var(--data-teal-dim);
+}
+.sync-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.sync-btn--syncing {
+  border-color: var(--data-teal);
+  color: var(--data-teal);
 }
 
-.period-select:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--focus-ring, rgba(0, 122, 255, 0.2));
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.spin {
+  animation: spin 1s linear infinite;
 }
 
 /* \u2500\u2500 Loading skeleton \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
