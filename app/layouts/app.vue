@@ -47,31 +47,24 @@
       <!-- ── Navigation body ────────────────────────────────────────────────── -->
       <nav class="sidebar-nav" role="navigation">
 
-        <!-- Group: Platform (Admin & Staff) ────────────────────────────── -->
+        <!-- Main navigation ────────────────────────────────────────────── -->
         <div class="nav-group" v-if="isAdmin || isStaff || isManager">
-          <p class="nav-group-label">Platform</p>
-
           <NuxtLink
             to="/dashboard"
             class="nav-item"
             active-class="nav-item--active"
-            title="Dashboard Insights"
+            title="Dashboard"
             @click="closeSidebarOnMobile"
           >
             <AppIcon name="layout-dashboard" :size="15" class="nav-icon" />
             <span class="nav-label">Dashboard</span>
           </NuxtLink>
-        </div>
-
-        <!-- Group: Beneficiaries ────────────────────────────────────── -->
-        <div class="nav-group" v-if="isAdmin || isStaff || isManager">
-          <p class="nav-group-label">Beneficiaries</p>
 
           <NuxtLink
             to="/beneficiaries"
             class="nav-item"
             active-class="nav-item--active"
-            title="Beneficiary Registry"
+            title="Beneficiaries"
             @click="closeSidebarOnMobile"
           >
             <AppIcon name="user-plus" :size="15" class="nav-icon" />
@@ -79,10 +72,8 @@
           </NuxtLink>
         </div>
 
-        <!-- Group: Activities (dynamic from framework) ──────────────── -->
+        <!-- Activities (dynamic from framework) ──────────────────────── -->
         <div class="nav-group" v-if="hasActivities">
-          <p class="nav-group-label">Activities</p>
-
           <NuxtLink
             v-for="activity in sidebarActivities"
             :key="activity.code"
@@ -97,25 +88,18 @@
           </NuxtLink>
         </div>
 
-        <!-- Group: Staff (Admin/Manager only) ──────────────────────── -->
+        <!-- Management ──────────────────────────────────────────────── -->
         <div class="nav-group" v-if="isAdmin || isManager">
-          <p class="nav-group-label">Staff</p>
-
           <NuxtLink
             to="/staff"
             class="nav-item"
             active-class="nav-item--active"
-            title="Staff Management"
+            title="Staff"
             @click="closeSidebarOnMobile"
           >
             <AppIcon name="users" :size="15" class="nav-icon" />
             <span class="nav-label">Staff</span>
           </NuxtLink>
-        </div>
-
-        <!-- Group: Reports (all users) ───────────────────────────────── -->
-        <div class="nav-group" v-if="isAdmin || isManager">
-          <p class="nav-group-label">Reports</p>
 
           <NuxtLink
             to="/reports"
@@ -129,10 +113,11 @@
           </NuxtLink>
         </div>
 
-        <!-- Group: Settings (Admin/Manager only) ──────────────────── -->
-        <div class="nav-group" v-if="isAdmin || isManager">
-          <p class="nav-group-label">Settings</p>
+        <!-- Separator ─────────────────────────────────────────────── -->
+        <div class="nav-divider" v-if="isAdmin || isManager" aria-hidden="true" />
 
+        <!-- Settings ──────────────────────────────────────────────── -->
+        <div class="nav-group" v-if="isAdmin || isManager">
           <NuxtLink
             to="/settings"
             class="nav-item"
@@ -612,18 +597,11 @@ async function handleLogout(): Promise<void> {
   gap: 1px;
 }
 
-/* Tiny all-caps section label */
-.nav-group-label {
-  margin: 0 0 6px 0;
-  padding: 0 8px;
-  font-size: 0.62rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: var(--text-muted);
-  user-select: none;
-  transition: opacity 0.15s ease;
-  white-space: nowrap;
+/* Thin divider between nav sections */
+.nav-divider {
+  height: 1px;
+  margin: 4px 8px;
+  background: var(--border-subtle);
 }
 
 /* Individual nav item — base styles shared by links and disabled spans */
@@ -1008,12 +986,9 @@ async function handleLogout(): Promise<void> {
     overflow: hidden;
   }
 
-  /* Section group labels */
-  .app-shell.sidebar-collapsed .nav-group-label {
-    opacity: 0;
-    height: 0;
-    margin: 0;
-    overflow: hidden;
+  /* Divider: hide when collapsed */
+  .app-shell.sidebar-collapsed .nav-divider {
+    margin: 2px 4px;
   }
 
   /* Nav item text */
