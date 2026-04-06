@@ -9,6 +9,8 @@ export function useBeneficiaryList() {
   const pageSize = ref(20)
   const search = ref('')
   const centreId = ref('')
+  const sex = ref('')
+  const disabilityStatus = ref('')
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -82,6 +84,8 @@ export function useBeneficiaryList() {
     pageSize,
     search,
     centreId,
+    sex,
+    disabilityStatus,
     loading,
     error,
     totalPages,

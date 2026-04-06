@@ -46,6 +46,8 @@ export const beneficiaryApi = {
     const qs = new URLSearchParams()
     if (params?.cfs_location_id) qs.set('cfs_location_id', params.cfs_location_id)
     if (params?.search) qs.set('search', params.search)
+    if (params?.sex) qs.set('sex', params.sex)
+    if (params?.disability_status) qs.set('disability_status', params.disability_status)
     if (params?.page) qs.set('page', String(params.page))
     if (params?.page_size) qs.set('page_size', String(params.page_size))
     const query = qs.toString() ? `?${qs.toString()}` : ''
@@ -57,6 +59,8 @@ export const beneficiaryApi = {
     const qs = new URLSearchParams()
     if (params?.cfs_location_id) qs.set('cfs_location_id', params.cfs_location_id)
     if (params?.search) qs.set('search', params.search)
+    if (params?.sex) qs.set('sex', params.sex)
+    if (params?.disability_status) qs.set('disability_status', params.disability_status)
     const query = qs.toString() ? `?${qs.toString()}` : ''
     const response = await fetch(`${BASE_URL}/cfs/beneficiaries/export${query}`, {
       headers: {

@@ -49,8 +49,6 @@
       <BeneficiaryTable
         v-else
         :beneficiaries="list.beneficiaries.value"
-        @edit="handleEdit"
-        @print="handlePrint"
       />
 
       <!-- ═══ Pagination ═══ -->
@@ -112,7 +110,6 @@ import BeneficiaryTable from '../../components/beneficiaries/BeneficiaryTable.vu
 import BeneficiarySkeleton from '../../components/beneficiaries/BeneficiarySkeleton.vue'
 import FilterBar from '../../components/beneficiaries/FilterBar.vue'
 import FilterDrawer from '../../components/beneficiaries/FilterDrawer.vue'
-import type { Beneficiary } from '../../interfaces/beneficiary'
 
 definePageMeta({
   layout: false,
@@ -141,8 +138,9 @@ const activeChip = ref('')
 
 const filterChips = computed(() => [
   { label: 'All', value: '', active: activeChip.value === '' },
-  { label: 'Active', value: 'active', active: activeChip.value === 'active' },
-  { label: 'Pending', value: 'pending', active: activeChip.value === 'pending' },
+  { label: 'Male', value: 'male', active: activeChip.value === 'male' },
+  { label: 'Female', value: 'female', active: activeChip.value === 'female' },
+  { label: 'Disability', value: 'disability', active: activeChip.value === 'disability' },
 ])
 
 // ── Recent searches (stored in memory) ────────────────────────────────────────
@@ -198,14 +196,28 @@ function handleSearch(value: string) {
 // ── Chip toggle ───────────────────────────────────────────────────────────────
 function handleChipToggle(value: string) {
   activeChip.value = value
-  // Map chips to API filter
+  // Map chips to API filters
+  if (value === 'male' || value === 'female') {
+    list.sex.value = value
+    list.disabilityStatus.value = ''
+  } else if (value === 'disability') {
+    list.sex.value = ''
+    list.disabilityStatus.value = 'has_disability'
+  } else {
+    list.sex.value = ''
+    list.disabilityStatus.value = ''
+  }
   list.applyFilter()
 }
 
 // ── Tag removal ───────────────────────────────────────────────────────────────
 function handleRemoveTag(key: string) {
   switch (key) {
-    case 'chip': activeChip.value = ''; break
+    case 'chip':
+      activeChip.value = ''
+      list.sex.value = ''
+      list.disabilityStatus.value = ''
+      break
     case 'centre': drawerFilters.value.centreId = ''; list.centreId.value = ''; break
     case 'disability': drawerFilters.value.disabilityStatus = ''; break
     case 'type': drawerFilters.value.beneficiaryType = 'all'; break
@@ -228,6 +240,8 @@ function handleClearAll() {
     householdSizeMax: null,
   }
   list.centreId.value = ''
+  list.sex.value = ''
+  list.disabilityStatus.value = ''
   list.search.value = ''
   list.applyFilter()
 }
@@ -252,17 +266,6 @@ function handleDrawerReset() {
   }
   list.centreId.value = ''
   list.applyFilter()
-}
-
-// ── Row actions ───────────────────────────────────────────────────────────────
-function handleEdit(b: Beneficiary) {
-  // TODO: navigate to edit page when ready
-  console.log('Edit', b.id)
-}
-
-function handlePrint(b: Beneficiary) {
-  // TODO: print report
-  console.log('Print', b.id)
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────

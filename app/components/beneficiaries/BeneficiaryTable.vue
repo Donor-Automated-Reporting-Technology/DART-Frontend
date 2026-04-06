@@ -9,16 +9,14 @@
             <th class="th-left">Name</th>
             <th class="th-right">Age</th>
             <th class="th-left">Gender</th>
-            <th class="th-left">Status</th>
             <th class="th-left">Location</th>
             <th class="th-left">Disability</th>
             <th class="th-left">Registered</th>
-            <th class="th-actions" aria-label="Actions"></th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="beneficiaries.length === 0">
-            <td colspan="9" class="empty-cell">
+            <td colspan="7" class="empty-cell">
               <div class="empty-state">
                 <AppIcon name="users" :size="32" class="empty-icon" />
                 <p class="empty-title">No beneficiaries found</p>
@@ -31,8 +29,6 @@
             :key="b.id"
             class="ben-row"
             :class="{ 'ben-row--even': idx % 2 === 1 }"
-            @mouseenter="hoveredId = b.id"
-            @mouseleave="hoveredId = null"
           >
             <!-- Avatar -->
             <td class="cell-avatar">
@@ -41,25 +37,19 @@
               </div>
             </td>
 
-            <!-- Name (left-aligned, bold primary + muted secondary) -->
+            <!-- Name -->
             <td class="cell-name">
               <span class="name-primary">{{ formatName(b) }}</span>
-              <span class="name-secondary">ID: {{ b.id.slice(0, 8) }}</span>
-              <span v-if="b.guardian_phone" class="name-tertiary">{{ b.guardian_phone }}</span>
+              <span class="name-secondary">{{ b.guardian_name ? `Guardian: ${b.guardian_name}` : `ID: ${b.id.slice(0, 8)}` }}</span>
             </td>
 
-            <!-- Age (right-aligned, numeric) -->
+            <!-- Age -->
             <td class="cell-number">{{ b.age_at_registration }}</td>
 
             <!-- Gender -->
             <td class="cell-text">{{ formatGender(b.sex) }}</td>
 
-            <!-- Status badge -->
-            <td class="cell-status">
-              <StatusBadge :status="deriveStatus(b)" />
-            </td>
-
-            <!-- Location (left-aligned) -->
+            <!-- Location -->
             <td class="cell-text cell-location">{{ b.cfs_location?.name ?? '—' }}</td>
 
             <!-- Disability -->
@@ -72,34 +62,12 @@
 
             <!-- Registered date -->
             <td class="cell-text cell-date">{{ formatDate(b.registration_date) }}</td>
-
-            <!-- Quick Actions (revealed on hover) -->
-            <td class="cell-actions">
-              <Transition name="actions-fade">
-                <div v-if="hoveredId === b.id" class="quick-actions">
-                  <button
-                    class="action-btn"
-                    title="Edit beneficiary"
-                    @click.stop="$emit('edit', b)"
-                  >
-                    <AppIcon name="pencil" :size="14" />
-                  </button>
-                  <button
-                    class="action-btn"
-                    title="Print report"
-                    @click.stop="$emit('print', b)"
-                  >
-                    <AppIcon name="printer" :size="14" />
-                  </button>
-                </div>
-              </Transition>
-            </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- ═══ Mobile Cards ═══ -->
+    <!-- ═══ Mobile Cards (attendance-style) ═══ -->
     <div class="ben-cards">
       <div v-if="beneficiaries.length === 0" class="empty-state empty-state--card">
         <AppIcon name="users" :size="32" class="empty-icon" />
@@ -108,51 +76,27 @@
       </div>
 
       <div v-for="b in beneficiaries" :key="'m'+b.id" class="ben-card">
-        <div class="card-header">
-          <div class="avatar avatar--card" :style="{ background: avatarColor(b) }">
-            {{ avatarInitials(b) }}
+        <div class="card-content">
+          <div class="card-left">
+            <div class="avatar avatar--card" :style="{ background: avatarColor(b) }">
+              {{ avatarInitials(b) }}
+            </div>
           </div>
-          <div class="card-name-block">
-            <span class="name-primary">{{ formatName(b) }}</span>
-            <span class="name-secondary">ID: {{ b.id.slice(0, 8) }}</span>
+          <div class="card-primary">
+            <span class="card-name">{{ formatName(b) }}</span>
+            <div class="card-meta">
+              <span class="meta-tag">Age {{ b.age_at_registration }}</span>
+              <span class="meta-tag meta-tag--gender">{{ formatGender(b.sex) }}</span>
+              <span v-if="b.disability_status && b.disability_status !== 'none'" class="meta-tag meta-tag--disability">{{ b.disability_status }}</span>
+            </div>
+            <div class="card-sub-row">
+              <span v-if="b.cfs_location?.name" class="card-location">{{ b.cfs_location.name }}</span>
+              <span v-if="b.guardian_name" class="card-guardian">{{ b.guardian_name }}</span>
+            </div>
           </div>
-          <StatusBadge :status="deriveStatus(b)" />
-        </div>
-
-        <div class="card-details">
-          <div class="detail-row">
-            <span class="detail-label">Age</span>
-            <span class="detail-value detail-value--num">{{ b.age_at_registration }}</span>
+          <div class="card-right">
+            <span class="card-date">{{ formatDateShort(b.registration_date) }}</span>
           </div>
-          <div class="detail-row">
-            <span class="detail-label">Gender</span>
-            <span class="detail-value">{{ formatGender(b.sex) }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Location</span>
-            <span class="detail-value">{{ b.cfs_location?.name ?? '—' }}</span>
-          </div>
-          <div class="detail-row" v-if="b.disability_status && b.disability_status !== 'none'">
-            <span class="detail-label">Disability</span>
-            <span class="detail-value">
-              <span class="disability-tag">{{ b.disability_status }}</span>
-            </span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Registered</span>
-            <span class="detail-value">{{ formatDate(b.registration_date) }}</span>
-          </div>
-        </div>
-
-        <div class="card-actions">
-          <button class="card-action-btn" @click="$emit('edit', b)">
-            <AppIcon name="pencil" :size="13" />
-            Edit
-          </button>
-          <button class="card-action-btn" @click="$emit('print', b)">
-            <AppIcon name="printer" :size="13" />
-            Print
-          </button>
         </div>
       </div>
     </div>
@@ -160,20 +104,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import type { Beneficiary } from '../../interfaces/beneficiary'
-import StatusBadge from './StatusBadge.vue'
 
 defineProps<{
   beneficiaries: Beneficiary[]
 }>()
-
-defineEmits<{
-  edit: [b: Beneficiary]
-  print: [b: Beneficiary]
-}>()
-
-const hoveredId = ref<string | null>(null)
 
 function formatName(b: Beneficiary): string {
   return [b.personal_name, b.father_name, b.grandfather_name, b.family_name]
@@ -182,14 +117,19 @@ function formatName(b: Beneficiary): string {
 }
 
 function formatGender(sex: string): string {
-  if (sex === 'M') return 'Male'
-  if (sex === 'F') return 'Female'
+  if (sex === 'male' || sex === 'M') return 'Male'
+  if (sex === 'female' || sex === 'F') return 'Female'
   return sex
 }
 
 function formatDate(iso: string): string {
   if (!iso) return '—'
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function formatDateShort(iso: string): string {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 
 function avatarInitials(b: Beneficiary): string {
@@ -210,17 +150,10 @@ function avatarColor(b: Beneficiary): string {
   for (let i = 0; i < s.length; i++) hash = s.charCodeAt(i) + ((hash << 5) - hash)
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
 }
-
-function deriveStatus(b: Beneficiary): string {
-  // Use existing status field or derive from data
-  if ((b as any).status) return (b as any).status
-  if (b.registration_date) return 'verified'
-  return 'pending'
-}
 </script>
 
 <style scoped>
-/* ═══ Table Container — 20px rounded corners, Apple polish ═══ */
+/* ═══ Table Container ═══ */
 .table-container {
   border-radius: 10px;
   overflow: hidden;
@@ -235,18 +168,15 @@ function deriveStatus(b: Beneficiary): string {
   table-layout: fixed;
 }
 
-/* ═══ Mobile: show cards, hide table ═══ */
 .ben-cards { display: none; }
 
 @media (max-width: 768px) {
   .table-container { display: none; }
-  .ben-cards { display: flex; flex-direction: column; gap: 10px; }
+  .ben-cards { display: flex; flex-direction: column; gap: 8px; }
 }
 
 /* ═══ Header ═══ */
-.ben-table thead {
-  background: var(--bg-surface);
-}
+.ben-table thead { background: var(--bg-surface); }
 
 .ben-table th {
   font-size: 0.72rem;
@@ -263,23 +193,11 @@ function deriveStatus(b: Beneficiary): string {
 .th-left { text-align: left; }
 .th-right { text-align: right; }
 .th-avatar { width: 52px; }
-.th-actions { width: 80px; }
 
-/* ═══ Rows — zebra striping + hover ═══ */
-.ben-row {
-  transition: background 0.12s ease;
-  position: relative;
-}
-
-/* 2% grey tint on even rows */
-.ben-row--even {
-  background: var(--hover-bg-subtle);
-}
-
-/* Hover: highlight row */
-.ben-row:hover {
-  background: var(--primary-dim);
-}
+/* ═══ Rows ═══ */
+.ben-row { transition: background 0.12s ease; }
+.ben-row--even { background: var(--hover-bg-subtle); }
+.ben-row:hover { background: var(--primary-dim); }
 
 .ben-table td {
   padding: 12px 16px;
@@ -312,7 +230,7 @@ function deriveStatus(b: Beneficiary): string {
   font-size: 0.76rem;
 }
 
-/* ═══ Cell: Name — strict hierarchy ═══ */
+/* ═══ Cell: Name ═══ */
 .cell-name {
   display: flex;
   flex-direction: column;
@@ -338,13 +256,7 @@ function deriveStatus(b: Beneficiary): string {
   line-height: 1.35;
 }
 
-.name-tertiary {
-  font-size: 0.7rem;
-  color: #AEAEB2;
-  line-height: 1.3;
-}
-
-/* ═══ Cell: Numbers — right aligned ═══ */
+/* ═══ Cell: Numbers ═══ */
 .cell-number {
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -375,8 +287,6 @@ function deriveStatus(b: Beneficiary): string {
   color: #86868B;
   white-space: nowrap;
 }
-
-.cell-status { white-space: nowrap; }
 
 .text-muted { color: var(--text-muted); }
 
@@ -410,46 +320,6 @@ function deriveStatus(b: Beneficiary): string {
   color: #ff9f0a;
 }
 
-/* ═══ Quick Actions — revealed on hover ═══ */
-.cell-actions {
-  width: 80px;
-  text-align: right;
-  padding-right: 16px;
-}
-
-.quick-actions {
-  display: inline-flex;
-  gap: 4px;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  background: var(--bg-panel);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.12s;
-  box-sizing: border-box;
-  flex-shrink: 0;
-}
-
-.action-btn:hover {
-  background: var(--primary-dim);
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.actions-fade-enter-active { transition: opacity 0.15s ease, transform 0.15s ease; }
-.actions-fade-leave-active { transition: opacity 0.1s ease; }
-.actions-fade-enter-from { opacity: 0; transform: translateX(4px); }
-.actions-fade-leave-to { opacity: 0; }
-
 /* ═══ Empty State ═══ */
 .empty-cell { border-bottom: none; }
 
@@ -462,7 +332,6 @@ function deriveStatus(b: Beneficiary): string {
 }
 
 .empty-state--card { padding: 40px 20px; }
-
 .empty-icon { color: var(--text-muted); opacity: 0.4; }
 
 .empty-title {
@@ -478,88 +347,110 @@ function deriveStatus(b: Beneficiary): string {
   margin: 0;
 }
 
-/* ═══ Mobile Cards ═══ */
+/* ═══ Mobile Cards — attendance-style ═══ */
 .ben-card {
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: var(--shadow-card);
+  transition: border-color 0.15s;
 }
 
-.card-header {
+.card-content {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
-  padding: 16px 16px 12px;
+  padding: 14px 16px;
 }
 
-.card-name-block {
+.card-left { flex-shrink: 0; padding-top: 2px; }
+
+.card-primary {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 4px;
 }
 
-.card-details {
-  padding: 0 16px 12px;
+.card-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.meta-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 6px;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.meta-tag--gender {
+  background: color-mix(in srgb, var(--data-teal) 12%, transparent);
+  color: var(--data-teal);
+}
+
+.meta-tag--disability {
+  background: rgba(255, 149, 0, 0.10);
+  color: #b25000;
+  text-transform: capitalize;
+}
+
+[data-theme="dark"] .meta-tag--disability,
+:root:not([data-theme="light"]) .meta-tag--disability {
+  background: rgba(255, 149, 0, 0.12);
+  color: #ff9f0a;
+}
+
+.card-sub-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.card-location,
+.card-guardian {
+  font-size: 0.72rem;
+  color: #86868B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-location::before {
+  content: '📍';
+  margin-right: 3px;
+}
+
+.card-guardian::before {
+  content: '👤';
+  margin-right: 3px;
+}
+
+.card-right {
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: flex-end;
 }
 
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.detail-label {
-  font-size: 0.74rem;
+.card-date {
+  font-size: 0.7rem;
   color: #86868B;
-  font-weight: 500;
-}
-
-.detail-value {
-  font-size: 0.82rem;
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.detail-value--num {
-  font-variant-numeric: tabular-nums;
-  font-weight: 650;
-}
-
-.card-actions {
-  display: flex;
-  border-top: 1px solid var(--border-subtle);
-}
-
-.card-action-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 0;
-  min-height: 48px;
-  background: none;
-  border: none;
-  border-right: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.12s, color 0.12s;
-  font-family: inherit;
-}
-
-.card-action-btn:last-child { border-right: none; }
-
-.card-action-btn:hover {
-  background: var(--hover-bg);
-  color: var(--primary);
+  white-space: nowrap;
 }
 </style>

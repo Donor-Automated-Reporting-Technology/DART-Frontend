@@ -42,6 +42,8 @@ export interface RegisterBeneficiaryRequest {
 export interface BeneficiaryFilter {
   cfs_location_id?: string
   search?: string
+  sex?: string
+  disability_status?: string
   page?: number
   page_size?: number
 }
