@@ -18,15 +18,15 @@
         <div class="greeting-actions">
           <button
             class="sync-btn"
-            :class="{ 'sync-btn--syncing': isSyncing }"
-            :disabled="isSyncing || !isOnline"
+            :class="{ 'sync-btn--syncing': isSyncing, 'sync-btn--pending': pendingCount > 0 && !isSyncing }"
+            :disabled="isSyncing"
             @click="handleSync"
           >
-            <AppIcon name="refresh-cw" :size="14" :class="{ 'spin': isSyncing }" />
+            <AppIcon :name="!isOnline ? 'wifi-off' : 'refresh-cw'" :size="14" :class="{ 'spin': isSyncing }" />
             <span v-if="isSyncing">Syncing…</span>
-            <span v-else-if="!isOnline">Offline</span>
-            <span v-else-if="pendingCount > 0">Sync {{ pendingCount }}</span>
-            <span v-else>Synced</span>
+            <span v-else-if="!isOnline">Offline Mode</span>
+            <span v-else-if="pendingCount > 0">Sync {{ pendingCount }} pending</span>
+            <span v-else>Sync Data</span>
           </button>
         </div>
       </div>
@@ -378,10 +378,17 @@ const {
 } = useDashboard()
 
 const { isOnline, pendingCount } = useOfflineStatus()
-const { isSyncing, flushQueue } = useSyncQueue()
+const { isSyncing, flushQueue, pullBeneficiaries } = useSyncQueue()
 
 async function handleSync() {
-  await flushQueue()
+  if (isOnline.value) {
+    // Online: push pending records to server, then pull fresh beneficiary data
+    await flushQueue()
+  }
+  // Always pull beneficiaries into IndexedDB for offline use (works online & caches for offline)
+  if (isOnline.value) {
+    await pullBeneficiaries()
+  }
   await fetchDashboard()
 }
 
@@ -485,12 +492,15 @@ onMounted(fetchDashboard)
   background: var(--data-teal-dim);
 }
 .sync-btn:disabled {
-  opacity: 0.5;
   cursor: not-allowed;
 }
 .sync-btn--syncing {
   border-color: var(--data-teal);
   color: var(--data-teal);
+}
+.sync-btn--pending {
+  border-color: var(--warning);
+  color: var(--warning);
 }
 
 @keyframes spin {
