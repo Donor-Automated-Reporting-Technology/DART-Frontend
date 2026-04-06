@@ -63,22 +63,22 @@ defineEmits<{
 .activity-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   padding: 14px 16px;
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  transition: border-color 0.15s, opacity 0.15s;
-  opacity: 0.55;
+  border-radius: 10px;
+  transition: border-color 0.15s, opacity 0.15s, background 0.15s;
+  opacity: 0.5;
 }
 
 .activity-row--active {
   opacity: 1;
-  border-color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 3%, var(--bg-panel));
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border-color));
+  background: color-mix(in srgb, var(--primary) 2%, var(--bg-panel));
 }
 
-/* ── Toggle ───────────────────────────────────────────────────────────────── */
+/* ── Toggle ── */
 .toggle-wrap {
   position: relative;
   flex-shrink: 0;
@@ -95,10 +95,10 @@ defineEmits<{
 
 .toggle-track {
   display: block;
-  width: 34px;
-  height: 18px;
+  width: 36px;
+  height: 20px;
   background: var(--border-color);
-  border-radius: 9px;
+  border-radius: 10px;
   transition: background 0.2s;
   position: relative;
 }
@@ -111,18 +111,19 @@ defineEmits<{
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   background: #fff;
   border-radius: 50%;
-  transition: transform 0.2s;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .toggle-input:checked + .toggle-track .toggle-thumb {
   transform: translateX(16px);
 }
 
-/* ── Info ──────────────────────────────────────────────────────────────────── */
+/* ── Info ── */
 .activity-info {
   flex: 1;
   min-width: 0;
@@ -150,7 +151,7 @@ defineEmits<{
   text-overflow: ellipsis;
 }
 
-/* ── Target ────────────────────────────────────────────────────────────────── */
+/* ── Target ── */
 .target-group {
   display: flex;
   align-items: center;
@@ -160,14 +161,15 @@ defineEmits<{
 
 .target-input {
   width: 80px;
-  padding: 7px 10px;
+  padding: 8px 10px;
   background: var(--bg-input);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   color: var(--text-primary);
   font-size: 0.8rem;
   text-align: right;
   font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .target-input:focus {
@@ -177,10 +179,10 @@ defineEmits<{
 }
 
 .target-unit {
-  padding: 7px 28px 7px 10px;
+  padding: 8px 28px 8px 10px;
   background: var(--bg-input);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   color: var(--text-primary);
   font-size: 0.8rem;
   font-family: inherit;
@@ -191,6 +193,7 @@ defineEmits<{
   background-repeat: no-repeat;
   background-size: 16px;
   min-width: 110px;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .target-unit:focus {

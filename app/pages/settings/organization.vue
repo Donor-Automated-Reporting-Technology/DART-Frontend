@@ -7,72 +7,97 @@
     ]"
   >
     <div class="settings-org">
+
+      <!-- ═══ Page Header ═══ -->
       <div class="page-header">
-        <h1 class="page-title">Organisation</h1>
-        <p class="page-subtitle">Update your organisation details.</p>
+        <div class="header-row">
+          <div>
+            <h1 class="page-title">Organisation</h1>
+            <p class="page-subtitle">Update your organisation details</p>
+          </div>
+          <NuxtLink to="/settings" class="btn-back">
+            <AppIcon name="arrow-left" :size="14" />
+            <span class="btn-text">Settings</span>
+          </NuxtLink>
+        </div>
       </div>
 
       <!-- Loading -->
-      <div v-if="loading" class="loading-msg">Loading organisation data…</div>
+      <div v-if="loading" class="loading-state">
+        <div class="skeleton-field" />
+        <div class="skeleton-field" />
+        <div class="skeleton-field skeleton-field--lg" />
+      </div>
 
       <!-- Form -->
       <form v-else class="org-form" @submit.prevent="save">
         <!-- Org name -->
-        <div class="field">
-          <label class="field-label" for="org-name">Organisation name</label>
-          <input
-            id="org-name"
-            v-model="form.name"
-            type="text"
-            class="field-input"
-            :class="{ 'is-error': errors.name }"
-            placeholder="Your organisation name"
-          />
-          <span v-if="errors.name" class="err-msg">{{ errors.name }}</span>
-        </div>
+        <div class="form-section">
+          <div class="section-label">Organisation info</div>
+          <div class="section-card">
+            <div class="field">
+              <label class="field-label" for="org-name">Organisation name</label>
+              <input
+                id="org-name"
+                v-model="form.name"
+                type="text"
+                class="field-input"
+                :class="{ 'is-error': errors.name }"
+                placeholder="Your organisation name"
+              />
+              <span v-if="errors.name" class="err-msg">{{ errors.name }}</span>
+            </div>
 
-        <!-- Country -->
-        <div class="field">
-          <label class="field-label" for="org-country">Country</label>
-          <select
-            id="org-country"
-            v-model="form.country"
-            class="field-input"
-            :class="{ 'is-error': errors.country }"
-          >
-            <option value="" disabled>Select a country</option>
-            <option v-for="c in countries" :key="c" :value="c">{{ c }}</option>
-          </select>
-          <span v-if="errors.country" class="err-msg">{{ errors.country }}</span>
+            <div class="field">
+              <label class="field-label" for="org-country">Country</label>
+              <select
+                id="org-country"
+                v-model="form.country"
+                class="field-input"
+                :class="{ 'is-error': errors.country }"
+              >
+                <option value="" disabled>Select a country</option>
+                <option v-for="c in countries" :key="c" :value="c">{{ c }}</option>
+              </select>
+              <span v-if="errors.country" class="err-msg">{{ errors.country }}</span>
+            </div>
+          </div>
         </div>
 
         <!-- Description -->
-        <div class="field">
-          <label class="field-label" for="org-desc">
-            Description
-            <span class="optional">optional</span>
-          </label>
-          <textarea
-            id="org-desc"
-            v-model="form.description"
-            class="field-textarea"
-            placeholder="Brief description of your organisation…"
-            maxlength="1000"
-            rows="3"
-          />
-          <div class="textarea-meta">
-            <span class="char-count" :class="{ warn: (form.description?.length ?? 0) > 900 }">
-              {{ form.description?.length ?? 0 }}&thinsp;/&thinsp;1000
-            </span>
+        <div class="form-section">
+          <div class="section-label">About</div>
+          <div class="section-card">
+            <div class="field">
+              <label class="field-label" for="org-desc">
+                Description
+                <span class="optional">optional</span>
+              </label>
+              <textarea
+                id="org-desc"
+                v-model="form.description"
+                class="field-textarea"
+                placeholder="Brief description of your organisation…"
+                maxlength="1000"
+                rows="3"
+              />
+              <div class="textarea-meta">
+                <span class="char-count" :class="{ warn: (form.description?.length ?? 0) > 900 }">
+                  {{ form.description?.length ?? 0 }}&thinsp;/&thinsp;1000
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- API error -->
-        <p v-if="apiError" class="api-err">{{ apiError }}</p>
+        <div v-if="apiError" class="api-err">
+          <AppIcon name="alert-circle" :size="14" />
+          {{ apiError }}
+        </div>
 
         <!-- Actions -->
         <div class="actions">
-          <NuxtLink to="/settings" class="btn-secondary">Back</NuxtLink>
           <button type="submit" class="btn-primary" :disabled="isSaving">
             <span v-if="isSaving" class="btn-spinner" />
             {{ isSaving ? 'Saving…' : 'Save changes' }}
@@ -80,10 +105,12 @@
         </div>
 
         <!-- Success toast -->
-        <div v-if="showSuccess" class="toast-success">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-          Organisation updated
-        </div>
+        <Transition name="toast">
+          <div v-if="showSuccess" class="toast-success">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Organisation updated
+          </div>
+        </Transition>
       </form>
     </div>
   </NuxtLayout>
@@ -176,39 +203,110 @@ async function save() {
 
 <style scoped>
 .settings-org {
-  max-width: 540px;
+  max-width: 600px;
 }
 
+/* ═══ Page Header ═══ */
 .page-header {
   margin-bottom: 24px;
 }
 
+.header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .page-title {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.35rem;
+  font-weight: 750;
   color: var(--text-primary);
-  margin: 0 0 4px;
+  margin: 0 0 2px;
+  letter-spacing: -0.02em;
 }
 
 .page-subtitle {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
   margin: 0;
 }
 
-.loading-msg {
-  font-size: 0.84rem;
-  color: var(--text-muted);
-  padding: 24px 0;
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+  min-height: 36px;
+}
+.btn-back:hover { border-color: var(--text-muted); color: var(--text-primary); }
+
+/* ═══ Loading Skeleton ═══ */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
+.skeleton-field {
+  height: 56px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.skeleton-field--lg {
+  height: 88px;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.3; }
+}
+
+/* ═══ Form ═══ */
 .org-form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
 
-/* ── Fields ───────────────────────────────────────────────────────────────── */
+/* ═══ Form Sections ═══ */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding-left: 2px;
+}
+
+.section-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 18px;
+}
+
+/* ═══ Fields ═══ */
 .field {
   display: flex;
   flex-direction: column;
@@ -216,11 +314,9 @@ async function save() {
 }
 
 .field-label {
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   gap: 5px;
@@ -229,8 +325,6 @@ async function save() {
 .optional {
   font-size: 0.65rem;
   font-weight: 400;
-  text-transform: none;
-  letter-spacing: 0;
   color: var(--text-muted);
   opacity: 0.7;
 }
@@ -238,10 +332,10 @@ async function save() {
 .field-input,
 .field-textarea {
   width: 100%;
-  padding: 9px 11px;
+  padding: 10px 12px;
   background: var(--bg-input);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   color: var(--text-primary);
   font-size: 0.845rem;
   font-family: inherit;
@@ -264,7 +358,7 @@ async function save() {
 select.field-input {
   appearance: none;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 8px center;
+  background-position: right 10px center;
   background-repeat: no-repeat;
   background-size: 16px;
   padding-right: 32px;
@@ -294,60 +388,44 @@ select.field-input {
 }
 
 .api-err {
-  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
   color: var(--error);
-  padding: 8px 12px;
-  background: color-mix(in srgb, var(--error) 8%, transparent);
-  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  background: var(--error-bg);
+  border: 1px solid rgba(248, 113, 113, 0.12);
+  border-radius: 8px;
   margin: 0;
 }
 
-/* ── Actions ──────────────────────────────────────────────────────────────── */
+/* ═══ Actions ═══ */
 .actions {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding-top: 4px;
 }
 
 .btn-primary {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 9px 18px;
+  padding: 10px 20px;
   background: var(--primary);
   color: #fff;
   border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.82rem;
+  border-radius: 8px;
+  font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, transform 0.1s;
+  font-family: inherit;
+  min-height: 40px;
 }
-
 .btn-primary:hover { opacity: 0.9; }
+.btn-primary:active { transform: scale(0.98); }
 .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
-
-.btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 18px;
-  background: transparent;
-  color: var(--text-muted);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  font-size: 0.82rem;
-  font-weight: 500;
-  text-decoration: none;
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
-}
-
-.btn-secondary:hover {
-  border-color: var(--text-primary);
-  color: var(--text-primary);
-}
 
 .btn-spinner {
   width: 14px;
@@ -360,17 +438,29 @@ select.field-input {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Toast ────────────────────────────────────────────────────────────────── */
+/* ═══ Toast ═══ */
 .toast-success {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
-  background: color-mix(in srgb, var(--success) 12%, var(--bg-panel));
-  border: 1px solid var(--success);
-  border-radius: var(--radius-sm);
-  font-size: 0.78rem;
+  padding: 10px 16px;
+  background: color-mix(in srgb, var(--success) 10%, var(--bg-panel));
+  border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
+  border-radius: 8px;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--success);
+}
+
+.toast-enter-active { transition: all 0.2s ease-out; }
+.toast-leave-active { transition: all 0.15s ease-in; }
+.toast-enter-from { opacity: 0; transform: translateY(4px); }
+.toast-leave-to { opacity: 0; }
+
+/* ═══ Responsive ═══ */
+@media (max-width: 640px) {
+  .header-row { flex-direction: column; gap: 10px; }
+  .btn-text { display: none; }
+  .section-card { padding: 14px; }
 }
 </style>

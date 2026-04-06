@@ -72,15 +72,10 @@
               <div class="card-primary">
                 <span class="card-name">{{ row.full_name }}</span>
                 <div class="card-meta">
-                  <span class="meta-id">{{ row.id.slice(0, 8).toUpperCase() }}</span>
-                  <span class="meta-sep">&middot;</span>
-                  <span v-if="row.age">Age {{ row.age }}</span>
-                  <span v-if="row.age && row.sex" class="meta-sep">&middot;</span>
-                  <span v-if="row.sex" class="meta-gender">{{ row.sex }}</span>
-                  <template v-if="row.disability_status && row.disability_status !== 'none'">
-                    <span class="meta-sep">&middot;</span>
-                    <span class="meta-disability">{{ row.disability_status }}</span>
-                  </template>
+                  <span class="meta-tag meta-tag--id">{{ row.id.slice(0, 8).toUpperCase() }}</span>
+                  <span v-if="row.age" class="meta-tag">Age {{ row.age }}</span>
+                  <span v-if="row.sex" class="meta-tag meta-tag--gender">{{ row.sex }}</span>
+                  <span v-if="row.disability_status && row.disability_status !== 'none'" class="meta-tag meta-tag--disability">{{ row.disability_status }}</span>
                 </div>
               </div>
               <div class="card-check">
@@ -416,52 +411,63 @@ onMounted(() => {
 .card-primary {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 6px;
   min-width: 0;
   flex: 1;
 }
 
 .card-name {
-  font-size: 0.88rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: var(--text-primary);
   letter-spacing: -0.012em;
-  white-space: nowrap;
+  line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
 }
 
 .card-meta {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 0.74rem;
-  color: var(--text-secondary);
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
-.meta-id {
+.meta-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--text-muted) 8%, transparent);
+  border-radius: 6px;
+  white-space: nowrap;
+  text-transform: capitalize;
+}
+
+.meta-tag--id {
   font-variant-numeric: tabular-nums;
   font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
   font-size: 0.68rem;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   color: var(--text-muted);
+  text-transform: none;
 }
 
-.meta-sep {
-  color: var(--text-muted);
-  opacity: 0.5;
-  font-size: 0.68rem;
-}
-
-.meta-gender {
+.meta-tag--gender {
   text-transform: capitalize;
 }
 
-.meta-disability {
-  text-transform: capitalize;
+.meta-tag--disability {
   color: var(--warning);
-  font-weight: 500;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
 }
 
 /* ── Checkmark Circle ────────────────────────────────────────────────────── */
@@ -545,14 +551,22 @@ onMounted(() => {
 
 .footer-stats {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   font-size: 0.78rem;
   color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.footer-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .footer-stats strong {
   color: var(--text-primary);
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .btn-submit {
@@ -674,7 +688,12 @@ onMounted(() => {
   }
 
   .card-meta {
-    font-size: 0.72rem;
+    gap: 3px;
+  }
+
+  .meta-tag {
+    font-size: 0.68rem;
+    padding: 2px 6px;
   }
 }
 </style>

@@ -7,27 +7,56 @@
     ]"
   >
     <div class="settings-loc">
+
+      <!-- ═══ Page Header ═══ -->
       <div class="page-header">
         <div class="header-row">
           <div>
             <h1 class="page-title">Locations</h1>
-            <p class="page-subtitle">Manage parent locations and their service points (CFS centres).</p>
+            <p class="page-subtitle">
+              {{ locStore.locations.length }} location{{ locStore.locations.length !== 1 ? 's' : '' }} configured
+            </p>
           </div>
-          <button class="btn-primary" @click="openAddLocation">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Add Location
-          </button>
+          <div class="header-actions">
+            <NuxtLink to="/settings" class="btn-back">
+              <AppIcon name="arrow-left" :size="14" />
+              <span class="btn-text">Settings</span>
+            </NuxtLink>
+            <button class="btn-primary" @click="openAddLocation">
+              <AppIcon name="plus" :size="14" />
+              <span class="btn-text">Add Location</span>
+            </button>
+          </div>
         </div>
       </div>
 
       <!-- Loading -->
-      <div v-if="locStore.loading && locStore.locations.length === 0" class="loading-msg">Loading locations…</div>
+      <div v-if="locStore.loading && locStore.locations.length === 0" class="loading-state">
+        <div v-for="n in 3" :key="n" class="skeleton-row" />
+      </div>
 
       <!-- Error -->
-      <p v-if="locStore.error" class="api-err">{{ locStore.error }}</p>
+      <div v-if="locStore.error" class="api-err">
+        <AppIcon name="alert-circle" :size="14" />
+        {{ locStore.error }}
+      </div>
+
+      <!-- Empty state -->
+      <div v-if="!locStore.loading && locStore.locations.length === 0 && !locStore.error" class="empty-state">
+        <div class="empty-icon">
+          <AppIcon name="map-pin" :size="28" />
+        </div>
+        <h3 class="empty-title">No locations yet</h3>
+        <p class="empty-desc">Add your first location to start organising service points.</p>
+        <button class="btn-primary" @click="openAddLocation">
+          <AppIcon name="plus" :size="14" />
+          Add Location
+        </button>
+      </div>
 
       <!-- Tree -->
       <LocationTree
+        v-if="locStore.locations.length > 0"
         :locations="locStore.locations"
         @edit-location="openEditLocation"
         @add-service-point="openAddSP"
@@ -35,88 +64,88 @@
         @delete-service-point="confirmDeleteSP"
       />
 
-      <!-- Back link -->
-      <div class="actions" style="margin-top: 20px;">
-        <NuxtLink to="/settings" class="btn-secondary">Back to Settings</NuxtLink>
-      </div>
-
-      <!-- ── Modal overlay ──────────────────────────────────────────────────── -->
+      <!-- ══ Modal overlay ══ -->
       <Teleport to="body">
-        <div v-if="modal.show" class="modal-backdrop" @click.self="closeModal">
-          <div class="modal-box">
-            <div class="modal-header">
-              <h2 class="modal-title">{{ modal.title }}</h2>
-              <button class="modal-close" @click="closeModal" aria-label="Close">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
-            </div>
-            <form class="modal-body" @submit.prevent="handleModalSave">
-              <!-- Location name -->
-              <div v-if="modal.type === 'location'" class="field">
-                <label class="field-label" for="modal-loc-name">Location name</label>
-                <input
-                  id="modal-loc-name"
-                  v-model="modal.fields.name"
-                  type="text"
-                  class="field-input"
-                  placeholder="e.g. Juba Main"
-                  autofocus
-                />
+        <Transition name="modal">
+          <div v-if="modal.show" class="modal-backdrop" @click.self="closeModal">
+            <div class="modal-box">
+              <div class="modal-header">
+                <h2 class="modal-title">{{ modal.title }}</h2>
+                <button class="modal-close" @click="closeModal" aria-label="Close">
+                  <AppIcon name="x" :size="16" />
+                </button>
               </div>
-
-              <!-- Service point fields -->
-              <template v-if="modal.type === 'servicePoint'">
-                <div class="field">
-                  <label class="field-label" for="modal-sp-name">Name</label>
+              <form class="modal-body" @submit.prevent="handleModalSave">
+                <!-- Location name -->
+                <div v-if="modal.type === 'location'" class="field">
+                  <label class="field-label" for="modal-loc-name">Location name</label>
                   <input
-                    id="modal-sp-name"
+                    id="modal-loc-name"
                     v-model="modal.fields.name"
                     type="text"
                     class="field-input"
-                    placeholder="e.g. CFS Centre A"
+                    placeholder="e.g. Juba Main"
                     autofocus
                   />
                 </div>
-                <div class="field">
-                  <label class="field-label" for="modal-sp-lang">
-                    Language
-                    <span class="optional">optional</span>
-                  </label>
-                  <input
-                    id="modal-sp-lang"
-                    v-model="modal.fields.language"
-                    type="text"
-                    class="field-input"
-                    placeholder="e.g. Arabic"
-                  />
-                </div>
-                <div class="field">
-                  <label class="field-label" for="modal-sp-sector">
-                    Sector
-                    <span class="optional">optional</span>
-                  </label>
-                  <input
-                    id="modal-sp-sector"
-                    v-model="modal.fields.sector"
-                    type="text"
-                    class="field-input"
-                    placeholder="e.g. Urban"
-                  />
-                </div>
-              </template>
 
-              <p v-if="modal.error" class="api-err">{{ modal.error }}</p>
+                <!-- Service point fields -->
+                <template v-if="modal.type === 'servicePoint'">
+                  <div class="field">
+                    <label class="field-label" for="modal-sp-name">Name</label>
+                    <input
+                      id="modal-sp-name"
+                      v-model="modal.fields.name"
+                      type="text"
+                      class="field-input"
+                      placeholder="e.g. CFS Centre A"
+                      autofocus
+                    />
+                  </div>
+                  <div class="field">
+                    <label class="field-label" for="modal-sp-lang">
+                      Language
+                      <span class="optional">optional</span>
+                    </label>
+                    <input
+                      id="modal-sp-lang"
+                      v-model="modal.fields.language"
+                      type="text"
+                      class="field-input"
+                      placeholder="e.g. Arabic"
+                    />
+                  </div>
+                  <div class="field">
+                    <label class="field-label" for="modal-sp-sector">
+                      Sector
+                      <span class="optional">optional</span>
+                    </label>
+                    <input
+                      id="modal-sp-sector"
+                      v-model="modal.fields.sector"
+                      type="text"
+                      class="field-input"
+                      placeholder="e.g. Urban"
+                    />
+                  </div>
+                </template>
 
-              <div class="modal-actions">
-                <button type="button" class="btn-secondary" @click="closeModal">Cancel</button>
-                <button type="submit" class="btn-primary" :disabled="modal.saving">
-                  <span v-if="modal.saving" class="btn-spinner" />
-                  {{ modal.saving ? 'Saving…' : 'Save' }}
-                </button>
-              </div>
-            </form>
+                <div v-if="modal.error" class="api-err api-err--sm">
+                  <AppIcon name="alert-circle" :size="13" />
+                  {{ modal.error }}
+                </div>
+
+                <div class="modal-actions">
+                  <button type="button" class="btn-secondary" @click="closeModal">Cancel</button>
+                  <button type="submit" class="btn-primary" :disabled="modal.saving">
+                    <span v-if="modal.saving" class="btn-spinner" />
+                    {{ modal.saving ? 'Saving…' : 'Save' }}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
+        </Transition>
       </Teleport>
     </div>
   </NuxtLayout>
@@ -258,9 +287,10 @@ async function handleModalSave() {
 
 <style scoped>
 .settings-loc {
-  max-width: 700px;
+  max-width: 760px;
 }
 
+/* ═══ Page Header ═══ */
 .page-header {
   margin-bottom: 24px;
 }
@@ -270,76 +300,163 @@ async function handleModalSave() {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .page-title {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.35rem;
+  font-weight: 750;
   color: var(--text-primary);
-  margin: 0 0 4px;
+  margin: 0 0 2px;
+  letter-spacing: -0.02em;
 }
 
 .page-subtitle {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
   margin: 0;
 }
 
-.loading-msg {
-  font-size: 0.84rem;
-  color: var(--text-muted);
-  padding: 24px 0;
+.header-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+  min-height: 40px;
+}
+.btn-back:hover { border-color: var(--text-muted); color: var(--text-primary); }
+
+/* ═══ Loading Skeleton ═══ */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-row {
+  height: 48px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.3; }
+}
+
+/* ═══ Empty State ═══ */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--bg-panel);
+  border: 1px dashed var(--border-color);
+  border-radius: 10px;
+}
+
+.empty-icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent, var(--primary)) 10%, transparent);
+  color: var(--accent, var(--primary));
+  margin-bottom: 14px;
+}
+
+.empty-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+
+.empty-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0 0 18px;
+}
+
+/* ═══ Error ═══ */
 .api-err {
-  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
   color: var(--error);
-  padding: 8px 12px;
-  background: color-mix(in srgb, var(--error) 8%, transparent);
-  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  background: var(--error-bg);
+  border: 1px solid rgba(248, 113, 113, 0.12);
+  border-radius: 8px;
   margin: 0 0 12px;
 }
 
-/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.api-err--sm {
+  font-size: 0.78rem;
+  padding: 8px 12px;
+  margin: 0;
+}
+
+/* ═══ Buttons ═══ */
 .btn-primary {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 9px 18px;
+  padding: 10px 18px;
   background: var(--primary);
   color: #fff;
   border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.82rem;
+  border-radius: 8px;
+  font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, transform 0.1s;
   white-space: nowrap;
+  font-family: inherit;
+  min-height: 40px;
 }
-
 .btn-primary:hover { opacity: 0.9; }
+.btn-primary:active { transform: scale(0.98); }
 .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .btn-secondary {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 9px 18px;
-  background: transparent;
-  color: var(--text-muted);
+  padding: 10px 18px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  font-size: 0.82rem;
+  border-radius: 8px;
+  font-size: 0.84rem;
   font-weight: 500;
-  text-decoration: none;
   cursor: pointer;
+  text-decoration: none;
   transition: border-color 0.15s, color 0.15s;
+  font-family: inherit;
+  min-height: 40px;
 }
-
-.btn-secondary:hover {
-  border-color: var(--text-primary);
-  color: var(--text-primary);
-}
+.btn-secondary:hover { border-color: var(--text-muted); color: var(--text-primary); }
 
 .btn-spinner {
   width: 14px;
@@ -352,12 +469,7 @@ async function handleModalSave() {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.actions {
-  display: flex;
-  gap: 10px;
-}
-
-/* ── Modal ────────────────────────────────────────────────────────────────── */
+/* ═══ Modal ═══ */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -365,29 +477,31 @@ async function handleModalSave() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   padding: 16px;
 }
 
 .modal-box {
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: var(--shadow-elevated);
 }
 
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--border-color);
 }
 
 .modal-title {
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
@@ -400,12 +514,17 @@ async function handleModalSave() {
   cursor: pointer;
   padding: 4px;
   display: flex;
+  border-radius: 6px;
+  transition: background 0.1s, color 0.1s;
 }
 
-.modal-close:hover { color: var(--text-primary); }
+.modal-close:hover {
+  color: var(--text-primary);
+  background: var(--hover-bg);
+}
 
 .modal-body {
-  padding: 18px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -415,10 +534,18 @@ async function handleModalSave() {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  padding-top: 4px;
+  padding-top: 6px;
 }
 
-/* ── Fields ───────────────────────────────────────────────────────────────── */
+/* Modal transition */
+.modal-enter-active { transition: all 0.2s ease-out; }
+.modal-leave-active { transition: all 0.15s ease-in; }
+.modal-enter-from { opacity: 0; }
+.modal-leave-to { opacity: 0; }
+.modal-enter-from .modal-box { transform: scale(0.96) translateY(8px); }
+.modal-leave-to .modal-box { transform: scale(0.98); }
+
+/* ═══ Fields ═══ */
 .field {
   display: flex;
   flex-direction: column;
@@ -426,11 +553,9 @@ async function handleModalSave() {
 }
 
 .field-label {
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   gap: 5px;
@@ -439,18 +564,16 @@ async function handleModalSave() {
 .optional {
   font-size: 0.65rem;
   font-weight: 400;
-  text-transform: none;
-  letter-spacing: 0;
   color: var(--text-muted);
   opacity: 0.7;
 }
 
 .field-input {
   width: 100%;
-  padding: 9px 11px;
+  padding: 10px 12px;
   background: var(--bg-input);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   color: var(--text-primary);
   font-size: 0.845rem;
   font-family: inherit;
@@ -462,5 +585,13 @@ async function handleModalSave() {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-dim);
+}
+
+/* ═══ Responsive ═══ */
+@media (max-width: 640px) {
+  .header-row { flex-direction: column; gap: 10px; }
+  .header-actions { width: 100%; }
+  .btn-text { display: none; }
+  .btn-primary, .btn-secondary, .btn-back { padding: 10px 12px; }
 }
 </style>

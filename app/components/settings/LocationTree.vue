@@ -95,25 +95,30 @@ function toggle(id: string) {
   gap: 6px;
 }
 
-/* ── Location node ────────────────────────────────────────────────────────── */
+/* ── Location node ── */
 .loc-node {
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
   overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.loc-node:hover {
+  border-color: color-mix(in srgb, var(--primary) 25%, var(--border-color));
 }
 
 .loc-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
+  gap: 10px;
+  padding: 12px 16px;
   cursor: pointer;
   user-select: none;
-  transition: background 0.1s;
+  transition: background 0.12s;
 }
 
 .loc-header:hover {
-  background: color-mix(in srgb, var(--primary) 4%, transparent);
+  background: color-mix(in srgb, var(--primary) 3%, transparent);
 }
 
 .expand-btn {
@@ -126,7 +131,7 @@ function toggle(id: string) {
 }
 
 .chevron {
-  transition: transform 0.15s;
+  transition: transform 0.2s ease;
 }
 
 .chevron--open {
@@ -134,12 +139,12 @@ function toggle(id: string) {
 }
 
 .loc-icon {
-  color: var(--primary);
+  color: var(--accent, var(--primary));
   flex-shrink: 0;
 }
 
 .loc-name {
-  font-size: 0.845rem;
+  font-size: 0.86rem;
   font-weight: 600;
   color: var(--text-primary);
   flex: 1;
@@ -153,6 +158,9 @@ function toggle(id: string) {
   font-size: 0.7rem;
   color: var(--text-muted);
   white-space: nowrap;
+  padding: 2px 8px;
+  background: var(--bg-input);
+  border-radius: 10px;
 }
 
 .loc-actions {
@@ -160,21 +168,27 @@ function toggle(id: string) {
   gap: 4px;
   margin-left: auto;
   flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
 }
 
-/* ── Icon buttons ─────────────────────────────────────────────────────────── */
+.loc-header:hover .loc-actions {
+  opacity: 1;
+}
+
+/* ── Icon buttons ── */
 .icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   background: none;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   color: var(--text-muted);
   cursor: pointer;
-  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
 
 .icon-btn:hover {
@@ -185,37 +199,45 @@ function toggle(id: string) {
 
 .icon-btn--danger:hover {
   color: var(--error);
-  border-color: var(--error);
-  background: color-mix(in srgb, var(--error) 6%, transparent);
+  border-color: color-mix(in srgb, var(--error) 30%, transparent);
+  background: var(--error-bg);
 }
 
-/* ── Service points list ──────────────────────────────────────────────────── */
+/* ── Service points list ── */
 .sp-list {
   border-top: 1px solid var(--border-color);
-  padding: 6px 14px 8px 38px;
+  padding: 8px 16px 10px 42px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  background: color-mix(in srgb, var(--bg-input) 40%, transparent);
 }
 
 .sp-empty {
   font-size: 0.78rem;
   color: var(--text-muted);
-  padding: 6px 0;
+  padding: 8px 0;
 }
 
 .sp-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background 0.1s;
+}
+
+.sp-row:hover {
+  background: var(--hover-bg);
 }
 
 .sp-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--border-color);
+  background: var(--accent, var(--primary));
+  opacity: 0.5;
   flex-shrink: 0;
 }
 
@@ -231,7 +253,7 @@ function toggle(id: string) {
 
 .sp-tag {
   font-size: 0.65rem;
-  padding: 1px 7px;
+  padding: 2px 8px;
   background: var(--bg-input);
   border: 1px solid var(--border-color);
   border-radius: 10px;
@@ -244,10 +266,19 @@ function toggle(id: string) {
   gap: 2px;
   margin-left: auto;
   flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
 }
 
-/* ── Empty state ──────────────────────────────────────────────────────────── */
+.sp-row:hover .sp-actions {
+  opacity: 1;
+}
+
+/* ── Empty state ── */
 .tree-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 20px 0;
 }
 
