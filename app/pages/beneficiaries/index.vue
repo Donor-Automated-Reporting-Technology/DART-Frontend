@@ -142,7 +142,6 @@ const activeChip = ref('')
 const filterChips = computed(() => [
   { label: 'All', value: '', active: activeChip.value === '' },
   { label: 'Active', value: 'active', active: activeChip.value === 'active' },
-  { label: 'Verified', value: 'verified', active: activeChip.value === 'verified' },
   { label: 'Pending', value: 'pending', active: activeChip.value === 'pending' },
 ])
 
@@ -275,7 +274,7 @@ onMounted(() => {
 
 <style scoped>
 .ben-page {
-  max-width: 1120px;
+  max-width: 1400px;
 }
 
 /* ═══ Page Header ═══ */
@@ -318,7 +317,7 @@ onMounted(() => {
   background: var(--primary);
   color: #fff;
   border: none;
-  border-radius: 12px;
+  border-radius: 8px;
   font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
@@ -326,7 +325,7 @@ onMounted(() => {
   white-space: nowrap;
   transition: opacity 0.15s, transform 0.1s;
   font-family: inherit;
-  min-height: 44px;
+  min-height: 40px;
 }
 .btn-primary:hover { opacity: 0.9; }
 .btn-primary:active { transform: scale(0.98); }
@@ -339,7 +338,7 @@ onMounted(() => {
   background: var(--bg-input);
   color: var(--text-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 8px;
   font-size: 0.84rem;
   font-weight: 500;
   cursor: pointer;
@@ -347,7 +346,7 @@ onMounted(() => {
   white-space: nowrap;
   transition: border-color 0.15s, color 0.15s;
   font-family: inherit;
-  min-height: 44px;
+  min-height: 40px;
 }
 .btn-secondary:hover { border-color: var(--text-muted); color: var(--text-primary); }
 
@@ -361,7 +360,7 @@ onMounted(() => {
   padding: 10px 14px;
   background: var(--error-bg);
   border: 1px solid rgba(255, 59, 48, 0.12);
-  border-radius: 12px;
+  border-radius: 8px;
   margin: 0 0 16px;
 }
 
@@ -384,7 +383,7 @@ onMounted(() => {
   padding: 0;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--text-secondary);
   font-size: 0.84rem;
   font-weight: 500;

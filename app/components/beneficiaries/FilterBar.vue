@@ -158,11 +158,11 @@ function hideSuggestions() {
 
 .search-input {
   width: 100%;
-  height: 40px;
+  height: 36px;
   padding: 0 36px 0 38px;
   background: var(--bg-input);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 8px;
   color: var(--text-primary);
   font-size: 0.84rem;
   font-family: inherit;
@@ -212,7 +212,7 @@ function hideSuggestions() {
   right: 0;
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: var(--shadow-elevated);
   z-index: 50;
   overflow: hidden;
@@ -257,15 +257,15 @@ function hideSuggestions() {
   padding: 0 14px;
   background: var(--bg-input);
   border: 1px solid var(--border-color);
-  border-radius: 100px;
+  border-radius: 8px;
   color: var(--text-secondary);
   font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
-  min-height: 44px;
-  min-width: 44px;
+  min-height: 36px;
+  min-width: 36px;
   justify-content: center;
   font-family: inherit;
 }
@@ -287,7 +287,7 @@ function hideSuggestions() {
   font-weight: 700;
   background: var(--hover-bg);
   padding: 1px 6px;
-  border-radius: 100px;
+  border-radius: 8px;
   min-width: 18px;
   text-align: center;
 }
@@ -301,11 +301,11 @@ function hideSuggestions() {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 40px;
+  height: 36px;
   padding: 0 14px;
   background: var(--bg-input);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 8px;
   color: var(--text-secondary);
   font-size: 0.82rem;
   font-weight: 500;
@@ -313,7 +313,7 @@ function hideSuggestions() {
   transition: all 0.15s;
   white-space: nowrap;
   font-family: inherit;
-  min-height: 44px;
+  min-height: 36px;
 }
 
 .filter-drawer-trigger:hover {
@@ -334,7 +334,7 @@ function hideSuggestions() {
   color: #fff;
   font-size: 0.66rem;
   font-weight: 700;
-  border-radius: 100px;
+  border-radius: 6px;
 }
 
 /* ── Active tags ──────────────────────────────────────────────────── */
@@ -352,7 +352,7 @@ function hideSuggestions() {
   padding: 4px 8px 4px 10px;
   background: var(--primary-dim);
   border: 1px solid rgba(0, 122, 255, 0.12);
-  border-radius: 100px;
+  border-radius: 6px;
   font-size: 0.72rem;
   font-weight: 500;
   color: var(--primary);

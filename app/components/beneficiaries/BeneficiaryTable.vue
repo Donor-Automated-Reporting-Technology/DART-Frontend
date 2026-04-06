@@ -222,7 +222,7 @@ function deriveStatus(b: Beneficiary): string {
 <style scoped>
 /* ═══ Table Container — 20px rounded corners, Apple polish ═══ */
 .table-container {
-  border-radius: 20px;
+  border-radius: 10px;
   overflow: hidden;
   border: 1px solid var(--border-color);
   background: var(--bg-panel);
@@ -232,7 +232,7 @@ function deriveStatus(b: Beneficiary): string {
 .ben-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: auto;
+  table-layout: fixed;
 }
 
 /* ═══ Mobile: show cards, hide table ═══ */
@@ -249,12 +249,12 @@ function deriveStatus(b: Beneficiary): string {
 }
 
 .ben-table th {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   color: var(--text-muted);
-  padding: 12px 16px;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--border-color);
   white-space: nowrap;
   user-select: none;
@@ -282,8 +282,8 @@ function deriveStatus(b: Beneficiary): string {
 }
 
 .ben-table td {
-  padding: 14px 16px;
-  font-size: 0.84rem;
+  padding: 12px 16px;
+  font-size: 0.86rem;
   color: var(--text-primary);
   border-bottom: 1px solid var(--border-subtle);
   vertical-align: middle;
@@ -321,10 +321,10 @@ function deriveStatus(b: Beneficiary): string {
 }
 
 .name-primary {
-  font-size: 0.88rem;
-  font-weight: 650;
+  font-size: 0.86rem;
+  font-weight: 600;
   color: #1D1D1F;
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
 [data-theme="dark"] .name-primary,
@@ -333,9 +333,9 @@ function deriveStatus(b: Beneficiary): string {
 }
 
 .name-secondary {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   color: #86868B;
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
 .name-tertiary {
@@ -360,7 +360,7 @@ function deriveStatus(b: Beneficiary): string {
 /* ═══ Cell: Text ═══ */
 .cell-text {
   color: var(--text-secondary);
-  font-size: 0.84rem;
+  font-size: 0.86rem;
 }
 
 .cell-location {
@@ -371,7 +371,7 @@ function deriveStatus(b: Beneficiary): string {
 }
 
 .cell-date {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: #86868B;
   white-space: nowrap;
 }
@@ -384,11 +384,11 @@ function deriveStatus(b: Beneficiary): string {
 .disability-tag {
   display: inline-block;
   padding: 2px 10px;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 600;
   background: rgba(255, 149, 0, 0.10);
   color: #b25000;
-  border-radius: 100px;
+  border-radius: 6px;
   text-transform: capitalize;
 }
 
@@ -471,7 +471,7 @@ function deriveStatus(b: Beneficiary): string {
 .ben-card {
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: 10px;
   overflow: hidden;
   box-shadow: var(--shadow-card);
 }

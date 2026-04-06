@@ -41,7 +41,7 @@ const label = computed(() => {
   align-items: center;
   gap: 5px;
   padding: 4px 12px;
-  border-radius: 100px;
+  border-radius: 6px;
   font-size: 11.5px;
   font-weight: 550;
   letter-spacing: 0.01em;
