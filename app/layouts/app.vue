@@ -49,6 +49,7 @@
 
         <!-- Main navigation ────────────────────────────────────────────── -->
         <div class="nav-group" v-if="isAdmin || isStaff || isManager">
+          <span class="nav-group-label">Main</span>
           <NuxtLink
             to="/dashboard"
             class="nav-item"
@@ -56,7 +57,8 @@
             title="Dashboard"
             @click="closeSidebarOnMobile"
           >
-            <AppIcon name="layout-dashboard" :size="15" class="nav-icon" />
+            <span class="nav-item-indicator" />
+            <AppIcon name="layout-dashboard" :size="16" class="nav-icon" />
             <span class="nav-label">Dashboard</span>
           </NuxtLink>
 
@@ -67,13 +69,15 @@
             title="Beneficiaries"
             @click="closeSidebarOnMobile"
           >
-            <AppIcon name="user-plus" :size="15" class="nav-icon" />
+            <span class="nav-item-indicator" />
+            <AppIcon name="user-plus" :size="16" class="nav-icon" />
             <span class="nav-label">Beneficiaries</span>
           </NuxtLink>
         </div>
 
         <!-- Activities (dynamic from framework) ──────────────────────── -->
         <div class="nav-group" v-if="hasActivities">
+          <span class="nav-group-label">Activities</span>
           <NuxtLink
             v-for="activity in sidebarActivities"
             :key="activity.code"
@@ -83,13 +87,15 @@
             :title="activity.label"
             @click="closeSidebarOnMobile"
           >
-            <AppIcon :name="activity.icon" :size="15" class="nav-icon" />
+            <span class="nav-item-indicator" />
+            <AppIcon :name="activity.icon" :size="16" class="nav-icon" />
             <span class="nav-label">{{ activity.label }}</span>
           </NuxtLink>
         </div>
 
         <!-- Management ──────────────────────────────────────────────── -->
         <div class="nav-group" v-if="isAdmin || isManager">
+          <span class="nav-group-label">Management</span>
           <NuxtLink
             to="/staff"
             class="nav-item"
@@ -97,7 +103,8 @@
             title="Staff"
             @click="closeSidebarOnMobile"
           >
-            <AppIcon name="users" :size="15" class="nav-icon" />
+            <span class="nav-item-indicator" />
+            <AppIcon name="users" :size="16" class="nav-icon" />
             <span class="nav-label">Staff</span>
           </NuxtLink>
 
@@ -108,16 +115,15 @@
             title="Reports"
             @click="closeSidebarOnMobile"
           >
-            <AppIcon name="file-text" :size="15" class="nav-icon" />
+            <span class="nav-item-indicator" />
+            <AppIcon name="file-text" :size="16" class="nav-icon" />
             <span class="nav-label">Reports</span>
           </NuxtLink>
         </div>
 
-        <!-- Separator ─────────────────────────────────────────────── -->
-        <div class="nav-divider" v-if="isAdmin || isManager" aria-hidden="true" />
-
-        <!-- Settings ──────────────────────────────────────────────── -->
+        <!-- System ──────────────────────────────────────────────── -->
         <div class="nav-group" v-if="isAdmin || isManager">
+          <span class="nav-group-label">System</span>
           <NuxtLink
             to="/settings"
             class="nav-item"
@@ -125,7 +131,8 @@
             title="Settings"
             @click="closeSidebarOnMobile"
           >
-            <AppIcon name="settings" :size="15" class="nav-icon" />
+            <span class="nav-item-indicator" />
+            <AppIcon name="settings" :size="16" class="nav-icon" />
             <span class="nav-label">Settings</span>
           </NuxtLink>
         </div>
@@ -578,67 +585,104 @@ async function handleLogout(): Promise<void> {
 .sidebar-nav {
   flex: 1;
   overflow-y: auto;
-  /* Scrollbar hidden but scroll still works */
   scrollbar-width: none;
-  padding: 14px 8px;
+  padding: 16px 10px;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 20px;
 }
 
 .sidebar-nav::-webkit-scrollbar {
   display: none;
 }
 
-/* Each nav group (Platform, Management, System…) */
+/* Section label above each nav group */
+.nav-group-label {
+  display: block;
+  padding: 0 10px;
+  margin-bottom: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  user-select: none;
+  transition: opacity 0.15s ease;
+}
+
+/* Each nav group */
 .nav-group {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
 }
 
-/* Thin divider between nav sections */
-.nav-divider {
-  height: 1px;
-  margin: 4px 8px;
-  background: var(--border-subtle);
-}
-
-/* Individual nav item — base styles shared by links and disabled spans */
+/* Individual nav item */
 .nav-item {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: var(--radius-sm);
-  font-size: 0.845rem;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 0.82rem;
   font-weight: 500;
   color: var(--text-secondary);
   text-decoration: none;
   cursor: pointer;
-  transition: background 0.14s, color 0.14s, padding 0.25s cubic-bezier(0.4, 0, 0.2, 1), justify-content 0.25s;
+  transition: background 0.15s ease, color 0.15s ease, padding 0.25s cubic-bezier(0.4, 0, 0.2, 1), justify-content 0.25s;
   user-select: none;
   line-height: 1;
-  /* Prevent item from shrinking the icon */
-  min-height: 32px;
+  min-height: 34px;
   white-space: nowrap;
 }
 
+/* Left accent indicator (hidden by default) */
+.nav-item-indicator {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0;
+  border-radius: 0 3px 3px 0;
+  background: var(--primary);
+  transition: height 0.2s ease;
+}
+
 .nav-item:hover {
-  background: var(--hover-bg-subtle);
+  background: var(--hover-bg);
   color: var(--text-primary);
   text-decoration: none;
 }
 
 /* Active / current page */
 .nav-item--active {
-  background: var(--hover-bg);
+  background: var(--primary-dim);
   color: var(--text-primary);
+}
+
+.nav-item--active .nav-icon {
+  color: var(--primary);
+}
+
+.nav-item--active .nav-item-indicator {
+  height: 16px;
 }
 
 .nav-icon {
   flex-shrink: 0;
   color: inherit;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.nav-item:hover .nav-icon {
+  opacity: 1;
+}
+
+.nav-item--active .nav-icon {
+  opacity: 1;
 }
 
 /* Nav item text label */
@@ -646,47 +690,10 @@ async function handleLogout(): Promise<void> {
   transition: opacity 0.15s ease;
 }
 
-/* Sub-item indentation */
-.nav-item--sub {
-  padding-left: 32px;
-  font-size: 0.8rem;
-  opacity: 0.9;
-}
-
-.nav-item--sub .nav-icon {
-  font-size: 0.85rem;
-}
-
-/* "Coming soon" items — dimmed, non-interactive */
-.nav-item--soon {
-  opacity: 0.38;
-  cursor: not-allowed;
-}
-
-.nav-item--soon:hover {
-  background: none;
-  color: var(--text-secondary);
-}
-
-/* Small pill badge: "Soon" */
-.nav-soon-tag {
-  margin-left: auto;
-  font-size: 0.58rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  padding: 2px 5px;
-  border-radius: 4px;
-  background: var(--hover-bg);
-  color: var(--text-muted);
-  flex-shrink: 0;
-  white-space: nowrap;
-  transition: opacity 0.15s ease;
-}
-
 /* ── Sidebar footer — user chip ────────────────────────────────────────────── */
 
 .sidebar-footer {
-  padding: 8px;
+  padding: 10px;
   border-top: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
@@ -697,21 +704,21 @@ async function handleLogout(): Promise<void> {
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 8px;
+  padding: 7px 10px;
   margin-bottom: 4px;
   background: none;
   border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
   font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: background 0.14s, color 0.14s;
+  transition: background 0.15s ease, color 0.15s ease;
   white-space: nowrap;
 }
 
 .logout-btn:hover {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(239, 68, 68, 0.08);
   color: #ef4444;
 }
 
@@ -980,15 +987,17 @@ async function handleLogout(): Promise<void> {
   .app-shell.sidebar-collapsed .brand-copy {
     opacity: 0;
     pointer-events: none;
-    /* width:0 lets the brand-mark stay centred in the narrowed header */
     flex: 0;
     min-width: 0;
     overflow: hidden;
   }
 
-  /* Divider: hide when collapsed */
-  .app-shell.sidebar-collapsed .nav-divider {
-    margin: 2px 4px;
+  /* Section labels: hide when collapsed */
+  .app-shell.sidebar-collapsed .nav-group-label {
+    opacity: 0;
+    height: 0;
+    margin: 0;
+    overflow: hidden;
   }
 
   /* Nav item text */
@@ -996,6 +1005,11 @@ async function handleLogout(): Promise<void> {
     opacity: 0;
     width: 0;
     overflow: hidden;
+  }
+
+  /* Active indicator: hide in collapsed rail */
+  .app-shell.sidebar-collapsed .nav-item-indicator {
+    display: none;
   }
 
   /* "Soon" badge */
@@ -1034,6 +1048,12 @@ async function handleLogout(): Promise<void> {
     justify-content: center;
     padding: 8px 0;
     gap: 0;
+  }
+
+  /* ── Reduce nav group gaps when collapsed ──────────────────────────────── */
+
+  .app-shell.sidebar-collapsed .sidebar-nav {
+    gap: 8px;
   }
 
   /* ── Centre the brand mark ─────────────────────────────────────────────── */
