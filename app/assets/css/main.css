@@ -46,9 +46,9 @@
 
   /* ── Data visualisation palette ─────────────────── */
   --data-teal: #2dd4bf;
-  --data-teal-dim: rgba(45, 212, 191, 0.10);
+  --data-teal-dim: rgba(45, 212, 191, 0.1);
   --data-purple: #a78bfa;
-  --data-purple-dim: rgba(167, 139, 250, 0.10);
+  --data-purple-dim: rgba(167, 139, 250, 0.1);
   --progress-high: #34d399;
   --progress-mid: #fbbf24;
   --progress-low: #fb7185;
@@ -101,40 +101,40 @@
   color-scheme: light;
 
   /* ── Action Blue (single accent) ───────── */
-  --primary: #007AFF;
+  --primary: #007aff;
   --primary-dim: rgba(0, 122, 255, 0.06);
-  --primary-hover: rgba(0, 122, 255, 0.10);
+  --primary-hover: rgba(0, 122, 255, 0.1);
   --secondary: #e2eeec;
-  --third: #34C759;
-  --accent: #007AFF;
+  --third: #34c759;
+  --accent: #007aff;
   --accent-dim: rgba(0, 122, 255, 0.06);
 
   /* ── Gradient accents (subtle) ─────────── */
-  --gradient-brand: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+  --gradient-brand: linear-gradient(135deg, #007aff 0%, #5856d6 100%);
   --gradient-card: none;
-  --gradient-success: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+  --gradient-success: linear-gradient(135deg, #34c759 0%, #30d158 100%);
 
   /* ── Backgrounds (clean whites) ────────── */
-  --bg-dark: #F5F5F7;
-  --bg-panel: #FFFFFF;
-  --bg-card: #FFFFFF;
-  --bg-card-hover: #FAFAFA;
-  --bg-input: #FFFFFF;
+  --bg-dark: #f5f5f7;
+  --bg-panel: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fafafa;
+  --bg-input: #ffffff;
   --bg-surface: rgba(0, 0, 0, 0.015);
   --sidebar-bg: rgba(255, 255, 255, 0.72);
 
   /* ── Text (Apple charcoal palette) ─────── */
-  --text-primary: #1D1D1F;
-  --text-secondary: #86868B;
-  --text-muted: #AEAEB2;
-  --text-placeholder: #AEAEB2;
+  --text-primary: #1d1d1f;
+  --text-secondary: #86868b;
+  --text-muted: #aeaeb2;
+  --text-placeholder: #aeaeb2;
 
   /* ── State colours ─────────────────────── */
-  --error: #FF3B30;
+  --error: #ff3b30;
   --error-bg: rgba(255, 59, 48, 0.06);
-  --success: #34C759;
+  --success: #34c759;
   --success-bg: rgba(52, 199, 89, 0.06);
-  --warning: #FF9500;
+  --warning: #ff9500;
   --warning-bg: rgba(255, 149, 0, 0.06);
 
   /* ── Data visualisation palette ─────────── */
@@ -147,20 +147,20 @@
   --progress-low: #ef4444;
 
   /* ── Borders (Apple-style subtle) ──────── */
-  --border-color: #E5E5EA;
-  --border-subtle: #E5E5EA;
+  --border-color: #e5e5ea;
+  --border-subtle: #e5e5ea;
 
   /* ── Legacy aliases ────────────────────── */
-  --input-bg: #FFFFFF;
-  --input-border: #E5E5EA;
-  --input-border-hover: #D1D1D6;
+  --input-bg: #ffffff;
+  --input-border: #e5e5ea;
+  --input-border-hover: #d1d1d6;
   --input-border-focus: var(--primary);
   --focus-ring: rgba(0, 122, 255, 0.2);
 
   /* ── Input / Tile backgrounds ────────────── */
-  --input-field-bg: #FBFBFD;
-  --tile-bg: #F5F5F7;
-  --tile-hover-bg: #EBEBED;
+  --input-field-bg: #fbfbfd;
+  --tile-bg: #f5f5f7;
+  --tile-hover-bg: #ebebed;
 
   /* ── Radius & shadow (flat, intentional) ─── */
   --radius-sm: 8px;
@@ -179,8 +179,8 @@
   --hover-bg-subtle: rgba(0, 0, 0, 0.015);
 
   /* ── Scrollbar ─────────────────────────── */
-  --scrollbar-thumb: #D1D1D6;
-  --scrollbar-thumb-hover: #AEAEB2;
+  --scrollbar-thumb: #d1d1d6;
+  --scrollbar-thumb-hover: #aeaeb2;
 }
 
 /* ── Smooth theme transition ──────────────────────────────────────────────── */
@@ -207,16 +207,8 @@ body {
   margin: 0;
   padding: 0;
   font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "SF Pro Display",
-    "SF Pro Text",
-    "Inter",
-    "Segoe UI",
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter",
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background-color: var(--bg-dark);
   color: var(--text-primary);
   box-sizing: border-box;

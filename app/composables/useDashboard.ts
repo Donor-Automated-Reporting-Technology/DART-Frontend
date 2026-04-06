@@ -8,6 +8,7 @@
 import { ref, computed, watch } from 'vue'
 import { getActivePinia } from 'pinia'
 import { ApiError } from '../services/api'
+import { useFrameworkStore } from '../stores/framework'
 import type {
   DashboardResponse,
   DemographicsSummary,
@@ -141,9 +142,38 @@ export const useDashboard = () => {
       const body: DashboardResponse = raw?.data !== undefined ? raw.data : raw
 
       demographics.value = body.demographics ?? demographics.value
-      activitySummary.value = body.activity_summary ?? []
       locations.value = body.locations ?? []
       recentSessions.value = body.recent_sessions ?? []
+
+      // ── Merge admin-configured grant targets ────────────────────────────
+      // Use targets set by the admin in Settings → Framework, so every user
+      // sees the same org-wide grant target instead of per-user values.
+      const frameworkStore = useFrameworkStore()
+      if (!frameworkStore.currentFramework) await frameworkStore.fetchFramework()
+      if (frameworkStore.currentFramework && !frameworkStore.frameworkActivities.length) {
+        await frameworkStore.fetchActivities()
+      }
+
+      const apiActivities: ActivitySummary[] = body.activity_summary ?? []
+
+      // Build a lookup of admin targets keyed by activity code
+      const adminTargets = new Map<string, number>()
+      for (const fa of frameworkStore.activeActivities) {
+        const code = fa.template?.code
+        if (code && fa.target_count > 0) {
+          adminTargets.set(code, fa.target_count)
+        }
+      }
+
+      // Override each activity's target with the admin-configured value
+      activitySummary.value = apiActivities.map((a) => {
+        const adminTarget = adminTargets.get(a.code)
+        if (adminTarget !== undefined) {
+          const pct = adminTarget > 0 ? Math.round((a.actual / adminTarget) * 100) : 0
+          return { ...a, target: adminTarget, percentage: Math.min(pct, 999) }
+        }
+        return a
+      })
     } catch (e: any) {
       error.value = e?.message ?? 'Failed to load dashboard'
     } finally {
