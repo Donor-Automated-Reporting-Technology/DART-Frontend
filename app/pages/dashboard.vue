@@ -671,9 +671,9 @@ onMounted(fetchDashboard)
   transition: width 0.5s ease;
 }
 
-.activity-bar-fill.clr-green { background: var(--success); }
-.activity-bar-fill.clr-yellow { background: var(--warning); }
-.activity-bar-fill.clr-red { background: var(--error); }
+.activity-bar-fill.clr-green,
+.activity-bar-fill.clr-yellow,
+.activity-bar-fill.clr-red { background: var(--primary); }
 
 .activity-pct {
   font-size: 0.75rem;
@@ -681,10 +681,8 @@ onMounted(fetchDashboard)
   width: 40px;
   text-align: right;
   flex-shrink: 0;
+  color: var(--primary);
 }
-.activity-pct.clr-green { color: var(--success); }
-.activity-pct.clr-yellow { color: var(--warning); }
-.activity-pct.clr-red { color: var(--error); }
 
 .activity-empty {
   padding: 16px 0;
@@ -806,8 +804,8 @@ onMounted(fetchDashboard)
   background: var(--primary);
   transition: width 0.5s ease;
 }
-.insight-bar-fill--alt { background: var(--success); }
-.insight-bar-fill--warn { background: var(--warning); }
+.insight-bar-fill--alt { background: var(--primary); opacity: 0.7; }
+.insight-bar-fill--warn { background: var(--primary); opacity: 0.5; }
 
 /* \u2500\u2500 Performance Snapshots (YouTube-style) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
 .perf-list {
@@ -858,13 +856,13 @@ onMounted(fetchDashboard)
 }
 
 .perf-trend--up {
-  background: var(--success-bg);
-  color: var(--success);
+  background: var(--primary-dim);
+  color: var(--primary);
 }
 
 .perf-trend--down {
-  background: var(--error-bg);
-  color: var(--error);
+  background: rgba(0, 122, 255, 0.06);
+  color: var(--text-muted);
 }
 
 .perf-empty {
