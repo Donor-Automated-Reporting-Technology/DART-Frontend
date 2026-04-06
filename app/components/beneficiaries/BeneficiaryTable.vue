@@ -63,8 +63,8 @@
             <td class="cell-text cell-location">{{ b.cfs_location?.name ?? '—' }}</td>
 
             <!-- Disability -->
-            <td class="cell-text">
-              <span v-if="b.disability_status && b.disability_status !== 'none'" class="disability-tag">
+            <td class="cell-text cell-disability">
+              <span v-if="b.disability_status && b.disability_status !== 'none'" class="disability-tag" :title="b.disability_status">
                 {{ b.disability_status }}
               </span>
               <span v-else class="text-muted">—</span>
@@ -380,9 +380,17 @@ function deriveStatus(b: Beneficiary): string {
 
 .text-muted { color: var(--text-muted); }
 
-/* ═══ Disability tag ═══ */
+/* ═══ Disability ═══ */
+.cell-disability {
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .disability-tag {
   display: inline-block;
+  max-width: 100%;
   padding: 2px 10px;
   font-size: 0.72rem;
   font-weight: 600;
@@ -390,6 +398,10 @@ function deriveStatus(b: Beneficiary): string {
   color: #b25000;
   border-radius: 6px;
   text-transform: capitalize;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
 }
 
 [data-theme="dark"] .disability-tag,
@@ -414,8 +426,8 @@ function deriveStatus(b: Beneficiary): string {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
@@ -423,9 +435,8 @@ function deriveStatus(b: Beneficiary): string {
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.12s;
-  min-width: 44px;
-  min-height: 44px;
-  margin: -6px 0;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .action-btn:hover {

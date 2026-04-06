@@ -61,6 +61,11 @@
   --sidebar-collapsed-width: 56px;
   --topbar-height: 56px;
 
+  /* ── Input / Tile backgrounds ────────────────────── */
+  --input-field-bg: #1c1c21;
+  --tile-bg: #1c1c21;
+  --tile-hover-bg: #252529;
+
   /* ── Radius & shadow ────────────────────────────── */
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -134,14 +139,17 @@
   --input-border-focus: var(--primary);
   --focus-ring: rgba(0, 122, 255, 0.2);
 
-  /* ── Radius & shadow (liquid glass) ────── */
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 20px;
-  --shadow-card: 0 0.5px 1px rgba(0, 0, 0, 0.04),
-    0 1px 3px rgba(0, 0, 0, 0.03);
-  --shadow-elevated:
-    0 2px 12px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.03);
+  /* ── Input / Tile backgrounds ────────────── */
+  --input-field-bg: #FBFBFD;
+  --tile-bg: #F5F5F7;
+  --tile-hover-bg: #EBEBED;
+
+  /* ── Radius & shadow (flat, intentional) ─── */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-card: none;
+  --shadow-elevated: 0 1px 4px rgba(0, 0, 0, 0.04);
   --shadow-glow: none;
 
   /* ── Glass effect (sidebar + header) ───── */
@@ -340,7 +348,7 @@ select {
 [data-theme="light"] textarea:focus,
 [data-theme="light"] select:focus {
   border-color: var(--input-border-focus, var(--primary));
-  box-shadow: 0 0 0 3px var(--focus-ring, rgba(37, 99, 235, 0.25));
+  box-shadow: none;
 }
 
 [data-theme="light"] input::placeholder,

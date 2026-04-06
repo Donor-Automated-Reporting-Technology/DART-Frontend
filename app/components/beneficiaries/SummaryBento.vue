@@ -41,15 +41,15 @@ defineProps<{
 
 <style scoped>
 .bento__title {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 500;
   color: var(--text-primary);
   margin: 0 0 4px;
 }
 
 .bento__subtitle {
-  font-size: 0.82rem;
-  color: var(--text-muted);
+  font-size: 0.8rem;
+  color: #6E6E73;
   margin: 0 0 20px;
 }
 
@@ -60,15 +60,10 @@ defineProps<{
 }
 
 .bento__card {
-  background: color-mix(in srgb, var(--bg-dark) 60%, var(--bg-panel));
+  background: var(--input-field-bg, #FBFBFD);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 16px 18px;
-  transition: box-shadow 0.2s;
-}
-
-.bento__card:hover {
-  box-shadow: 0 2px 12px color-mix(in srgb, var(--text-primary) 6%, transparent);
 }
 
 .bento__card--wide {
@@ -76,11 +71,11 @@ defineProps<{
 }
 
 .bento__card-title {
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: 0.7rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--primary);
+  color: #6E6E73;
   margin: 0 0 10px;
 }
 
@@ -101,15 +96,15 @@ defineProps<{
 
 .bento__dt {
   font-size: 0.78rem;
-  color: var(--text-muted);
-  font-weight: 500;
+  color: #6E6E73;
+  font-weight: 400;
   flex-shrink: 0;
 }
 
 .bento__dd {
   font-size: 0.82rem;
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: 500;
   text-align: right;
   margin: 0;
   min-width: 0;

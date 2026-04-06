@@ -71,8 +71,8 @@
                 :required="true"
                 :error="errors.sex"
                 :options="[
-                  { value: 'male', label: 'Male', icon: '👦' },
-                  { value: 'female', label: 'Female', icon: '👧' },
+                  { value: 'male', label: 'Male' },
+                  { value: 'female', label: 'Female' },
                 ]"
               />
             </div>
@@ -83,11 +83,11 @@
                 v-model="form.language"
                 label="Primary Language"
                 :options="[
-                  { value: 'Arabic', label: 'Arabic', icon: '🇸🇦' },
-                  { value: 'English', label: 'English', icon: '🇬🇧' },
-                  { value: 'Dinka', label: 'Dinka', icon: '🇸🇸' },
-                  { value: 'Nuer', label: 'Nuer', icon: '🇸🇸' },
-                  { value: 'Other', label: 'Other', icon: '🌍' },
+                  { value: 'Arabic', label: 'Arabic' },
+                  { value: 'English', label: 'English' },
+                  { value: 'Dinka', label: 'Dinka' },
+                  { value: 'Nuer', label: 'Nuer' },
+                  { value: 'Other', label: 'Other' },
                 ]"
               />
 
@@ -95,12 +95,12 @@
                 v-model="form.disability_status"
                 label="Disability Status"
                 :options="[
-                  { value: 'none', label: 'None', icon: '✅' },
-                  { value: 'physical', label: 'Physical', icon: '🦽' },
-                  { value: 'visual', label: 'Visual', icon: '👁️' },
-                  { value: 'hearing', label: 'Hearing', icon: '🦻' },
-                  { value: 'intellectual', label: 'Intellectual', icon: '🧠' },
-                  { value: 'multiple', label: 'Multiple', icon: '➕' },
+                  { value: 'none', label: 'None' },
+                  { value: 'physical', label: 'Physical' },
+                  { value: 'visual', label: 'Visual' },
+                  { value: 'hearing', label: 'Hearing' },
+                  { value: 'intellectual', label: 'Intellectual' },
+                  { value: 'multiple', label: 'Multiple' },
                 ]"
               />
             </div>
@@ -383,7 +383,7 @@ async function onSubmit() {
   width: 36px;
   height: 36px;
   border-radius: 12px;
-  color: var(--text-muted);
+  color: #86868B;
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
   transition: all 0.2s;
@@ -393,20 +393,20 @@ async function onSubmit() {
 
 .reg-back:hover {
   color: var(--text-primary);
-  border-color: var(--text-primary);
+  border-color: var(--text-secondary);
 }
 
 .reg-title {
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: 1.15rem;
+  font-weight: 500;
   color: var(--text-primary);
   margin: 0;
   line-height: 1.3;
 }
 
 .reg-subtitle {
-  font-size: 0.82rem;
-  color: var(--text-muted);
+  font-size: 0.8rem;
+  color: #6E6E73;
   margin: 2px 0 0;
 }
 
@@ -414,8 +414,8 @@ async function onSubmit() {
 .reg-card {
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
-  border-radius: 24px;
-  padding: 40px;
+  border-radius: 16px;
+  padding: 32px;
 }
 
 /* ── Stages ── */
@@ -490,12 +490,12 @@ async function onSubmit() {
   align-items: center;
   gap: 6px;
   padding: 10px 22px;
-  font-size: 0.88rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 500;
   font-family: inherit;
-  border-radius: 14px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   min-height: 44px;
   text-decoration: none;
 }
@@ -507,24 +507,22 @@ async function onSubmit() {
 }
 
 .reg-btn--primary:hover {
-  opacity: 0.9;
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 30%, transparent);
+  opacity: 0.88;
 }
 
 .reg-btn--primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  box-shadow: none;
 }
 
 .reg-btn--ghost {
   background: transparent;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   border: 1px solid var(--border-color);
 }
 
 .reg-btn--ghost:hover {
-  border-color: var(--text-primary);
+  border-color: var(--text-secondary);
   color: var(--text-primary);
 }
 
@@ -545,7 +543,7 @@ async function onSubmit() {
 @media (max-width: 600px) {
   .reg-card {
     padding: 24px 18px;
-    border-radius: 20px;
+    border-radius: 12px;
   }
 
   .stage__grid {

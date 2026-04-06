@@ -79,26 +79,25 @@ const hasValue = computed(() => {
 
 .floating-field__wrap {
   position: relative;
-  border-radius: 14px;
-  background: var(--bg-input, #f9f9fb);
-  border: 1.5px solid var(--border-color);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  border-radius: 12px;
+  background: var(--input-field-bg, #FBFBFD);
+  border: 1px solid var(--border-color);
+  transition: border-color 0.2s;
   overflow: hidden;
 }
 
 .floating-field--focused .floating-field__wrap {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+  border-width: 2px;
 }
 
 .floating-field--error .floating-field__wrap {
   border-color: var(--error);
-  box-shadow: none;
   animation: field-shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
 }
 
 .floating-field--success .floating-field__wrap {
-  border-color: #34c759;
+  border-color: var(--success, #34c759);
 }
 
 .floating-field__input {
@@ -113,6 +112,10 @@ const hasValue = computed(() => {
   line-height: 1.4;
   box-sizing: border-box;
   resize: none;
+}
+
+.floating-field--focused .floating-field__input {
+  padding: 21px 15px 7px;
 }
 
 .floating-field--textarea .floating-field__input {
@@ -130,8 +133,8 @@ const hasValue = computed(() => {
   top: 50%;
   left: 16px;
   transform: translateY(-50%);
-  font-size: 0.88rem;
-  color: var(--text-muted);
+  font-size: 0.82rem;
+  color: #6E6E73;
   pointer-events: none;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   transform-origin: left;
@@ -148,8 +151,9 @@ const hasValue = computed(() => {
 .floating-field--focused .floating-field__label,
 .floating-field--filled .floating-field__label {
   top: 10px;
-  transform: translateY(0) scale(0.75);
-  color: var(--text-muted);
+  transform: translateY(0) scale(0.78);
+  font-weight: 500;
+  color: #6E6E73;
 }
 
 .floating-field--focused .floating-field__label {
@@ -159,11 +163,11 @@ const hasValue = computed(() => {
 .floating-field--textarea.floating-field--focused .floating-field__label,
 .floating-field--textarea.floating-field--filled .floating-field__label {
   top: 6px;
-  transform: scale(0.75);
+  transform: scale(0.78);
 }
 
 .floating-field__optional {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 400;
   opacity: 0.6;
 }
@@ -178,8 +182,7 @@ const hasValue = computed(() => {
 }
 
 .floating-field__icon--success {
-  color: #34c759;
-  animation: field-tick 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--success, #34c759);
 }
 
 .floating-field__icon--success svg {
@@ -209,11 +212,5 @@ const hasValue = computed(() => {
   40% { transform: translateX(4px); }
   60% { transform: translateX(-3px); }
   80% { transform: translateX(2px); }
-}
-
-@keyframes field-tick {
-  0% { opacity: 0; transform: translateY(-50%) scale(0.5); }
-  60% { transform: translateY(-50%) scale(1.15); }
-  100% { opacity: 1; transform: translateY(-50%) scale(1); }
 }
 </style>
