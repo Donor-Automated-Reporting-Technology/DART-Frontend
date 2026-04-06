@@ -399,8 +399,14 @@ async function fetchStaff() {
   loading.value = true
   error.value = null
   try {
-    const res = await staffApi.list() as { assignments?: StaffMember[]; staff?: StaffMember[] }
-    staffList.value = res.staff ?? res.assignments ?? []
+    const res = await staffApi.list() as { assignments?: any[]; staff?: any[] }
+    staffList.value = (res.staff ?? res.assignments ?? []).map((s: any) => ({
+      ...s,
+      id: s.id ?? s.user_id,
+      assigned_locations: (s.assigned_locations ?? []).map(
+        (loc: any) => typeof loc === 'string' ? loc : loc.id,
+      ),
+    }))
   } catch (e: any) {
     error.value = e?.message ?? 'Failed to load staff'
   } finally {
@@ -441,7 +447,9 @@ async function handleCreate() {
 
 function openEdit(s: StaffMember) {
   editTarget.value = s
-  editLocations.value = [...(s.assigned_locations ?? [])]
+  editLocations.value = (s.assigned_locations ?? []).map(
+    (loc: any) => typeof loc === 'string' ? loc : loc.id,
+  )
   showEdit.value = true
 }
 
