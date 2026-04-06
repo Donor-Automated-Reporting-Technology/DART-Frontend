@@ -23,13 +23,27 @@
             @click="handleSync"
           >
             <AppIcon :name="!isOnline ? 'wifi-off' : 'refresh-cw'" :size="14" :class="{ 'spin': isSyncing }" />
-            <span v-if="isSyncing">Syncing…</span>
+            <span v-if="isSyncing">{{ syncStatus }}</span>
             <span v-else-if="!isOnline">Offline Mode</span>
             <span v-else-if="pendingCount > 0">Sync {{ pendingCount }} pending</span>
             <span v-else>Sync Data</span>
           </button>
         </div>
       </div>
+
+      <!-- Sync result toast -->
+      <Transition name="toast-fade">
+        <div v-if="syncToast" class="sync-toast" :class="syncToast.type">
+          <AppIcon :name="syncToast.type === 'sync-toast--success' ? 'check-circle' : 'alert-circle'" :size="16" />
+          <div class="sync-toast-body">
+            <span class="sync-toast-title">{{ syncToast.title }}</span>
+            <ul v-if="syncToast.details.length" class="sync-toast-list">
+              <li v-for="(d, i) in syncToast.details" :key="i">{{ d }}</li>
+            </ul>
+          </div>
+          <button class="sync-toast-close" @click="syncToast = null">&times;</button>
+        </div>
+      </Transition>
 
       <!-- Loading skeleton -->
       <div v-if="isLoading" class="loading-skeleton">
@@ -385,18 +399,49 @@ const {
 } = useDashboard()
 
 const { isOnline, pendingCount } = useOfflineStatus()
-const { isSyncing, flushQueue, pullBeneficiaries } = useSyncQueue()
+const { isSyncing, flushQueue, pullBeneficiaries, syncLog } = useSyncQueue()
+
+const syncStatus = ref('Syncing…')
+const syncToast = ref<{ type: string; title: string; details: string[] } | null>(null)
 
 async function handleSync() {
-  if (isOnline.value) {
-    // Online: push pending records to server, then pull fresh beneficiary data
-    await flushQueue()
+  if (!isOnline.value) return
+  syncToast.value = null
+  const pushed: string[] = []
+
+  // Step 1: Push pending offline records to server
+  syncStatus.value = 'Pushing pending…'
+  await flushQueue()
+
+  // Collect push results from syncLog
+  for (const entry of syncLog.value) {
+    if (entry.startsWith('✓') || entry.startsWith('⚠') || entry.startsWith('✗')) {
+      pushed.push(entry)
+    }
   }
-  // Always pull beneficiaries into IndexedDB for offline use (works online & caches for offline)
-  if (isOnline.value) {
-    await pullBeneficiaries()
+
+  // Step 2: Pull beneficiaries for offline use
+  syncStatus.value = 'Pulling beneficiaries…'
+  await pullBeneficiaries()
+
+  // Extract pull count from the last log entry
+  const pullEntry = syncLog.value.find(l => l.startsWith('Pulled'))
+  const pullCount = pullEntry?.match(/(\d+)/)?.[1] ?? '0'
+
+  // Build toast summary
+  const details: string[] = []
+  if (parseInt(pullCount) > 0) details.push(`${pullCount} beneficiaries synced for offline use`)
+  if (pushed.length) details.push(...pushed)
+  if (!details.length) details.push('Everything is up to date')
+
+  syncToast.value = {
+    type: parseInt(pullCount) > 0 || pushed.length ? 'sync-toast--success' : 'sync-toast--info',
+    title: 'Sync Complete',
+    details,
   }
-  await fetchDashboard()
+
+  // Auto-dismiss after 8s
+  setTimeout(() => { syncToast.value = null }, 8000)
 }
 
 // \u2500\u2500 Deep Dive toggle
@@ -508,6 +553,62 @@ onMounted(fetchDashboard)
 .sync-btn--pending {
   border-color: var(--warning);
   color: var(--warning);
+}
+
+/* ── Sync toast ───────────────────────────────── */
+.sync-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  animation: slideDown 0.3s ease;
+}
+.sync-toast--success {
+  background: color-mix(in srgb, var(--progress-high) 10%, var(--bg-card));
+  border: 1px solid color-mix(in srgb, var(--progress-high) 25%, transparent);
+  color: var(--progress-high);
+}
+.sync-toast--info {
+  background: color-mix(in srgb, var(--data-teal) 10%, var(--bg-card));
+  border: 1px solid color-mix(in srgb, var(--data-teal) 25%, transparent);
+  color: var(--data-teal);
+}
+.sync-toast-body { flex: 1; }
+.sync-toast-title {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+.sync-toast-list {
+  margin: 0;
+  padding-left: 16px;
+  list-style: none;
+}
+.sync-toast-list li::before {
+  content: '•';
+  margin-right: 6px;
+  opacity: 0.5;
+}
+.sync-toast-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+.sync-toast-close:hover { color: var(--text-primary); }
+
+.toast-fade-enter-active { animation: slideDown 0.3s ease; }
+.toast-fade-leave-active { animation: slideDown 0.3s ease reverse; }
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes spin {
