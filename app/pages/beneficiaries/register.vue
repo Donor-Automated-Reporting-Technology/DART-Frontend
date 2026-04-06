@@ -199,6 +199,8 @@ import { reactive, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { beneficiaryApi } from '../../services/beneficiaryApi'
 import { ApiError } from '../../services/api'
+import { saveBeneficiaryOffline, saveCfsRegistrationOffline } from '../../services/offlineDb'
+import { v4 as uuidv4 } from 'uuid'
 import type { BentoGroup } from '../../components/beneficiaries/SummaryBento.vue'
 
 definePageMeta({
@@ -335,6 +337,38 @@ async function onSubmit() {
 
   saving.value = true
   try {
+    if (!navigator.onLine) {
+      // Save beneficiary to IndexedDB and queue a CFS registration for later sync
+      const id = uuidv4()
+      await saveBeneficiaryOffline({
+        id,
+        personalName: form.personal_name.trim(),
+        fatherName: form.father_name.trim(),
+        grandfatherName: form.grandfather_name.trim(),
+        familyName: form.family_name.trim(),
+        ageAtRegistration: Number(form.age_at_registration),
+        sex: form.sex,
+        language: form.language.trim() || 'Arabic',
+        disabilityStatus: form.disability_status,
+        guardianName: form.guardian_name.trim(),
+        guardianPhone: form.guardian_phone.trim(),
+        knownMedicalIssues: form.known_medical_issues.trim(),
+        knownLearningDifficulties: '',
+        additionalNotes: form.additional_notes.trim(),
+        primeroCaseId: '',
+        syncStatus: 'pending',
+        clientTimestamp: new Date().toISOString(),
+      })
+      await saveCfsRegistrationOffline({
+        id: uuidv4(),
+        beneficiaryId: id,
+        syncStatus: 'pending',
+        clientTimestamp: new Date().toISOString(),
+      })
+      router.push('/beneficiaries')
+      return
+    }
+
     await beneficiaryApi.register({
       personal_name: form.personal_name.trim(),
       father_name: form.father_name.trim(),

@@ -10,6 +10,8 @@ import { ref, computed, watch } from 'vue'
 import { activityApi } from '../services/activityApi'
 import type { AttendanceBeneficiary } from '../services/activityApi'
 import { ApiError } from '../services/api'
+import { getBeneficiariesOffline, saveSessionOffline, saveAttendanceRecordsOffline } from '../services/offlineDb'
+import { v4 as uuidv4 } from 'uuid'
 
 export interface AttendanceRow extends AttendanceBeneficiary {
   selected: boolean
@@ -46,6 +48,20 @@ export const useAttendance = () => {
     error.value = null
     submitted.value = false
     try {
+      if (!navigator.onLine) {
+        const offline = await getBeneficiariesOffline()
+        rows.value = offline.map(b => ({
+          id: b.serverId ?? b.id,
+          full_name: [b.personalName, b.fatherName, b.grandfatherName, b.familyName]
+            .filter(Boolean).join(' '),
+          age: b.ageAtRegistration,
+          sex: b.sex,
+          disability_status: b.disabilityStatus,
+          already_present: false,
+          selected: false,
+        }))
+        return
+      }
       const list = await activityApi.getAttendanceBeneficiaries()
       rows.value = (Array.isArray(list) ? list : []).map(b => ({
         ...b,
@@ -70,6 +86,28 @@ export const useAttendance = () => {
     submitting.value = true
     error.value = null
     try {
+      if (!navigator.onLine) {
+        // Queue session + attendance records for later sync
+        const sessionId = uuidv4()
+        await saveSessionOffline({
+          id: sessionId,
+          sessionDate: date.value,
+          sessionType: 'general_group_activity',
+          syncStatus: 'pending',
+          clientTimestamp: new Date().toISOString(),
+        })
+        await saveAttendanceRecordsOffline(rows.value.map(r => ({
+          id: uuidv4(),
+          sessionId,
+          beneficiaryId: r.id,
+          status: r.selected ? 'present' as const : 'absent' as const,
+          syncStatus: 'pending' as const,
+          clientTimestamp: new Date().toISOString(),
+        })))
+        submitted.value = true
+        return
+      }
+
       const session = await activityApi.createSession({
         session_date: date.value,
         session_type: 'general_group_activity',
