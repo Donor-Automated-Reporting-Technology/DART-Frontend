@@ -9,6 +9,7 @@ import { ref, computed, watch } from 'vue'
 import { getActivePinia } from 'pinia'
 import { ApiError } from '../services/api'
 import { useFrameworkStore } from '../stores/framework'
+import { cfsApi } from '../services/cfsApi'
 import type {
   DashboardResponse,
   DemographicsSummary,
@@ -16,6 +17,7 @@ import type {
   LocationSummary,
   RecentSession,
 } from '../interfaces/dashboard'
+import type { DashboardStatsResponse } from '../interfaces/cfs'
 
 const BASE_URL = '/api/v1'
 
@@ -131,6 +133,7 @@ export const useDashboard = () => {
       qs.set('period_end', range.period_end)
       if (locationFilter.value) qs.set('location_id', locationFilter.value)
 
+      // 1. Fetch the main dashboard (locations, sessions, activity list)
       const url = `${BASE_URL}/dashboard?${qs.toString()}`
       const response = await fetch(url, { headers })
       const raw = await response.json().catch(() => ({}))
@@ -141,39 +144,149 @@ export const useDashboard = () => {
 
       const body: DashboardResponse = raw?.data !== undefined ? raw.data : raw
 
-      demographics.value = body.demographics ?? demographics.value
       locations.value = body.locations ?? []
       recentSessions.value = body.recent_sessions ?? []
 
-      // ── Merge admin-configured grant targets ────────────────────────────
-      // Use targets set by the admin in Settings → Framework, so every user
-      // sees the same org-wide grant target instead of per-user values.
-      const frameworkStore = useFrameworkStore()
-      if (!frameworkStore.currentFramework) await frameworkStore.fetchFramework()
-      if (frameworkStore.currentFramework && !frameworkStore.frameworkActivities.length) {
-        await frameworkStore.fetchActivities()
-      }
-
       const apiActivities: ActivitySummary[] = body.activity_summary ?? []
 
-      // Build a lookup of admin targets keyed by activity code
-      const adminTargets = new Map<string, number>()
-      for (const fa of frameworkStore.activeActivities) {
-        const code = fa.template?.code
-        if (code && fa.target_count > 0) {
-          adminTargets.set(code, fa.target_count)
+      // ── Strategy: resolve org-wide grant targets for ALL user roles ────
+      // Try multiple sources in order of specificity.  The first source that
+      // provides data wins. This ensures non-admin users see the same
+      // admin-configured targets as admins.
+
+      let resolved = false
+
+      // ─── Source A: Framework activities (per-activity targets) ─────────
+      // Works for admins and roles with framework read access.
+      try {
+        const frameworkStore = useFrameworkStore()
+        if (!frameworkStore.currentFramework) await frameworkStore.fetchFramework()
+        if (frameworkStore.currentFramework && !frameworkStore.frameworkActivities.length) {
+          await frameworkStore.fetchActivities()
+        }
+
+        const adminTargets = new Map<string, number>()
+        for (const fa of frameworkStore.activeActivities) {
+          const code = fa.template?.code
+          if (code && fa.target_count > 0) {
+            adminTargets.set(code, fa.target_count)
+          }
+        }
+
+        if (adminTargets.size > 0) {
+          activitySummary.value = apiActivities.map((a) => {
+            const adminTarget = adminTargets.get(a.code)
+            if (adminTarget !== undefined) {
+              const pct = adminTarget > 0 ? Math.round((a.actual / adminTarget) * 100) : 0
+              return { ...a, target: adminTarget, percentage: Math.min(pct, 999) }
+            }
+            return a
+          })
+          demographics.value = body.demographics ?? demographics.value
+          resolved = true
+        }
+      } catch {
+        // Framework endpoint not accessible for this role — try next source
+      }
+
+      // ─── Source B: CFS org-wide dashboard stats ───────────────────────
+      // Returns correct org-wide demographics + grant targets + progress.
+      // Accessible to all org members for CFS/child_protection frameworks.
+      if (!resolved) {
+        try {
+          const cfsStats: DashboardStatsResponse = await cfsApi.getDashboardStats()
+
+          // Use org-wide demographics instead of location-scoped values
+          demographics.value = {
+            total_beneficiaries: cfsStats.demographics.total_children ?? 0,
+            girls_women: cfsStats.demographics.total_female ?? 0,
+            boys_men: cfsStats.demographics.total_male ?? 0,
+            with_disability: cfsStats.demographics.total_with_disability ?? 0,
+          }
+
+          // Map CFS progress items (server-calculated actual vs grant target)
+          // to the activity summary, keyed by activity code.
+          const cfsProgressMap: Record<string, { actual: number; target: number; percentage: number }> = {}
+
+          if (cfsStats.progress) {
+            // Map the CFS grant target categories to likely activity codes
+            if (cfsStats.progress.total_children) {
+              cfsProgressMap['cfs'] = cfsStats.progress.total_children
+              cfsProgressMap['children_sessions'] = cfsStats.progress.total_children
+            }
+            if (cfsStats.progress.sessions) {
+              cfsProgressMap['sessions'] = cfsStats.progress.sessions
+            }
+          }
+
+          // Also build a target-only map from grant_targets for additional matching
+          const grantTargetMap: Record<string, number> = {}
+          if (cfsStats.grant_targets) {
+            grantTargetMap['cfs'] = cfsStats.grant_targets.target_total_children ?? 0
+            grantTargetMap['children_sessions'] = cfsStats.grant_targets.target_total_children ?? 0
+          }
+
+          activitySummary.value = apiActivities.map((a) => {
+            // Prefer full progress item (has correct actual + target)
+            const progress = cfsProgressMap[a.code]
+            if (progress && progress.target > 0) {
+              return {
+                ...a,
+                actual: progress.actual,
+                target: progress.target,
+                percentage: Math.min(progress.percentage, 999),
+              }
+            }
+            // Fall back to grant target for target only, keep API actual
+            const grantTarget = grantTargetMap[a.code]
+            if (grantTarget && grantTarget > 0) {
+              const pct = Math.round((a.actual / grantTarget) * 100)
+              return { ...a, target: grantTarget, percentage: Math.min(pct, 999) }
+            }
+            return a
+          })
+
+          resolved = true
+        } catch {
+          // CFS dashboard stats not accessible — try grant targets only
         }
       }
 
-      // Override each activity's target with the admin-configured value
-      activitySummary.value = apiActivities.map((a) => {
-        const adminTarget = adminTargets.get(a.code)
-        if (adminTarget !== undefined) {
-          const pct = adminTarget > 0 ? Math.round((a.actual / adminTarget) * 100) : 0
-          return { ...a, target: adminTarget, percentage: Math.min(pct, 999) }
+      // ─── Source C: CFS grant targets (target values only) ─────────────
+      // Lightweight read-only config endpoint — most likely accessible to all.
+      if (!resolved) {
+        try {
+          const grantTargets = await cfsApi.getGrantTargets()
+          if (grantTargets?.target_values) {
+            const tv = grantTargets.target_values
+            const targetMap: Record<string, number> = {}
+            if (tv.total_children > 0) {
+              targetMap['cfs'] = tv.total_children
+              targetMap['children_sessions'] = tv.total_children
+            }
+
+            demographics.value = body.demographics ?? demographics.value
+
+            activitySummary.value = apiActivities.map((a) => {
+              const target = targetMap[a.code]
+              if (target && target > 0) {
+                const pct = Math.round((a.actual / target) * 100)
+                return { ...a, target, percentage: Math.min(pct, 999) }
+              }
+              return a
+            })
+            resolved = true
+          }
+        } catch {
+          // Grant targets not accessible
         }
-        return a
-      })
+      }
+
+      // ─── Fallback: use raw API data as-is ─────────────────────────────
+      if (!resolved) {
+        demographics.value = body.demographics ?? demographics.value
+        activitySummary.value = apiActivities
+      }
     } catch (e: any) {
       error.value = e?.message ?? 'Failed to load dashboard'
     } finally {
