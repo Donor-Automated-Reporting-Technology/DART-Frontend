@@ -73,6 +73,18 @@
             <AppIcon name="user-plus" :size="16" class="nav-icon" />
             <span class="nav-label">Beneficiaries</span>
           </NuxtLink>
+
+          <NuxtLink
+            to="/activities"
+            class="nav-item"
+            active-class="nav-item--active"
+            title="Activities"
+            @click="closeSidebarOnMobile"
+          >
+            <span class="nav-item-indicator" />
+            <AppIcon name="layers" :size="16" class="nav-icon" />
+            <span class="nav-label">Activities</span>
+          </NuxtLink>
         </div>
 
         <!-- Activities (dynamic from framework) ──────────────────────── -->
