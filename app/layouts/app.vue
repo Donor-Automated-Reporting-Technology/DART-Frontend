@@ -48,7 +48,7 @@
       <nav class="sidebar-nav" role="navigation">
 
         <!-- Main navigation ────────────────────────────────────────────── -->
-        <div class="nav-group" v-if="isAdmin || isStaff || isManager">
+        <div class="nav-group">
           <span class="nav-group-label">Main</span>
           <NuxtLink
             to="/dashboard"
