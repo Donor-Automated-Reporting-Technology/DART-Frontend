@@ -25,9 +25,7 @@
 
         <!-- ── Activity Hero ─────────────────────────────────────── -->
         <div class="activity-hero">
-          <div class="hero-icon-wrap">
-            <AppIcon :name="activityIcon" :size="24" />
-          </div>
+          <AppIcon :name="activityIcon" :size="26" class="hero-icon" />
           <div class="hero-body">
             <h1 class="hero-title">{{ activity.template?.name ?? 'Activity' }}</h1>
             <p v-if="activity.template?.description" class="hero-desc">{{ activity.template.description }}</p>
@@ -55,26 +53,20 @@
               :to="link.to"
               class="action-card action-card--primary"
             >
-              <div class="action-icon">
-                <AppIcon :name="link.icon" :size="20" />
-              </div>
+              <AppIcon :name="link.icon" :size="20" class="action-ico" />
               <span class="action-label">{{ link.label }}</span>
               <AppIcon name="arrow-right" :size="14" class="action-arrow" />
             </NuxtLink>
 
             <!-- Global actions -->
             <NuxtLink to="/beneficiaries" class="action-card">
-              <div class="action-icon action-icon--secondary">
-                <AppIcon name="users" :size="20" />
-              </div>
+              <AppIcon name="users" :size="20" class="action-ico action-ico--muted" />
               <span class="action-label">Beneficiaries</span>
               <AppIcon name="arrow-right" :size="14" class="action-arrow" />
             </NuxtLink>
 
             <NuxtLink to="/beneficiaries/register" class="action-card">
-              <div class="action-icon action-icon--secondary">
-                <AppIcon name="user-plus" :size="20" />
-              </div>
+              <AppIcon name="user-plus" :size="20" class="action-ico action-ico--muted" />
               <span class="action-label">Register</span>
               <AppIcon name="arrow-right" :size="14" class="action-arrow" />
             </NuxtLink>
@@ -296,15 +288,8 @@ onMounted(fetchData)
   box-shadow: var(--shadow-card);
 }
 
-.hero-icon-wrap {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  background: var(--primary-dim);
+.hero-icon {
   color: var(--primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
 }
 
@@ -407,31 +392,18 @@ onMounted(fetchData)
   transform: translateY(0) scale(0.98);
 }
 
-.action-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: var(--primary-dim);
+.action-ico {
   color: var(--primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
-  transition: transform 0.2s ease;
+  transition: color 0.2s ease;
 }
 
-.action-card:hover .action-icon {
-  transform: scale(1.08);
-}
-
-.action-card--primary .action-icon {
-  background: var(--primary);
-  color: #fff;
-}
-
-.action-icon--secondary {
-  background: var(--hover-bg);
+.action-ico--muted {
   color: var(--text-secondary);
+}
+
+.action-card:hover .action-ico--muted {
+  color: var(--primary);
 }
 
 .action-label {

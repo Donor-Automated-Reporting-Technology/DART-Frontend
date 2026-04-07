@@ -4,9 +4,7 @@
 
       <!-- Hero header -->
       <div class="hero">
-        <div class="hero-icon-wrap">
-          <AppIcon name="layers" :size="22" class="hero-icon" />
-        </div>
+        <AppIcon name="layers" :size="24" class="hero-icon" />
         <div>
           <h1 class="hero-title">Projects</h1>
           <p class="hero-sub">Select a project to view its activities</p>
@@ -32,9 +30,7 @@
           :to="`/activities/${fw.id}`"
           class="project-card"
         >
-          <div class="card-icon-wrap" :class="`card-icon--${fw.framework_type}`">
-            <AppIcon :name="frameworkIcon(fw.framework_type)" :size="18" />
-          </div>
+          <AppIcon :name="frameworkIcon(fw.framework_type)" :size="20" class="card-icon" />
 
           <div class="card-content">
             <h2 class="card-name">{{ fw.project_name }}</h2>
@@ -51,9 +47,7 @@
 
       <!-- Empty -->
       <div v-else class="state state--empty">
-        <div class="empty-icon-wrap">
-          <AppIcon name="inbox" :size="28" />
-        </div>
+        <AppIcon name="inbox" :size="32" class="empty-icon" />
         <p class="empty-title">No projects yet</p>
         <p class="empty-text">Ask your admin to set up a framework in Settings.</p>
       </div>
@@ -121,19 +115,9 @@ onMounted(fetchFrameworks)
   margin-bottom: 32px;
 }
 
-.hero-icon-wrap {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
-  background: var(--primary-dim);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
 .hero-icon {
   color: var(--primary);
+  flex-shrink: 0;
 }
 
 .hero-title {
@@ -238,27 +222,15 @@ onMounted(fetchFrameworks)
   transform: translateY(0) scale(0.99);
 }
 
-/* icon tint circles */
-.card-icon-wrap {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.card-icon {
+  color: var(--text-secondary);
   flex-shrink: 0;
-  transition: transform 0.2s ease;
+  transition: color 0.2s ease;
 }
 
-.project-card:hover .card-icon-wrap {
-  transform: scale(1.08);
+.project-card:hover .card-icon {
+  color: var(--primary);
 }
-
-.card-icon--child_protection { background: rgba(96, 165, 250, 0.12); color: #60a5fa; }
-.card-icon--education { background: rgba(167, 139, 250, 0.12); color: #a78bfa; }
-.card-icon--health { background: rgba(251, 113, 133, 0.12); color: #fb7185; }
-.card-icon--wash { background: rgba(45, 212, 191, 0.12); color: #2dd4bf; }
-.card-icon--livelihoods { background: rgba(251, 191, 36, 0.12); color: #fbbf24; }
 
 .card-content {
   flex: 1;
@@ -313,14 +285,7 @@ onMounted(fetchFrameworks)
   padding: 80px 24px;
 }
 
-.empty-icon-wrap {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  background: var(--hover-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.empty-icon {
   color: var(--text-muted);
 }
 

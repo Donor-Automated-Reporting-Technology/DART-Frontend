@@ -23,9 +23,7 @@
 
         <!-- ── Project Hero ──────────────────────────────────────── -->
         <div class="project-hero">
-          <div class="hero-icon-wrap" :class="`hero-icon--${framework.framework_type}`">
-            <AppIcon :name="frameworkIcon(framework.framework_type)" :size="22" />
-          </div>
+          <AppIcon :name="frameworkIcon(framework.framework_type)" :size="24" class="hero-icon" />
           <div class="hero-body">
             <h1 class="hero-title">{{ framework.project_name }}</h1>
             <div class="hero-chips">
@@ -59,9 +57,7 @@
               :to="`/activities/${frameworkId}/${a.id}`"
               class="activity-card"
             >
-              <div class="act-icon-wrap">
-                <AppIcon :name="activityIcon(a)" :size="18" />
-              </div>
+              <AppIcon :name="activityIcon(a)" :size="20" class="act-icon" />
               <div class="act-body">
                 <h3 class="act-name">{{ a.template?.name ?? 'Activity' }}</h3>
                 <span v-if="a.target_count" class="act-target">
@@ -233,21 +229,10 @@ onMounted(fetchProject)
   box-shadow: var(--shadow-card);
 }
 
-.hero-icon-wrap {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.hero-icon {
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
-
-.hero-icon--child_protection { background: rgba(96, 165, 250, 0.12); color: #60a5fa; }
-.hero-icon--education { background: rgba(167, 139, 250, 0.12); color: #a78bfa; }
-.hero-icon--health { background: rgba(251, 113, 133, 0.12); color: #fb7185; }
-.hero-icon--wash { background: rgba(45, 212, 191, 0.12); color: #2dd4bf; }
-.hero-icon--livelihoods { background: rgba(251, 191, 36, 0.12); color: #fbbf24; }
 
 .hero-body {
   flex: 1;
@@ -357,21 +342,14 @@ onMounted(fetchProject)
   transform: translateY(0) scale(0.99);
 }
 
-.act-icon-wrap {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: var(--primary-dim);
-  color: var(--primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.act-icon {
+  color: var(--text-secondary);
   flex-shrink: 0;
-  transition: transform 0.2s ease;
+  transition: color 0.2s ease;
 }
 
-.activity-card:hover .act-icon-wrap {
-  transform: scale(1.08);
+.activity-card:hover .act-icon {
+  color: var(--primary);
 }
 
 .act-body {
