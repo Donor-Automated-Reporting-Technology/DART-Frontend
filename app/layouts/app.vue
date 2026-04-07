@@ -87,24 +87,6 @@
           </NuxtLink>
         </div>
 
-        <!-- Activities (dynamic from framework) ──────────────────────── -->
-        <div class="nav-group" v-if="hasActivities">
-          <span class="nav-group-label">Activities</span>
-          <NuxtLink
-            v-for="activity in sidebarActivities"
-            :key="activity.code"
-            :to="activity.route"
-            class="nav-item"
-            active-class="nav-item--active"
-            :title="activity.label"
-            @click="closeSidebarOnMobile"
-          >
-            <span class="nav-item-indicator" />
-            <AppIcon :name="activity.icon" :size="16" class="nav-icon" />
-            <span class="nav-label">{{ activity.label }}</span>
-          </NuxtLink>
-        </div>
-
         <!-- Management ──────────────────────────────────────────────── -->
         <div class="nav-group" v-if="isAdmin || isManager">
           <span class="nav-group-label">Management</span>
@@ -306,7 +288,6 @@ import { useAuthStore }       from '../stores/auth';
 import { useOnboardingStore } from '../stores/onboarding';
 import { useTheme }           from '../composables/useTheme';
 import AppIcon from '../components/interfaces/AppIcon.vue';
-import { ACTIVITY_CONFIG }    from '../utils/activityConfig';
 import type { Breadcrumb } from '../interfaces/dashboard';
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
@@ -355,34 +336,6 @@ const isStaff = computed(() =>
 const isManager = computed(() =>
   authStore.userRole === 'org_admin' || authStore.userRole === 'program_manager'
 );
-
-/**
- * Dynamic sidebar activity items built from the auth store's frameworkActivities.
- * Falls back to the old `activities` array for backward compat during migration.
- */
-const sidebarActivities = computed(() => {
-  // New framework-based approach
-  if (authStore.frameworkActivities.length > 0) {
-    return authStore.frameworkActivities
-      .filter((fa) => fa.is_active && fa.template?.code)
-      .map((fa) => {
-        const code = fa.template!.code
-        const config = ACTIVITY_CONFIG[code]
-        return config ? { code, ...config } : null
-      })
-      .filter(Boolean) as Array<{ code: string; icon: string; label: string; route: string }>
-  }
-  // Backward compat: old activities array (string[])
-  if (authStore.activities?.includes('Child Friendly Spaces')) {
-    return [
-      { code: 'CFS_ATTENDANCE', icon: 'check-square', label: 'Attendance', route: '/cfs/attendance' },
-    ]
-  }
-  return []
-});
-
-/** Whether the user has any activities to show */
-const hasActivities = computed(() => sidebarActivities.value.length > 0);
 
 // ─── Onboarding pill ──────────────────────────────────────────────────────────
 
