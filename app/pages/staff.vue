@@ -46,7 +46,12 @@
               </td>
               <td class="sf-cell-email">{{ s.email }}</td>
               <td><span class="sf-role-tag">{{ formatRole(s.role) }}</span></td>
-              <td class="sf-cell-locations">{{ s.assigned_locations?.length || 0 }} assigned</td>
+              <td class="sf-cell-locations">
+                <template v-if="s.assigned_locations?.length">
+                  <span v-for="locId in s.assigned_locations" :key="locId" class="sf-location-pill">{{ locationName(locId) }}</span>
+                </template>
+                <span v-else class="sf-unassigned-tag">Unassigned</span>
+              </td>
               <td class="sf-col-actions">
                 <button class="sf-btn-edit" @click="openEdit(s)">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -245,6 +250,10 @@
                 </button>
               </div>
               <div class="sf-modal__body">
+                <div v-if="editLocations.length === 0" class="sf-unassigned-banner">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  This staff member is not assigned to any location.
+                </div>
                 <StaffAssignmentForm
                   :service-points="servicePoints"
                   v-model="editLocations"
@@ -252,8 +261,16 @@
               </div>
               <div class="sf-modal__footer">
                 <button class="sf-btn-secondary" @click="showEdit = false">Cancel</button>
+                <button
+                  v-if="editOriginalLocations.length > 0"
+                  class="sf-btn-danger"
+                  :disabled="creating"
+                  @click="handleUnassignAll"
+                >
+                  Unassign All
+                </button>
                 <div class="sf-modal__footer-spacer" />
-                <button class="sf-btn-save" :disabled="creating" @click="handleEditSave">
+                <button class="sf-btn-save" :disabled="creating || editLocations.length === 0" @click="handleEditSave">
                   <span v-if="creating" class="spinner spinner--sm" />
                   {{ creating ? 'Saving...' : 'Save Assignments' }}
                 </button>
@@ -295,6 +312,7 @@ const showEdit = ref(false)
 const showPassword = ref(false)
 const editTarget = ref<StaffMember | null>(null)
 const editLocations = ref<string[]>([])
+const editOriginalLocations = ref<string[]>([])
 const toastMsg = ref('')
 
 // Multi-step
@@ -445,11 +463,17 @@ async function handleCreate() {
   }
 }
 
+function locationName(id: string): string {
+  return locationStore.servicePointById(id)?.name ?? id
+}
+
 function openEdit(s: StaffMember) {
   editTarget.value = s
-  editLocations.value = (s.assigned_locations ?? []).map(
+  const locs = (s.assigned_locations ?? []).map(
     (loc: any) => typeof loc === 'string' ? loc : loc.id,
   )
+  editLocations.value = [...locs]
+  editOriginalLocations.value = [...locs]
   showEdit.value = true
 }
 
@@ -471,6 +495,24 @@ async function handleEditSave() {
     await fetchStaff()
   } catch (e: any) {
     error.value = e?.message ?? 'Failed to update assignments'
+  } finally {
+    creating.value = false
+  }
+}
+
+async function handleUnassignAll() {
+  if (!editTarget.value) return
+  creating.value = true
+  error.value = null
+  try {
+    await staffApi.unassign({ user_id: editTarget.value.id })
+    editLocations.value = []
+    editOriginalLocations.value = []
+    showEdit.value = false
+    showToast('Staff member unassigned from all locations')
+    await fetchStaff()
+  } catch (e: any) {
+    error.value = e?.message ?? 'Failed to unassign staff'
   } finally {
     creating.value = false
   }
@@ -632,6 +674,65 @@ onMounted(() => {
   background: var(--hover-bg);
   color: var(--text-secondary);
   font-weight: 500;
+}
+
+.sf-cell-locations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.sf-location-pill {
+  display: inline-block;
+  font-size: 0.72rem;
+  padding: 2px 9px;
+  border-radius: 100px;
+  background: var(--hover-bg);
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sf-unassigned-tag {
+  font-size: 0.75rem;
+  color: #AEAEB2;
+  font-style: italic;
+}
+
+.sf-unassigned-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  font-size: 0.8rem;
+  color: #AEAEB2;
+  background: var(--hover-bg);
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-color);
+}
+
+.sf-btn-danger {
+  padding: 9px 16px;
+  background: transparent;
+  border: 1px solid var(--error);
+  border-radius: var(--radius-sm);
+  color: var(--error);
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sf-btn-danger:hover {
+  background: var(--error);
+  color: #FFFFFF;
+}
+
+.sf-btn-danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .sf-col-actions {
