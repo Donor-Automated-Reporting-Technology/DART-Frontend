@@ -418,13 +418,27 @@ async function fetchStaff() {
   error.value = null
   try {
     const res = await staffApi.list() as { assignments?: any[]; staff?: any[] }
-    staffList.value = (res.staff ?? res.assignments ?? []).map((s: any) => ({
-      ...s,
-      id: s.id ?? s.user_id,
-      assigned_locations: (s.assigned_locations ?? []).map(
-        (loc: any) => typeof loc === 'string' ? loc : loc.id,
-      ),
-    }))
+    const rows = res.assignments ?? res.staff ?? []
+
+    // The API returns one row per assignment — group by user to build a staff list
+    const grouped = new Map<string, StaffMember>()
+    for (const r of rows) {
+      const uid = r.user_id ?? r.id
+      if (!grouped.has(uid)) {
+        grouped.set(uid, {
+          id: uid,
+          full_name: r.full_name ?? '',
+          email: r.email ?? '',
+          role: r.role ?? '',
+          assigned_locations: [],
+        })
+      }
+      const locId = r.cfs_location_id
+      if (locId) {
+        grouped.get(uid)!.assigned_locations.push(locId)
+      }
+    }
+    staffList.value = Array.from(grouped.values())
   } catch (e: any) {
     error.value = e?.message ?? 'Failed to load staff'
   } finally {
