@@ -2,48 +2,60 @@
   <NuxtLayout name="app" :breadcrumbs="[{ title: 'Activities', href: '/activities', current: true }]">
     <div class="activities-hub">
 
-      <div class="page-header">
+      <!-- Hero header -->
+      <div class="hero">
+        <div class="hero-icon-wrap">
+          <AppIcon name="layers" :size="22" class="hero-icon" />
+        </div>
         <div>
-          <h1 class="page-title">Projects</h1>
-          <p class="page-subtitle">Select a project to view its activities</p>
+          <h1 class="hero-title">Projects</h1>
+          <p class="hero-sub">Select a project to view its activities</p>
         </div>
       </div>
 
       <!-- Loading -->
-      <div v-if="loading" class="hub-loading">
-        <div class="spinner" />
-        <span>Loading projects...</span>
+      <div v-if="loading" class="state state--loading">
+        <div class="pulse-dot" /><div class="pulse-dot" /><div class="pulse-dot" />
       </div>
 
       <!-- Error -->
-      <p v-else-if="error" class="hub-error">{{ error }}</p>
+      <div v-else-if="error" class="state state--error">
+        <AppIcon name="alert-circle" :size="18" />
+        <span>{{ error }}</span>
+      </div>
 
       <!-- Project cards -->
-      <div v-else-if="frameworks.length" class="cards-grid">
+      <div v-else-if="frameworks.length" class="card-stack">
         <NuxtLink
           v-for="fw in frameworks"
           :key="fw.id"
           :to="`/activities/${fw.id}`"
           class="project-card"
         >
-          <div class="card-left">
-            <AppIcon :name="frameworkIcon(fw.framework_type)" :size="16" class="card-icon" />
-            <div class="card-body">
-              <h2 class="card-title">{{ fw.project_name }}</h2>
-              <span class="card-partner">{{ fw.partner_name }}</span>
-            </div>
+          <div class="card-icon-wrap" :class="`card-icon--${fw.framework_type}`">
+            <AppIcon :name="frameworkIcon(fw.framework_type)" :size="18" />
           </div>
-          <div class="card-right">
-            <span class="card-type">{{ formatType(fw.framework_type) }}</span>
-            <AppIcon name="chevron-right" :size="14" class="card-chevron" />
+
+          <div class="card-content">
+            <h2 class="card-name">{{ fw.project_name }}</h2>
+            <p class="card-partner">{{ fw.partner_name }}</p>
+          </div>
+
+          <span class="card-pill">{{ formatType(fw.framework_type) }}</span>
+
+          <div class="card-arrow">
+            <AppIcon name="chevron-right" :size="16" />
           </div>
         </NuxtLink>
       </div>
 
       <!-- Empty -->
-      <div v-else class="hub-empty">
-        <p class="hub-empty__title">No projects configured</p>
-        <p class="hub-empty__text">Ask your admin to set up a framework in Settings.</p>
+      <div v-else class="state state--empty">
+        <div class="empty-icon-wrap">
+          <AppIcon name="inbox" :size="28" />
+        </div>
+        <p class="empty-title">No projects yet</p>
+        <p class="empty-text">Ask your admin to set up a framework in Settings.</p>
       </div>
     </div>
   </NuxtLayout>
@@ -76,13 +88,8 @@ const TYPE_ICONS: Record<string, string> = {
   livelihoods: 'briefcase',
 }
 
-function formatType(t: string) {
-  return TYPE_LABELS[t] ?? t
-}
-
-function frameworkIcon(t: string) {
-  return TYPE_ICONS[t] ?? 'layers'
-}
+function formatType(t: string) { return TYPE_LABELS[t] ?? t }
+function frameworkIcon(t: string) { return TYPE_ICONS[t] ?? 'layers' }
 
 async function fetchFrameworks() {
   loading.value = true
@@ -102,163 +109,242 @@ onMounted(fetchFrameworks)
 
 <style scoped>
 .activities-hub {
-  max-width: 680px;
+  max-width: 720px;
+  padding-bottom: 48px;
 }
 
-.page-header {
-  margin-bottom: 20px;
+/* ── Hero Header ─────────────────────────────────────────────────────────── */
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
 }
 
-.page-title {
-  font-size: 1.25rem;
+.hero-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: var(--primary-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hero-icon {
+  color: var(--primary);
+}
+
+.hero-title {
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 2px;
-  letter-spacing: -0.02em;
-}
-
-.page-subtitle {
-  font-size: 0.78rem;
-  color: var(--text-muted);
   margin: 0;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
 }
 
-/* ── Loading / Error / Empty ─────────────────────────────────────────────── */
-.hub-loading {
+.hero-sub {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 2px 0 0;
+}
+
+/* ── Loading ─────────────────────────────────────────────────────────────── */
+.state {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 48px;
-  color: var(--text-muted);
-  font-size: 0.84rem;
-}
-
-.hub-error {
-  padding: 12px 16px;
-  font-size: 0.8rem;
-  color: var(--error);
-  background: var(--error-bg);
-  border-radius: var(--radius-sm);
-}
-
-.hub-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
   padding: 64px 24px;
-  text-align: center;
+  border-radius: var(--radius-lg);
 }
 
-.hub-empty__title {
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
+.state--loading {
+  gap: 6px;
 }
 
-.hub-empty__text {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin: 0;
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  opacity: 0.4;
+  animation: pulse-bounce 1.4s ease-in-out infinite;
+}
+
+.pulse-dot:nth-child(2) { animation-delay: 0.16s; }
+.pulse-dot:nth-child(3) { animation-delay: 0.32s; }
+
+@keyframes pulse-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+.state--error {
+  background: var(--error-bg);
+  color: var(--error);
+  font-size: 0.84rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  justify-content: flex-start;
 }
 
 /* ── Cards ───────────────────────────────────────────────────────────────── */
-.cards-grid {
+.card-stack {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 }
 
 .project-card {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 18px;
-  background: var(--bg-panel);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
+  gap: 14px;
+  padding: 16px 20px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
   text-decoration: none;
   color: inherit;
-  transition: border-color 0.15s, background 0.15s;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.22s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.project-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+  border: 1.5px solid transparent;
+  transition: border-color 0.2s ease;
+  pointer-events: none;
 }
 
 .project-card:hover {
-  border-color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 3%, var(--bg-panel));
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-elevated);
 }
 
-.card-left {
+.project-card:hover::after {
+  border-color: var(--primary);
+}
+
+.project-card:active {
+  transform: translateY(0) scale(0.99);
+}
+
+/* icon tint circles */
+.card-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-
-.card-icon {
-  color: var(--text-muted);
+  justify-content: center;
   flex-shrink: 0;
+  transition: transform 0.2s ease;
 }
 
-.card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
+.project-card:hover .card-icon-wrap {
+  transform: scale(1.08);
+}
+
+.card-icon--child_protection { background: rgba(96, 165, 250, 0.12); color: #60a5fa; }
+.card-icon--education { background: rgba(167, 139, 250, 0.12); color: #a78bfa; }
+.card-icon--health { background: rgba(251, 113, 133, 0.12); color: #fb7185; }
+.card-icon--wash { background: rgba(45, 212, 191, 0.12); color: #2dd4bf; }
+.card-icon--livelihoods { background: rgba(251, 191, 36, 0.12); color: #fbbf24; }
+
+.card-content {
+  flex: 1;
   min-width: 0;
 }
 
-.card-title {
-  font-size: 0.88rem;
+.card-name {
+  font-size: 0.92rem;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.01em;
 }
 
 .card-partner {
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   color: var(--text-secondary);
+  margin: 2px 0 0;
 }
 
-.card-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.card-type {
+.card-pill {
   font-size: 0.68rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  padding: 2px 8px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 4px 10px;
   border-radius: 100px;
   background: var(--hover-bg);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
 }
 
-.card-chevron {
+.card-arrow {
   color: var(--text-muted);
-  opacity: 0.35;
-  transition: opacity 0.15s, transform 0.15s;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.project-card:hover .card-chevron {
+.project-card:hover .card-arrow {
   opacity: 1;
+  transform: translateX(0);
   color: var(--primary);
-  transform: translateX(2px);
 }
 
-@media (max-width: 640px) {
-  .project-card {
-    padding: 12px 14px;
-  }
+/* ── Empty ───────────────────────────────────────────────────────────────── */
+.state--empty {
+  flex-direction: column;
+  gap: 12px;
+  padding: 80px 24px;
+}
 
-  .card-type {
-    display: none;
-  }
+.empty-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--hover-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.empty-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.empty-text {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ── Mobile ──────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .hero-icon-wrap { width: 40px; height: 40px; }
+  .hero-title { font-size: 1.25rem; }
+
+  .project-card { padding: 14px 16px; gap: 12px; }
+  .card-icon-wrap { width: 36px; height: 36px; border-radius: 8px; }
+  .card-pill { display: none; }
+  .card-arrow { opacity: 0.5; transform: translateX(0); }
 }
 </style>

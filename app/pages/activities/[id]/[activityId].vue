@@ -3,80 +3,115 @@
     <div class="activity-page">
 
       <!-- Loading -->
-      <div v-if="loading" class="state-loading">
-        <div class="spinner" />
-        <span>Loading activity...</span>
+      <div v-if="loading" class="state state--loading">
+        <div class="pulse-dot" /><div class="pulse-dot" /><div class="pulse-dot" />
       </div>
 
       <!-- Error -->
-      <p v-else-if="error" class="state-error">{{ error }}</p>
+      <div v-else-if="error" class="state state--error">
+        <AppIcon name="alert-circle" :size="18" />
+        <span>{{ error }}</span>
+      </div>
 
       <template v-else-if="activity">
-        <!-- ── Nav trail ─────────────────────────────────────────── -->
-        <div class="nav-trail">
-          <NuxtLink to="/activities" class="trail-link">Projects</NuxtLink>
-          <AppIcon name="chevron-right" :size="12" class="trail-sep" />
-          <NuxtLink :to="`/activities/${frameworkId}`" class="trail-link">{{ framework?.project_name ?? 'Project' }}</NuxtLink>
-          <AppIcon name="chevron-right" :size="12" class="trail-sep" />
-          <span class="trail-current">{{ activity.template?.name ?? 'Activity' }}</span>
-        </div>
+        <!-- ── Breadcrumb ────────────────────────────────────────── -->
+        <nav class="breadcrumb">
+          <NuxtLink to="/activities" class="crumb-link">Projects</NuxtLink>
+          <span class="crumb-sep">/</span>
+          <NuxtLink :to="`/activities/${frameworkId}`" class="crumb-link">{{ framework?.project_name ?? 'Project' }}</NuxtLink>
+          <span class="crumb-sep">/</span>
+          <span class="crumb-current">{{ activity.template?.name ?? 'Activity' }}</span>
+        </nav>
 
-        <!-- ── Header ──────────────────────────────────────────────── -->
-        <div class="page-header">
-          <div class="header-top">
-            <AppIcon :name="activityIcon" :size="18" class="header-icon" />
-            <h1 class="page-title">{{ activity.template?.name ?? 'Activity' }}</h1>
+        <!-- ── Activity Hero ─────────────────────────────────────── -->
+        <div class="activity-hero">
+          <div class="hero-icon-wrap">
+            <AppIcon :name="activityIcon" :size="24" />
           </div>
-          <p v-if="activity.template?.description" class="page-desc">{{ activity.template.description }}</p>
-          <div class="header-tags">
-            <span class="tag">{{ formatPattern(activity.template?.pattern_type) }}</span>
-            <span v-if="activity.target_count" class="tag">{{ activity.target_count }} {{ activity.target_unit }}</span>
+          <div class="hero-body">
+            <h1 class="hero-title">{{ activity.template?.name ?? 'Activity' }}</h1>
+            <p v-if="activity.template?.description" class="hero-desc">{{ activity.template.description }}</p>
+            <div class="hero-tags">
+              <span class="tag-pill">
+                <AppIcon name="repeat" :size="11" />
+                {{ formatPattern(activity.template?.pattern_type) }}
+              </span>
+              <span v-if="activity.target_count" class="tag-pill">
+                <AppIcon name="target" :size="11" />
+                {{ activity.target_count }} {{ activity.target_unit }}
+              </span>
+            </div>
           </div>
         </div>
 
-        <!-- ── Action buttons ──────────────────────────────────────── -->
-        <div class="actions">
-          <!-- Activity-specific primary action -->
-          <NuxtLink
-            v-for="link in activityLinks"
-            :key="link.to"
-            :to="link.to"
-            class="action-btn action-btn--primary"
-          >
-            <AppIcon :name="link.icon" :size="16" />
-            {{ link.label }}
-          </NuxtLink>
+        <!-- ── Quick Actions ─────────────────────────────────────── -->
+        <div class="actions-section">
+          <h2 class="section-label">Quick Actions</h2>
+          <div class="actions-grid">
+            <!-- Primary activity action -->
+            <NuxtLink
+              v-for="link in activityLinks"
+              :key="link.to"
+              :to="link.to"
+              class="action-card action-card--primary"
+            >
+              <div class="action-icon">
+                <AppIcon :name="link.icon" :size="20" />
+              </div>
+              <span class="action-label">{{ link.label }}</span>
+              <AppIcon name="arrow-right" :size="14" class="action-arrow" />
+            </NuxtLink>
 
-          <!-- Global actions -->
-          <NuxtLink to="/beneficiaries" class="action-btn">
-            <AppIcon name="users" :size="16" />
-            Beneficiaries
-          </NuxtLink>
-          <NuxtLink to="/beneficiaries/register" class="action-btn">
-            <AppIcon name="user-plus" :size="16" />
-            Register
-          </NuxtLink>
+            <!-- Global actions -->
+            <NuxtLink to="/beneficiaries" class="action-card">
+              <div class="action-icon action-icon--secondary">
+                <AppIcon name="users" :size="20" />
+              </div>
+              <span class="action-label">Beneficiaries</span>
+              <AppIcon name="arrow-right" :size="14" class="action-arrow" />
+            </NuxtLink>
+
+            <NuxtLink to="/beneficiaries/register" class="action-card">
+              <div class="action-icon action-icon--secondary">
+                <AppIcon name="user-plus" :size="20" />
+              </div>
+              <span class="action-label">Register</span>
+              <AppIcon name="arrow-right" :size="14" class="action-arrow" />
+            </NuxtLink>
+          </div>
         </div>
 
-        <!-- ── Info panel ──────────────────────────────────────────── -->
-        <div class="info-panel">
-          <h3 class="panel-label">Details</h3>
-          <div class="info-grid">
-            <div class="info-cell">
-              <span class="info-key">Project</span>
-              <span class="info-val">{{ framework?.project_name ?? '—' }}</span>
+        <!-- ── Details Panel ─────────────────────────────────────── -->
+        <div class="details-panel">
+          <h2 class="section-label">Details</h2>
+          <div class="details-grid">
+            <div class="detail-item">
+              <AppIcon name="folder" :size="14" class="detail-icon" />
+              <div class="detail-text">
+                <span class="detail-key">Project</span>
+                <span class="detail-val">{{ framework?.project_name ?? '\u2014' }}</span>
+              </div>
             </div>
-            <div class="info-cell">
-              <span class="info-key">Partner</span>
-              <span class="info-val">{{ framework?.partner_name ?? '—' }}</span>
+            <div class="detail-item">
+              <AppIcon name="building" :size="14" class="detail-icon" />
+              <div class="detail-text">
+                <span class="detail-key">Partner</span>
+                <span class="detail-val">{{ framework?.partner_name ?? '\u2014' }}</span>
+              </div>
             </div>
-            <div class="info-cell">
-              <span class="info-key">Reporting To</span>
-              <span class="info-val">{{ framework?.reporting_to || '—' }}</span>
+            <div class="detail-item">
+              <AppIcon name="send" :size="14" class="detail-icon" />
+              <div class="detail-text">
+                <span class="detail-key">Reporting To</span>
+                <span class="detail-val">{{ framework?.reporting_to || '\u2014' }}</span>
+              </div>
             </div>
-            <div class="info-cell" v-if="activity.target_count">
-              <span class="info-key">Target</span>
-              <span class="info-val">{{ activity.target_count }} {{ activity.target_unit }}</span>
+            <div v-if="activity.target_count" class="detail-item">
+              <AppIcon name="target" :size="14" class="detail-icon" />
+              <div class="detail-text">
+                <span class="detail-key">Target</span>
+                <span class="detail-val">{{ activity.target_count }} {{ activity.target_unit }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -127,7 +162,7 @@ const PATTERN_LABELS: Record<string, string> = {
 }
 
 function formatPattern(p?: string) {
-  if (!p) return '—'
+  if (!p) return '\u2014'
   return PATTERN_LABELS[p] ?? p
 }
 
@@ -213,200 +248,322 @@ onMounted(fetchData)
 
 <style scoped>
 .activity-page {
-  max-width: 680px;
+  max-width: 720px;
+  padding-bottom: 48px;
 }
 
-/* ── Nav trail ───────────────────────────────────────────────────────────── */
-.nav-trail {
+/* ── Breadcrumb ──────────────────────────────────────────────────────────── */
+.breadcrumb {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 16px;
+  gap: 8px;
+  margin-bottom: 24px;
 }
 
-.trail-link {
-  font-size: 0.75rem;
+.crumb-link {
+  font-size: 0.78rem;
   font-weight: 500;
   color: var(--text-muted);
   text-decoration: none;
   transition: color 0.15s;
 }
 
-.trail-link:hover {
+.crumb-link:hover {
   color: var(--primary);
 }
 
-.trail-sep {
+.crumb-sep {
+  font-size: 0.72rem;
   color: var(--text-muted);
   opacity: 0.4;
 }
 
-.trail-current {
-  font-size: 0.75rem;
+.crumb-current {
+  font-size: 0.78rem;
   font-weight: 500;
   color: var(--text-secondary);
 }
 
-/* ── Header ──────────────────────────────────────────────────────────────── */
-.page-header {
-  margin-bottom: 24px;
+/* ── Activity Hero ───────────────────────────────────────────────────────── */
+.activity-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 36px;
+  padding: 24px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
 }
 
-.header-top {
+.hero-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--primary-dim);
+  color: var(--primary);
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 4px;
-}
-
-.header-icon {
-  color: var(--text-muted);
+  justify-content: center;
   flex-shrink: 0;
 }
 
-.page-title {
-  font-size: 1.25rem;
+.hero-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-title {
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0;
-  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
 }
 
-.page-desc {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin: 0 0 8px;
-  line-height: 1.45;
+.hero-desc {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  margin: 0 0 12px;
+  line-height: 1.5;
 }
 
-.header-tags {
+.hero-tags {
   display: flex;
-  gap: 6px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.tag {
-  font-size: 0.68rem;
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
   font-weight: 500;
-  color: var(--text-muted);
-  padding: 2px 8px;
+  color: var(--text-secondary);
+  padding: 4px 10px;
   border-radius: 100px;
   background: var(--hover-bg);
 }
 
-/* ── Action buttons ──────────────────────────────────────────────────────── */
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 28px;
-}
-
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 9px 18px;
-  font-size: 0.82rem;
-  font-weight: 500;
-  font-family: inherit;
-  border-radius: 8px;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-  background: var(--bg-panel);
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
-}
-
-.action-btn:hover {
-  border-color: var(--text-muted);
-  color: var(--text-primary);
-}
-
-.action-btn--primary {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #fff;
-}
-
-.action-btn--primary:hover {
-  opacity: 0.9;
-  border-color: var(--primary);
-  color: #fff;
-}
-
-/* ── Info panel ──────────────────────────────────────────────────────────── */
-.info-panel {
-  padding: 16px 20px;
-  background: var(--bg-panel);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-}
-
-.panel-label {
-  font-size: 0.7rem;
+/* ── Section Label ───────────────────────────────────────────────────────── */
+.section-label {
+  font-size: 0.76rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
-  margin: 0 0 12px;
+  margin: 0 0 14px;
 }
 
-.info-grid {
+/* ── Quick Actions ───────────────────────────────────────────────────────── */
+.actions-section {
+  margin-bottom: 32px;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.22s ease;
+}
+
+.action-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+  border: 1.5px solid transparent;
+  transition: border-color 0.2s ease;
+  pointer-events: none;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-elevated);
+}
+
+.action-card:hover::after {
+  border-color: var(--primary);
+}
+
+.action-card:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.action-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--primary-dim);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.action-card:hover .action-icon {
+  transform: scale(1.08);
+}
+
+.action-card--primary .action-icon {
+  background: var(--primary);
+  color: #fff;
+}
+
+.action-icon--secondary {
+  background: var(--hover-bg);
+  color: var(--text-secondary);
+}
+
+.action-label {
+  flex: 1;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.action-arrow {
+  color: var(--text-muted);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.action-card:hover .action-arrow {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--primary);
+}
+
+/* ── Details Panel ───────────────────────────────────────────────────────── */
+.details-panel {
+  padding: 24px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.details-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 14px 24px;
+  gap: 20px;
 }
 
-.info-cell {
+.detail-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.detail-icon {
+  color: var(--text-muted);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.detail-text {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
 }
 
-.info-key {
+.detail-key {
   font-size: 0.7rem;
+  font-weight: 500;
   color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.info-val {
-  font-size: 0.84rem;
+.detail-val {
+  font-size: 0.88rem;
   font-weight: 500;
   color: var(--text-primary);
 }
 
 /* ── States ──────────────────────────────────────────────────────────────── */
-.state-loading {
+.state {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 48px;
-  color: var(--text-muted);
-  font-size: 0.84rem;
+  padding: 64px 24px;
 }
 
-.state-error {
-  padding: 12px 16px;
-  font-size: 0.8rem;
-  color: var(--error);
+.state--loading {
+  gap: 6px;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  opacity: 0.4;
+  animation: pulse-bounce 1.4s ease-in-out infinite;
+}
+
+.pulse-dot:nth-child(2) { animation-delay: 0.16s; }
+.pulse-dot:nth-child(3) { animation-delay: 0.32s; }
+
+@keyframes pulse-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+.state--error {
   background: var(--error-bg);
-  border-radius: var(--radius-sm);
+  color: var(--error);
+  font-size: 0.84rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  gap: 10px;
+  justify-content: flex-start;
 }
 
-/* ── Responsive ──────────────────────────────────────────────────────────── */
+/* ── Mobile ──────────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .actions {
+  .activity-hero {
     flex-direction: column;
+    gap: 14px;
+    padding: 20px;
   }
 
-  .action-btn {
-    justify-content: center;
-  }
+  .hero-icon-wrap { width: 48px; height: 48px; border-radius: 14px; }
+  .hero-title { font-size: 1.15rem; }
 
-  .info-grid {
+  .actions-grid {
     grid-template-columns: 1fr;
-    gap: 10px;
   }
+
+  .action-card { padding: 14px 16px; }
+  .action-arrow { opacity: 0.5; transform: translateX(0); }
+
+  .details-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .details-panel { padding: 20px; }
 }
 </style>
