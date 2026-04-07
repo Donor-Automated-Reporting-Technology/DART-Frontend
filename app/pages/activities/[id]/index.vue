@@ -48,13 +48,11 @@
           </div>
 
           <div v-if="activities.length" class="cards-grid">
-            <component
-              :is="activityRoute(a) ? 'NuxtLink' : 'div'"
+            <NuxtLink
               v-for="a in activities"
               :key="a.id"
-              :to="activityRoute(a) || undefined"
+              :to="`/activities/${frameworkId}/${a.id}`"
               class="activity-card"
-              :class="{ 'activity-card--disabled': !activityRoute(a) }"
             >
               <div class="act-icon">
                 <AppIcon :name="activityIcon(a)" :size="18" />
@@ -66,11 +64,10 @@
               <div class="act-meta" v-if="a.target_count">
                 <span class="act-target">{{ a.target_count }} {{ a.target_unit }}</span>
               </div>
-              <span class="act-arrow" v-if="activityRoute(a)">
+              <span class="act-arrow">
                 <AppIcon name="chevron-right" :size="15" />
               </span>
-              <span class="act-badge" v-else>Coming Soon</span>
-            </component>
+            </NuxtLink>
           </div>
 
           <div v-else class="det-empty">
@@ -86,9 +83,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { frameworkApi } from '../../services/frameworkApi'
-import { ACTIVITY_CONFIG, FUTURE_ACTIVITIES } from '../../utils/activityConfig'
-import type { Framework, FrameworkActivity } from '../../interfaces/framework'
+import { frameworkApi } from '../../../services/frameworkApi'
+import { ACTIVITY_CONFIG, FUTURE_ACTIVITIES } from '../../../utils/activityConfig'
+import type { Framework, FrameworkActivity } from '../../../interfaces/framework'
 
 definePageMeta({ layout: false, middleware: ['auth'] })
 
@@ -126,13 +123,6 @@ function formatDate(d: string) {
 }
 
 const ALL_CONFIGS = { ...ACTIVITY_CONFIG, ...FUTURE_ACTIVITIES }
-
-function activityRoute(a: FrameworkActivity): string | null {
-  const code = a.template?.code
-  if (!code) return null
-  const cfg = ACTIVITY_CONFIG[code]
-  return cfg?.route ?? null
-}
 
 function activityIcon(a: FrameworkActivity): string {
   const code = a.template?.code
@@ -308,18 +298,14 @@ onMounted(fetchProject)
   transition: border-color 0.15s, background 0.15s, transform 0.1s;
 }
 
-.activity-card:not(.activity-card--disabled):hover {
+.activity-card:hover {
   border-color: var(--primary);
   background: color-mix(in srgb, var(--primary) 3%, var(--bg-panel));
   cursor: pointer;
 }
 
-.activity-card:not(.activity-card--disabled):active {
+.activity-card:active {
   transform: scale(0.995);
-}
-
-.activity-card--disabled {
-  opacity: 0.65;
 }
 
 /* ── Activity Icon ───────────────────────────────────────────────────────── */
@@ -336,7 +322,7 @@ onMounted(fetchProject)
   transition: transform 0.2s;
 }
 
-.activity-card:not(.activity-card--disabled):hover .act-icon {
+.activity-card:hover .act-icon {
   transform: scale(1.04);
 }
 
@@ -387,21 +373,10 @@ onMounted(fetchProject)
   transition: opacity 0.15s, transform 0.15s;
 }
 
-.activity-card:not(.activity-card--disabled):hover .act-arrow {
+.activity-card:hover .act-arrow {
   opacity: 1;
   color: var(--primary);
   transform: translateX(2px);
-}
-
-.act-badge {
-  font-size: 0.68rem;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 100px;
-  background: var(--hover-bg);
-  color: var(--text-muted);
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 
 /* ── Loading / Error / Empty ─────────────────────────────────────────────── */
