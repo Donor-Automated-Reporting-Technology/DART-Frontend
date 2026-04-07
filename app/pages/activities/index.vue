@@ -26,21 +26,17 @@
           :to="`/activities/${fw.id}`"
           class="project-card"
         >
-          <div class="card-icon" :class="`card-icon--${fw.framework_type}`">
-            <AppIcon :name="frameworkIcon(fw.framework_type)" :size="20" />
+          <div class="card-left">
+            <AppIcon :name="frameworkIcon(fw.framework_type)" :size="16" class="card-icon" />
+            <div class="card-body">
+              <h2 class="card-title">{{ fw.project_name }}</h2>
+              <span class="card-partner">{{ fw.partner_name }}</span>
+            </div>
           </div>
-          <div class="card-body">
-            <h2 class="card-title">{{ fw.project_name }}</h2>
-            <p class="card-desc">{{ fw.partner_name }}</p>
+          <div class="card-right">
+            <span class="card-type">{{ formatType(fw.framework_type) }}</span>
+            <AppIcon name="chevron-right" :size="14" class="card-chevron" />
           </div>
-          <div class="card-meta">
-            <span class="card-type-tag">{{ formatType(fw.framework_type) }}</span>
-            <span v-if="fw.is_active" class="card-status card-status--active">Active</span>
-            <span v-else class="card-status card-status--inactive">Inactive</span>
-          </div>
-          <span class="card-arrow">
-            <AppIcon name="chevron-right" :size="15" />
-          </span>
         </NuxtLink>
       </div>
 
@@ -106,23 +102,23 @@ onMounted(fetchFrameworks)
 
 <style scoped>
 .activities-hub {
-  max-width: 800px;
+  max-width: 680px;
 }
 
 .page-header {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .page-title {
-  font-size: 1.35rem;
-  font-weight: 750;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0 0 2px;
   letter-spacing: -0.02em;
 }
 
 .page-subtitle {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
   margin: 0;
 }
@@ -156,36 +152,37 @@ onMounted(fetchFrameworks)
 }
 
 .hub-empty__title {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
 }
 
 .hub-empty__text {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
   margin: 0;
 }
 
-/* ── Cards Grid ──────────────────────────────────────────────────────────── */
+/* ── Cards ───────────────────────────────────────────────────────────────── */
 .cards-grid {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .project-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
   border-radius: 10px;
   text-decoration: none;
   color: inherit;
-  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  transition: border-color 0.15s, background 0.15s;
 }
 
 .project-card:hover {
@@ -193,131 +190,74 @@ onMounted(fetchFrameworks)
   background: color-mix(in srgb, var(--primary) 3%, var(--bg-panel));
 }
 
-.project-card:active {
-  transform: scale(0.995);
-}
-
-/* ── Card Icon ───────────────────────────────────────────────────────────── */
-.card-icon {
+.card-left {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
+  gap: 12px;
+  min-width: 0;
+}
+
+.card-icon {
+  color: var(--text-muted);
   flex-shrink: 0;
-  transition: transform 0.2s;
 }
 
-.project-card:hover .card-icon {
-  transform: scale(1.04);
-}
-
-.card-icon--child_protection {
-  background: color-mix(in srgb, var(--primary) 10%, transparent);
-  color: var(--primary);
-}
-
-.card-icon--education {
-  background: color-mix(in srgb, var(--success) 10%, transparent);
-  color: var(--success);
-}
-
-.card-icon--health {
-  background: color-mix(in srgb, var(--error) 10%, transparent);
-  color: var(--error);
-}
-
-.card-icon--wash {
-  background: color-mix(in srgb, #0ea5e9 10%, transparent);
-  color: #0ea5e9;
-}
-
-.card-icon--livelihoods {
-  background: color-mix(in srgb, #f59e0b 10%, transparent);
-  color: #f59e0b;
-}
-
-/* ── Card Body ───────────────────────────────────────────────────────────── */
 .card-body {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
   min-width: 0;
 }
 
 .card-title {
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 3px;
-}
-
-.card-desc {
-  font-size: 0.78rem;
-  color: var(--text-secondary);
   margin: 0;
-  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* ── Card Meta ───────────────────────────────────────────────────────────── */
-.card-meta {
+.card-partner {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.card-right {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
+  align-items: center;
+  gap: 10px;
   flex-shrink: 0;
 }
 
-.card-type-tag {
+.card-type {
   font-size: 0.68rem;
   font-weight: 500;
+  color: var(--text-muted);
   padding: 2px 8px;
   border-radius: 100px;
   background: var(--hover-bg);
-  color: var(--text-secondary);
 }
 
-.card-status {
-  font-size: 0.68rem;
-  font-weight: 600;
-}
-
-.card-status--active {
-  color: var(--success);
-}
-
-.card-status--inactive {
+.card-chevron {
   color: var(--text-muted);
-}
-
-/* ── Card Arrow ──────────────────────────────────────────────────────────── */
-.card-arrow {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  color: var(--text-muted);
-  opacity: 0.4;
+  opacity: 0.35;
   transition: opacity 0.15s, transform 0.15s;
 }
 
-.project-card:hover .card-arrow {
+.project-card:hover .card-chevron {
   opacity: 1;
   color: var(--primary);
   transform: translateX(2px);
 }
 
-/* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .project-card {
-    padding: 16px;
-    gap: 12px;
+    padding: 12px 14px;
   }
 
-  .card-icon {
-    width: 40px;
-    height: 40px;
-  }
-
-  .card-meta {
+  .card-type {
     display: none;
   }
 }
