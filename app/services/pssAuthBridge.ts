@@ -43,6 +43,7 @@
  * however suits the release.
  */
 
+import { getActivePinia } from 'pinia'
 import { useAuthStore, isTokenValid } from '../stores/auth'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -120,7 +121,20 @@ export function refreshAccessToken(): Promise<RefreshOutcome> {
   if (inFlightRefresh) return inFlightRefresh
 
   inFlightRefresh = (async (): Promise<RefreshOutcome> => {
-    const authStore = useAuthStore()
+    // Defensive Pinia access — this function may be invoked from a sync
+    // worker tick, an `onErrorCaptured` boundary, or any other scope that
+    // is NOT a Vue setup or Nuxt request. In those scopes the active
+    // Pinia is unset and bare `useAuthStore()` would throw
+    // "getActivePinia() was called but there was no active Pinia".
+    // Per the Pinia docs, passing the instance explicitly
+    // (`useStore(pinia)`) is the supported outside-setup pattern.
+    const pinia = getActivePinia()
+    if (!pinia) {
+      // No Pinia scope — nothing to refresh into. Surface as a transient
+      // failure so the caller's 401 bubbles up unchanged.
+      return { ok: false, reason: 'unknown' }
+    }
+    const authStore = useAuthStore(pinia)
 
     let response: RefreshResponseEnvelope | undefined
     try {
@@ -270,8 +284,13 @@ export async function withAuthRefresh<T>(
  * the token is current before the next request.
  */
 export function hasValidPssAuthToken(): boolean {
-  const authStore = useAuthStore()
-  return isTokenValid(authStore.accessToken)
+  // Defensive Pinia access — see `refreshAccessToken` for rationale.
+  // This is called by the sync worker boot plugin, which can fire before
+  // any Vue component has mounted.
+  const pinia = getActivePinia()
+  if (!pinia) return false
+  const token = (pinia.state.value['auth'] as { accessToken?: string | null } | undefined)?.accessToken
+  return !!token && isTokenValid(token)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
