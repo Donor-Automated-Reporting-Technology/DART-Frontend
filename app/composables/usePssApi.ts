@@ -25,6 +25,7 @@ import type {
   PssHttpMethod,
   PssRequestOptions,
 } from '../interfaces/pss';
+import { newIdempotencyKey } from '../utils/idempotency';
 
 const BASE = '/api/v1';
 
@@ -155,6 +156,17 @@ export function usePssApi(): UsePssApiReturn {
       Accept: 'application/json',
     };
     if (token) headers.Authorization = `Bearer ${token}`;
+
+    // Idempotency-Key (DART-64). Auto-generate for write methods unless
+    // the caller explicitly opts out by passing `null`. Always send the
+    // exact key the caller supplied — replays from the sync queue must
+    // reuse the original key so the backend can dedupe.
+    if (method !== 'GET' && options.idempotencyKey !== null) {
+      headers['Idempotency-Key'] =
+        options.idempotencyKey ?? newIdempotencyKey();
+    } else if (options.idempotencyKey) {
+      headers['Idempotency-Key'] = options.idempotencyKey;
+    }
 
     const init: RequestInit = {
       method,

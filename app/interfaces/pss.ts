@@ -51,4 +51,30 @@ export interface PssRequestOptions {
   retry?: number;
   /** AbortSignal forwarded to the underlying fetch. */
   signal?: AbortSignal;
+  /**
+   * UUID v4 to send as the `Idempotency-Key` header (DART-64).
+   *
+   * - For `POST` / `PATCH` / `DELETE`, the client auto-generates a key
+   *   when this is not supplied so retries from the sync queue do not
+   *   double-write on the backend.
+   * - Pass an explicit key when the same logical mutation may be retried
+   *   from multiple call sites (e.g. queued offline write replayed after
+   *   reconnect) — store it alongside the queued record so every replay
+   *   uses the same key.
+   * - Set to `null` to opt out (e.g. analytics POSTs that are safe to
+   *   process more than once).
+   */
+  idempotencyKey?: string | null;
+}
+
+/**
+ * Marker shape for any record that carries a `client_timestamp` used by
+ * the conflict resolver (DART-64).
+ *
+ * The DART data model uses ISO-8601 strings everywhere; a numeric variant
+ * is allowed because IndexedDB indexes sort numerics natively and some
+ * offline records use `Date.now()` directly.
+ */
+export interface PssTimestamped {
+  client_timestamp: string | number;
 }
