@@ -54,7 +54,7 @@
             <NuxtLink
               v-for="a in activities"
               :key="a.id"
-              :to="`/activities/${frameworkId}/${a.id}`"
+              :to="activityRoute(a)"
               class="activity-card"
             >
               <AppIcon :name="activityIcon(a)" :size="20" class="act-icon" />
@@ -98,10 +98,20 @@ const allActivities = ref<FrameworkActivity[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 
-const activities = computed(() => allActivities.value.filter(a => a.is_active))
+const activities = computed(() =>
+  allActivities.value.filter(a => {
+    if (!a.is_active) return false
+    // PSS is exclusive to Child Protection — hide it for any other framework type
+    // even if a stale framework_activities row exists.
+    if (a.template?.code === 'PSS' && framework.value?.framework_type !== 'child_protection') {
+      return false
+    }
+    return true
+  }),
+)
 
 const breadcrumbs = computed(() => [
-  { title: 'Activities', href: '/activities' },
+  { title: 'Projects', href: '/activities' },
   { title: framework.value?.project_name ?? 'Project', href: `/activities/${frameworkId}`, current: true },
 ])
 
@@ -135,6 +145,12 @@ function activityIcon(a: FrameworkActivity): string {
   const code = a.template?.code
   if (!code) return 'circle'
   return ALL_CONFIGS[code]?.icon ?? 'circle'
+}
+
+function activityRoute(a: FrameworkActivity): string {
+  const code = a.template?.code
+  if (code === 'PSS') return `/activities/${frameworkId}/pss`
+  return `/activities/${frameworkId}/${a.id}`
 }
 
 async function fetchProject() {

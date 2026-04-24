@@ -2,15 +2,15 @@
   <NuxtLayout
     name="app"
     :breadcrumbs="[
-      { title: 'Activities', href: '/activities' },
-      { title: 'Attendance', href: '/activities/attendance', current: true },
+      { title: 'Projects', href: '/activities' },
+      { title: 'Structured PSS Activities', href: '/activities/attendance', current: true },
     ]"
   >
     <div class="attendance-page">
       <!-- Page Header -->
       <div class="page-header">
         <div class="header-text">
-          <h1 class="page-title">Daily Attendance</h1>
+          <h1 class="page-title">Structured PSS Activities</h1>
           <p class="page-subtitle">Record beneficiary attendance for today's session.</p>
         </div>
       </div>

@@ -1,12 +1,177 @@
 /**
  * Dashboard feature interfaces
  *
- * All types used across the DART dashboard — donors, reports,
- * projects and activity feed. These replace the previous FocusFlow
- * types that were incorrectly copied from another application.
+ * All types used across the DART dashboard — drill-down navigation
+ * from Organisation → Project → Activity detail views.
  */
 
-// ─── Stats summary ────────────────────────────────────────────────────────────
+// ─── Target Breakdown (shared) ────────────────────────────────────────────────
+
+export interface TargetBreakdown {
+  girls: number;
+  boys: number;
+  girls_with_disability: number;
+  boys_with_disability: number;
+}
+
+// ─── Level 1: Org Overview — GET /api/v1/dashboard ────────────────────────────
+
+export interface OrgSummary {
+  total_projects: number;
+  total_active_locations: number;
+  total_unique_beneficiaries: number;
+  overall_target: number;
+  target_breakdown: TargetBreakdown;
+}
+
+export interface DashboardProject {
+  id: string;
+  project_name: string;
+  framework_type: string;
+  partner_name: string;
+  reporting_to: string;
+  period_start: string;
+  period_end: string;
+  is_active: boolean;
+  active_activities: number;
+  total_activities: number;
+  total_beneficiaries: number;
+  overall_target: number;
+  overall_actual: number;
+  overall_progress: number;
+  target_breakdown: TargetBreakdown;
+}
+
+export interface OrgDashboardResponse {
+  org_summary: OrgSummary;
+  projects: DashboardProject[];
+}
+
+// ─── Level 1: Summary Stats — GET /api/v1/dashboard/summary-stats ─────────────
+
+export interface ReachMetric {
+  actual: number;
+  target: number;
+  percentage: number;
+}
+
+export interface BeneficiaryReach {
+  total: ReachMetric;
+  girls_women: ReachMetric;
+  boys_men: ReachMetric;
+  with_disability: ReachMetric;
+}
+
+export interface SummaryStatsResponse {
+  beneficiary_reach: BeneficiaryReach;
+}
+
+// ─── Level 2: Project Detail — GET /api/v1/dashboard/projects/:frameworkId ────
+
+export interface ProjectInfo {
+  id: string;
+  project_name: string;
+  framework_type: string;
+  partner_name: string;
+  reporting_to: string;
+  period_start: string;
+  period_end: string;
+}
+
+export interface ProjectSummary {
+  unique_beneficiaries: number;
+  girls: number;
+  boys: number;
+  with_disability: number;
+  active_locations: number;
+  total_locations: number;
+  total_service_points: number;
+  target_breakdown: TargetBreakdown;
+}
+
+export interface ProjectActivity {
+  id: string;
+  name: string;
+  code: string;
+  pattern_type: string;
+  target_count: number;
+  target_unit: string;
+  target_breakdown: TargetBreakdown;
+  actual_count: number;
+  percentage: number;
+  is_active: boolean;
+}
+
+export interface ProjectDetailResponse {
+  project: ProjectInfo;
+  summary: ProjectSummary;
+  activities: ProjectActivity[];
+}
+
+// ─── Level 3: Activity Detail — GET /api/v1/dashboard/activities/:id ──────────
+
+export interface ActivityInfo {
+  id: string;
+  name: string;
+  code: string;
+  target_count: number;
+  target_unit: string;
+}
+
+export interface ActivityDetailSummary {
+  unique_children: number;
+  target: number;
+  percentage: number;
+  girls: number;
+  boys: number;
+  with_disability: number;
+  new_this_period: number;
+}
+
+export interface AttendanceOverview {
+  total_sessions: number;
+  total_present: number;
+  total_absent: number;
+  attendance_rate: number;
+}
+
+export interface DailyTrendPoint {
+  date: string;
+  present: number;
+  absent: number;
+}
+
+export interface ActivityLocationRow {
+  location_id: string;
+  location_name: string;
+  unique: number;
+  girls: number;
+  boys: number;
+  disability: number;
+  sessions_held: number;
+  avg_daily_present: number;
+}
+
+export interface ActivitySession {
+  id: string;
+  date: string;
+  location_name: string;
+  present: number;
+  absent: number;
+  total: number;
+}
+
+export interface ActivityDetailResponse {
+  pattern_type: string;
+  activity: ActivityInfo;
+  summary: ActivityDetailSummary;
+  attendance: AttendanceOverview;
+  daily_trend: DailyTrendPoint[];
+  by_location: ActivityLocationRow[];
+  recent_sessions: ActivitySession[];
+}
+
+// ─── Legacy types (kept for compatibility) ────────────────────────────────────
 
 /** Top-level summary cards shown at the top of the dashboard */
 export interface DashboardStats {
@@ -48,8 +213,12 @@ export interface ActivitySummary {
 export interface LocationSummary {
   id: string;
   name: string;
-  children_count: number;
-  centre_count: number;
+  total_children: number;
+  children_count?: number;
+  centre_count?: number;
+  male: number;
+  female: number;
+  with_disability: number;
 }
 
 export interface RecentSession {

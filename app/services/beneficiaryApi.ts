@@ -36,7 +36,7 @@ async function request<T>(url: string, options: RequestInit = {}, token?: string
 
 export const beneficiaryApi = {
   async register(payload: RegisterBeneficiaryRequest, token?: string) {
-    return request(`${BASE_URL}/cfs/beneficiaries`, {
+    return request(`${BASE_URL}/beneficiaries`, {
       method: 'POST',
       body: JSON.stringify(payload),
     }, token)
@@ -78,5 +78,30 @@ export const beneficiaryApi = {
       method: 'POST',
       body: JSON.stringify({ beneficiary_id: beneficiaryId }),
     }, token)
+  },
+
+  async getUnenrolled(token?: string) {
+    return request<{ beneficiaries: Array<{
+      id: string
+      personal_name: string
+      father_name: string
+      grandfather_name?: string | null
+      family_name?: string | null
+      age_at_registration: number
+      sex: string
+      disability_status: string
+    }> }>(`${BASE_URL}/beneficiaries/unenrolled`, { method: 'GET' }, token)
+  },
+
+  async getEnrolled(params?: BeneficiaryFilter, token?: string): Promise<BeneficiaryListResponse> {
+    const qs = new URLSearchParams()
+    if (params?.cfs_location_id) qs.set('cfs_location_id', params.cfs_location_id)
+    if (params?.search) qs.set('search', params.search)
+    if (params?.sex) qs.set('sex', params.sex)
+    if (params?.disability_status) qs.set('disability_status', params.disability_status)
+    if (params?.page) qs.set('page', String(params.page))
+    if (params?.page_size) qs.set('page_size', String(params.page_size))
+    const query = qs.toString() ? `?${qs.toString()}` : ''
+    return request<BeneficiaryListResponse>(`${BASE_URL}/beneficiaries/enrolled${query}`, { method: 'GET' }, token)
   },
 }

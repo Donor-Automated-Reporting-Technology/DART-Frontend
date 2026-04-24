@@ -39,8 +39,8 @@
 
             <!-- Name -->
             <td class="cell-name">
-              <span class="name-primary">{{ formatName(b) }}</span>
-              <span class="name-secondary">{{ b.guardian_name ? `Guardian: ${b.guardian_name}` : `ID: ${b.id.slice(0, 8)}` }}</span>
+              <span class="name-primary" :title="formatName(b)">{{ formatName(b) }}</span>
+              <span class="name-secondary" :title="b.guardian_name ? `Guardian: ${b.guardian_name}` : b.id">{{ b.guardian_name ? `Guardian: ${b.guardian_name}` : `ID: ${b.id.slice(0, 8)}` }}</span>
             </td>
 
             <!-- Age -->
@@ -165,7 +165,6 @@ function avatarColor(b: Beneficiary): string {
 .ben-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
 }
 
 .ben-cards { display: none; }
@@ -235,7 +234,8 @@ function avatarColor(b: Beneficiary): string {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 160px;
+  min-width: 120px;
+  max-width: 220px;
 }
 
 .name-primary {
@@ -243,6 +243,9 @@ function avatarColor(b: Beneficiary): string {
   font-weight: 600;
   color: #1D1D1F;
   line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 [data-theme="dark"] .name-primary,
@@ -254,6 +257,9 @@ function avatarColor(b: Beneficiary): string {
   font-size: 0.74rem;
   color: #86868B;
   line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ═══ Cell: Numbers ═══ */
@@ -378,6 +384,9 @@ function avatarColor(b: Beneficiary): string {
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .card-meta {

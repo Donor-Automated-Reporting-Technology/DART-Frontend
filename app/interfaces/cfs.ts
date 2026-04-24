@@ -145,6 +145,7 @@ export type AttendanceStatus = 'present' | 'absent';
 export interface CreateSessionPayload {
   session_date: string;
   session_type: SessionType;
+  framework_activity_id?: string;
 }
 
 export interface CreateSessionResponse {
@@ -339,6 +340,7 @@ export interface OfflineCfsRegistration extends OfflineBase {
 export interface OfflineCfsSession extends OfflineBase {
   sessionDate: string;
   sessionType: SessionType;
+  frameworkActivityId?: string;
 }
 
 export interface OfflineAttendanceRecord extends OfflineBase {

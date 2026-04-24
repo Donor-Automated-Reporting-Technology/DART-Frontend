@@ -52,11 +52,11 @@ const settingsCards = [
     desc: 'Update your organisation name, country, and description.',
   },
   {
-    to: '/settings/framework',
+    to: '/settings/projects',
     icon: 'layers',
     iconClass: 'card-icon--framework',
-    title: 'Framework',
-    desc: 'Configure your project framework, activities, and targets.',
+    title: 'Projects',
+    desc: 'Create projects, configure their framework and toggle activities.',
   },
   {
     to: '/settings/locations',

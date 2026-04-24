@@ -369,7 +369,7 @@ async function onSubmit() {
       return
     }
 
-    await beneficiaryApi.register({
+    const result = await beneficiaryApi.register({
       personal_name: form.personal_name.trim(),
       father_name: form.father_name.trim(),
       grandfather_name: form.grandfather_name.trim() || undefined,
@@ -383,6 +383,7 @@ async function onSubmit() {
       known_medical_issues: form.known_medical_issues.trim() || undefined,
       additional_notes: form.additional_notes.trim() || undefined,
     })
+
     router.push('/beneficiaries')
   } catch (e: any) {
     if (e instanceof ApiError && e.data?.errors) Object.assign(errors, e.data.errors)

@@ -78,12 +78,12 @@
             to="/activities"
             class="nav-item"
             active-class="nav-item--active"
-            title="Activities"
+            title="Projects"
             @click="closeSidebarOnMobile"
           >
             <span class="nav-item-indicator" />
             <AppIcon name="layers" :size="16" class="nav-icon" />
-            <span class="nav-label">Activities</span>
+            <span class="nav-label">Projects</span>
           </NuxtLink>
         </div>
 
@@ -277,6 +277,12 @@
         <slot />
       </main>
 
+      <!-- ── Sync status footer (Frame A — internal trust signal) ───────────
+           Lives as a sibling AFTER <main> inside .sidebar-inset so it pins to
+           the bottom of the viewport via the existing flex column without
+           needing position:fixed. See sprint-tickets/sync-status-footer-v1.md. -->
+      <DSyncStatusFooter />
+
     </div><!-- /sidebar-inset -->
 
   </div><!-- /app-shell -->
@@ -288,6 +294,7 @@ import { useAuthStore }       from '../stores/auth';
 import { useOnboardingStore } from '../stores/onboarding';
 import { useTheme }           from '../composables/useTheme';
 import AppIcon from '../components/interfaces/AppIcon.vue';
+import DSyncStatusFooter from '../components/layout/DSyncStatusFooter.vue';
 import type { Breadcrumb } from '../interfaces/dashboard';
 
 // ─── Theme ────────────────────────────────────────────────────────────────────

@@ -29,7 +29,7 @@ import type {
  * Manages the offline → online sync pipeline.
  *
  * Sync order (FK dependencies):
- *   1. beneficiaries       → POST /cfs/beneficiaries
+ *   1. beneficiaries       → POST /beneficiaries
  *   2. cfs_registrations   → POST /cfs/registrations  (needs server beneficiary_id)
  *   3. cfs_sessions        → POST /cfs/sessions
  *   4. attendance_records  → POST /cfs/attendance      (needs server session_id + beneficiary_id)
@@ -163,6 +163,7 @@ export const useSyncQueue = () => {
             const response = await cfsApi.createSession({
               session_date: session.sessionDate,
               session_type: session.sessionType,
+              framework_activity_id: session.frameworkActivityId,
             }, token);
 
             const serverSessionId = response.session.id;

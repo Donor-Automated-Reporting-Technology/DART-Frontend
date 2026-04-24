@@ -147,7 +147,7 @@ export const cfsApi = {
    * Creates the core demographic record for a child.
    */
   async registerBeneficiary(payload: RegisterBeneficiaryPayload, token?: string): Promise<BeneficiaryResponse> {
-    return request<BeneficiaryResponse>(`${BASE}/cfs/beneficiaries`, {
+    return request<BeneficiaryResponse>(`${BASE}/beneficiaries`, {
       method: 'POST',
       body: JSON.stringify(payload),
     }, token);
@@ -161,6 +161,17 @@ export const cfsApi = {
     return request<CFSRegistrationResponse>(`${BASE}/cfs/registrations`, {
       method: 'POST',
       body: JSON.stringify(payload),
+    }, token);
+  },
+
+  /**
+   * 8b. Batch Enroll Beneficiaries into CFS
+   * Links multiple beneficiaries to the active CFS location in a single request.
+   */
+  async batchEnrollBeneficiaries(beneficiaryIds: string[], token?: string): Promise<CFSRegistrationResponse> {
+    return request<CFSRegistrationResponse>(`${BASE}/cfs/registrations`, {
+      method: 'POST',
+      body: JSON.stringify({ beneficiary_ids: beneficiaryIds }),
     }, token);
   },
 

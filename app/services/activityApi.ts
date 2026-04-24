@@ -32,6 +32,8 @@ async function request<T>(url: string, options: RequestInit = {}, token?: string
 export interface CreateSessionRequest {
   session_date: string
   session_type: string
+  framework_activity_id?: string
+  [key: string]: unknown
 }
 
 export interface RecordAttendanceRequest {

@@ -20,12 +20,16 @@
         <span class="loc-name">{{ loc.name }}</span>
         <div class="loc-stats">
           <div class="loc-stat">
-            <span class="stat-val">{{ loc.children_count }}</span>
+            <span class="stat-val">{{ loc.total_children }}</span>
             <span class="stat-label">Beneficiaries</span>
           </div>
           <div class="loc-stat">
-            <span class="stat-val">{{ loc.centre_count }}</span>
-            <span class="stat-label">Centres</span>
+            <span class="stat-val">{{ loc.male }}</span>
+            <span class="stat-label">Male</span>
+          </div>
+          <div class="loc-stat">
+            <span class="stat-val">{{ loc.female }}</span>
+            <span class="stat-label">Female</span>
           </div>
         </div>
       </NuxtLink>

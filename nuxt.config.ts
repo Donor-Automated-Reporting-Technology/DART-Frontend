@@ -11,7 +11,7 @@ export default defineNuxtConfig({
     },
   },
   routeRules: {
-    '/api/**': { proxy: process.env.API_BASE_URL ? `${process.env.API_BASE_URL}/**` : 'http://ec2-16-16-207-103.eu-north-1.compute.amazonaws.com/api/**' }
+    '/api/**': { proxy: process.env.API_BASE_URL ? `${process.env.API_BASE_URL}/**` : (process.env.NODE_ENV === 'production' ? 'http://ec2-16-16-207-103.eu-north-1.compute.amazonaws.com/api/**' : 'http://localhost:8090/api/**') }
   },
   pwa: {
     registerType: 'autoUpdate',
@@ -51,10 +51,18 @@ export default defineNuxtConfig({
           },
         },
         {
-          urlPattern: /^\/api\/v1\/cfs\/dashboard/,
+          urlPattern: /^\/api\/v1\/dashboard/,
           handler: 'NetworkFirst',
           options: {
             cacheName: 'api-dashboard',
+            expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 },
+          },
+        },
+        {
+          urlPattern: /^\/api\/v1\/cfs\/dashboard/,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'api-cfs-dashboard',
             expiration: { maxEntries: 5, maxAgeSeconds: 60 * 60 },
           },
         },

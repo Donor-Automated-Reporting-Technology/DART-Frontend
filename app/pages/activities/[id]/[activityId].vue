@@ -59,19 +59,23 @@
             </NuxtLink>
 
             <!-- Global actions -->
-            <NuxtLink to="/beneficiaries" class="action-card">
-              <AppIcon name="users" :size="20" class="action-ico action-ico--muted" />
-              <span class="action-label">Beneficiaries</span>
-              <AppIcon name="arrow-right" :size="14" class="action-arrow" />
-            </NuxtLink>
-
-            <NuxtLink to="/beneficiaries/register" class="action-card">
+            <button class="action-card" @click="openEnrollModal">
               <AppIcon name="user-plus" :size="20" class="action-ico action-ico--muted" />
-              <span class="action-label">Register</span>
+              <span class="action-label">Enroll into CFS</span>
               <AppIcon name="arrow-right" :size="14" class="action-arrow" />
-            </NuxtLink>
+            </button>
           </div>
         </div>
+
+        <!-- ── Enroll Modal ──────────────────────────────────────── -->
+        <ActivitiesEnrollBeneficiariesModal
+          :open="enrollModalOpen"
+          :beneficiaries="unenrolledBeneficiaries"
+          :enrolling="enrolling"
+          :loading="enrollListLoading"
+          @close="enrollModalOpen = false"
+          @enroll="handleEnroll"
+        />
 
         <!-- ── Details Panel ─────────────────────────────────────── -->
         <div class="details-panel">
@@ -107,6 +111,75 @@
             </div>
           </div>
         </div>
+
+        <!-- ── Enrolled Children ─────────────────────────────────── -->
+        <div class="enrolled-section">
+          <div class="enrolled-header">
+            <h2 class="section-label">Enrolled Children</h2>
+            <span class="enrolled-count">{{ enrolledTotal }} enrolled</span>
+          </div>
+
+          <div class="enrolled-search-row">
+            <div class="enrolled-search-wrap">
+              <AppIcon name="search" :size="14" class="search-ico" />
+              <input
+                v-model="enrolledSearch"
+                type="text"
+                class="enrolled-search"
+                placeholder="Search enrolled children…"
+                @input="debouncedFetchEnrolled"
+              />
+            </div>
+          </div>
+
+          <div v-if="enrolledError" class="api-err">
+            <AppIcon name="alert-circle" :size="14" />
+            {{ enrolledError }}
+          </div>
+
+          <BeneficiarySkeleton v-if="enrolledLoading" :rows="4" />
+
+          <BeneficiaryTable
+            v-else
+            :beneficiaries="enrolledBeneficiaries"
+          />
+
+          <!-- Pagination -->
+          <div v-if="enrolledTotalPages > 1" class="pagination">
+            <button
+              class="page-btn"
+              :disabled="enrolledPage <= 1"
+              @click="goEnrolledPage(enrolledPage - 1)"
+              aria-label="Previous page"
+            >
+              <AppIcon name="chevron-left" :size="14" />
+            </button>
+
+            <template v-for="p in enrolledPaginationRange" :key="p">
+              <button
+                v-if="p !== '...'"
+                class="page-btn page-num"
+                :class="{ 'page-num--active': p === enrolledPage }"
+                @click="goEnrolledPage(p as number)"
+              >
+                {{ p }}
+              </button>
+              <span v-else class="page-ellipsis">…</span>
+            </template>
+
+            <button
+              class="page-btn"
+              :disabled="enrolledPage >= enrolledTotalPages"
+              @click="goEnrolledPage(enrolledPage + 1)"
+              aria-label="Next page"
+            >
+              <AppIcon name="chevron-right" :size="14" />
+            </button>
+
+            <span class="page-summary">{{ enrolledTotal }} total</span>
+          </div>
+        </div>
+
       </template>
     </div>
   </NuxtLayout>
@@ -116,8 +189,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { frameworkApi } from '../../../services/frameworkApi'
+import { beneficiaryApi } from '../../../services/beneficiaryApi'
+import { cfsApi } from '../../../services/cfsApi'
 import { ACTIVITY_CONFIG, FUTURE_ACTIVITIES } from '../../../utils/activityConfig'
 import type { Framework, FrameworkActivity } from '../../../interfaces/framework'
+import type { Beneficiary } from '../../../interfaces/beneficiary'
+import BeneficiaryTable from '../../../components/beneficiaries/BeneficiaryTable.vue'
+import BeneficiarySkeleton from '../../../components/beneficiaries/BeneficiarySkeleton.vue'
 
 definePageMeta({ layout: false, middleware: ['auth'] })
 
@@ -131,7 +209,7 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 
 const breadcrumbs = computed(() => [
-  { title: 'Activities', href: '/activities' },
+  { title: 'Projects', href: '/activities' },
   { title: framework.value?.project_name ?? 'Project', href: `/activities/${frameworkId}` },
   { title: activity.value?.template?.name ?? 'Activity', href: `/activities/${frameworkId}/${activityId}`, current: true },
 ])
@@ -145,7 +223,7 @@ const activityIcon = computed(() => {
 })
 
 const PATTERN_LABELS: Record<string, string> = {
-  daily_attendance: 'Daily Attendance',
+  daily_attendance: 'Structured PSS',
   cohort_sequential: 'Cohort Sequential',
   topic_attendance: 'Topic Attendance',
   aggregate_event: 'Aggregate Event',
@@ -160,7 +238,7 @@ function formatPattern(p?: string) {
 
 const ACTIVITY_LINKS: Record<string, Array<{ to: string; icon: string; label: string }>> = {
   CFS_ATTENDANCE: [
-    { to: '/activities/attendance', icon: 'check-square', label: 'Take Attendance' },
+    { to: `/activities/${frameworkId}/cfs-session`, icon: 'check-square', label: 'Create CFS Session' },
   ],
   TEAMUP: [
     { to: '/activities/teamup', icon: 'users', label: 'TeamUp Sessions' },
@@ -193,6 +271,116 @@ const activityLinks = computed(() => {
   if (!code) return []
   return ACTIVITY_LINKS[code] ?? []
 })
+
+/* ── Enroll into CFS ──────────────────────────────────────────────────── */
+const enrollModalOpen = ref(false)
+const enrolling = ref(false)
+const enrollListLoading = ref(false)
+const unenrolledBeneficiaries = ref<Array<{
+  id: string; full_name: string; age: number; sex: string; disability_status: string
+}>>([])
+
+async function openEnrollModal() {
+  enrollModalOpen.value = true
+  enrollListLoading.value = true
+  unenrolledBeneficiaries.value = []
+
+  try {
+    const res = await beneficiaryApi.getUnenrolled()
+    const list = res.beneficiaries ?? (Array.isArray(res) ? res as any[] : [])
+
+    unenrolledBeneficiaries.value = list.map((b: any) => ({
+      id: b.id,
+      full_name: [b.personal_name, b.father_name, b.grandfather_name, b.family_name]
+        .filter(Boolean)
+        .join(' '),
+      age: b.age_at_registration,
+      sex: b.sex,
+      disability_status: b.disability_status ?? '',
+    }))
+  } catch (e: any) {
+    console.error('Failed to load unenrolled beneficiaries:', e)
+  } finally {
+    enrollListLoading.value = false
+  }
+}
+
+async function handleEnroll(ids: string[]) {
+  enrolling.value = true
+  try {
+    await cfsApi.batchEnrollBeneficiaries(ids)
+    enrollModalOpen.value = false
+    fetchEnrolled()
+  } catch (e: any) {
+    console.error('Enroll failed:', e)
+  } finally {
+    enrolling.value = false
+  }
+}
+
+/* ── Enrolled Children ────────────────────────────────────────────────── */
+const allEnrolledBeneficiaries = ref<Beneficiary[]>([])
+const enrolledTotal = ref(0)
+const enrolledPage = ref(1)
+const enrolledPageSize = ref(5)
+const enrolledSearch = ref('')
+const enrolledLoading = ref(false)
+const enrolledError = ref<string | null>(null)
+
+const enrolledTotalPages = computed(() => Math.max(1, Math.ceil(enrolledTotal.value / enrolledPageSize.value)))
+
+const enrolledBeneficiaries = computed(() => allEnrolledBeneficiaries.value)
+
+const enrolledPaginationRange = computed(() => {
+  const total = enrolledTotalPages.value
+  const current = enrolledPage.value
+  const pages: (number | string)[] = []
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    if (current > 3) pages.push('...')
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i)
+    if (current < total - 2) pages.push('...')
+    pages.push(total)
+  }
+  return pages
+})
+
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+function debouncedFetchEnrolled() {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    enrolledPage.value = 1
+    fetchEnrolled()
+  }, 300)
+}
+
+async function fetchEnrolled() {
+  enrolledLoading.value = true
+  enrolledError.value = null
+  try {
+    const params: Record<string, any> = {
+      page: enrolledPage.value,
+      page_size: enrolledPageSize.value,
+    }
+    if (enrolledSearch.value.trim()) params.search = enrolledSearch.value.trim()
+    const res = await beneficiaryApi.list(params)
+    const raw = res as any
+    const list = raw.beneficiaries ?? (Array.isArray(raw) ? raw : [])
+    allEnrolledBeneficiaries.value = list
+    enrolledTotal.value = raw.pagination?.total_items ?? raw.total_items ?? list.length
+  } catch (e: any) {
+    enrolledError.value = e?.message ?? 'Failed to load enrolled children'
+  } finally {
+    enrolledLoading.value = false
+  }
+}
+
+function goEnrolledPage(p: number) {
+  enrolledPage.value = Math.max(1, Math.min(p, enrolledTotalPages.value))
+  fetchEnrolled()
+}
 
 async function fetchData() {
   loading.value = true
@@ -235,12 +423,15 @@ async function fetchData() {
   }
 }
 
-onMounted(fetchData)
+onMounted(() => {
+  fetchData()
+  fetchEnrolled()
+})
 </script>
 
 <style scoped>
 .activity-page {
-  max-width: 720px;
+  max-width: 860px;
   padding-bottom: 48px;
 }
 
@@ -359,12 +550,15 @@ onMounted(fetchData)
   gap: 12px;
   padding: 16px 18px;
   background: var(--bg-card);
+  border: none;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
   text-decoration: none;
   color: inherit;
   position: relative;
   overflow: hidden;
+  cursor: pointer;
+  font-family: inherit;
   transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
               box-shadow 0.22s ease;
 }
@@ -433,6 +627,7 @@ onMounted(fetchData)
   background: var(--bg-card);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
+  margin-bottom: 32px;
 }
 
 .details-grid {
@@ -537,5 +732,142 @@ onMounted(fetchData)
   }
 
   .details-panel { padding: 20px; }
+}
+
+/* ── Enrolled Children Section ───────────────────────────────────────── */
+.enrolled-section {
+  margin-bottom: 32px;
+}
+
+.enrolled-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.enrolled-header .section-label {
+  margin: 0;
+}
+
+.enrolled-count {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.enrolled-search-row {
+  margin-bottom: 14px;
+}
+
+.enrolled-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-ico {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.enrolled-search {
+  width: 100%;
+  padding: 10px 14px 10px 36px;
+  font-size: 0.84rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.enrolled-search::placeholder {
+  color: var(--text-muted);
+}
+
+.enrolled-search:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-dim);
+}
+
+.api-err {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--error-bg);
+  color: var(--error);
+  font-size: 0.84rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+}
+
+/* ── Pagination ──────────────────────────────────────────────────────── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: var(--hover-bg);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.page-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.page-num--active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.page-num--active:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.page-ellipsis {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 0 4px;
+}
+
+.page-summary {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-left: 8px;
 }
 </style>

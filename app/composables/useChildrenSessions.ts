@@ -9,6 +9,7 @@ import { ref, computed, watch } from 'vue'
 import { activityApi } from '../services/activityApi'
 import type { AttendanceBeneficiary } from '../services/activityApi'
 import { ApiError } from '../services/api'
+import { useAuthStore } from '../stores/auth'
 
 export const CP_TOPICS = [
   'Good Touch / Bad Touch',
@@ -32,6 +33,7 @@ export interface ChildTopicRow {
 }
 
 export const useChildrenSessions = () => {
+  const authStore = useAuthStore()
   const centreId = ref('')
   const selectedTopic = ref(0)
   const sessionDate = ref(new Date().toISOString().slice(0, 10))
@@ -86,11 +88,15 @@ export const useChildrenSessions = () => {
     if (!centreId.value) return
     submitting.value = true
     error.value = null
+    const csActivity = authStore.frameworkActivities.find(
+      fa => fa.template?.code === 'CHILDREN_SESSIONS',
+    )
     try {
       const session = await activityApi.createSession({
         cfs_location_id: centreId.value,
         session_date: sessionDate.value,
         session_type: 'children_sessions',
+        framework_activity_id: csActivity?.id,
         activity_context: {
           topic_index: selectedTopic.value,
           topic_name: CP_TOPICS[selectedTopic.value],

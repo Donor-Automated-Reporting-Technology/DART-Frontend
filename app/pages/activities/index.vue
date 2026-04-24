@@ -1,5 +1,5 @@
 <template>
-  <NuxtLayout name="app" :breadcrumbs="[{ title: 'Activities', href: '/activities', current: true }]">
+  <NuxtLayout name="app" :breadcrumbs="[{ title: 'Projects', href: '/activities', current: true }]">
     <div class="activities-hub">
 
       <!-- Hero header -->

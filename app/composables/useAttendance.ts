@@ -11,6 +11,7 @@ import { activityApi } from '../services/activityApi'
 import type { AttendanceBeneficiary } from '../services/activityApi'
 import { ApiError } from '../services/api'
 import { getBeneficiariesOffline, saveSessionOffline, saveAttendanceRecordsOffline } from '../services/offlineDb'
+import { useAuthStore } from '../stores/auth'
 import { v4 as uuidv4 } from 'uuid'
 
 export interface AttendanceRow extends AttendanceBeneficiary {
@@ -18,6 +19,7 @@ export interface AttendanceRow extends AttendanceBeneficiary {
 }
 
 export const useAttendance = () => {
+  const authStore = useAuthStore()
   const date = ref(new Date().toISOString().slice(0, 10))
   const centreId = ref('')
   const rows = ref<AttendanceRow[]>([])
@@ -85,6 +87,10 @@ export const useAttendance = () => {
   async function submitAttendance() {
     submitting.value = true
     error.value = null
+    const cfsActivity = authStore.frameworkActivities.find(
+      fa => fa.template?.code === 'CFS_ATTENDANCE',
+    )
+    const frameworkActivityId = cfsActivity?.id
     try {
       if (!navigator.onLine) {
         // Queue session + attendance records for later sync
@@ -93,6 +99,7 @@ export const useAttendance = () => {
           id: sessionId,
           sessionDate: date.value,
           sessionType: 'general_group_activity',
+          frameworkActivityId,
           syncStatus: 'pending',
           clientTimestamp: new Date().toISOString(),
         })
@@ -111,6 +118,7 @@ export const useAttendance = () => {
       const session = await activityApi.createSession({
         session_date: date.value,
         session_type: 'general_group_activity',
+        framework_activity_id: frameworkActivityId,
       }) as { session: { id: string } }
 
       await activityApi.recordAttendance({

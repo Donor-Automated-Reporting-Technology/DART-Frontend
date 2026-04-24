@@ -99,4 +99,13 @@ export const dashboardApi = {
   async getActivity(limit = 10): Promise<ActivityItem[]> {
     return apiFetch<ActivityItem[]>(`/activity?limit=${limit}`);
   },
+
+  /**
+   * Fetch Level 3 activity detail.
+   *
+   * GET /api/v1/dashboard/activities/:frameworkActivityId
+   */
+  async getActivityDetail(frameworkActivityId: string): Promise<import('../interfaces/dashboard').ActivityDetailResponse> {
+    return apiFetch<import('../interfaces/dashboard').ActivityDetailResponse>(`/dashboard/activities/${frameworkActivityId}`);
+  },
 };

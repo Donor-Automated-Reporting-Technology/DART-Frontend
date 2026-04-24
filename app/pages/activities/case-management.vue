@@ -2,7 +2,7 @@
   <NuxtLayout
     name="app"
     :breadcrumbs="[
-      { title: 'Activities', href: '/activities' },
+      { title: 'Projects', href: '/activities' },
       { title: 'Case Management', href: '/activities/case-management', current: true },
     ]"
   >
@@ -19,7 +19,7 @@
         <div class="coming-soon-badge">Coming Soon</div>
         <p class="coming-soon-note">
           This feature is not yet available in the current version.<br />
-          Only <strong>Daily Attendance</strong> is active for now.
+          Only <strong>Structured PSS Activities</strong> is active for now.
         </p>
         <NuxtLink to="/activities/attendance" class="btn-primary">
           Go to Attendance
