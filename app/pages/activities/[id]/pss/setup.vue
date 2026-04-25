@@ -7,6 +7,7 @@
   to the stepper carrying the draft's clientId.
 
   Sourced AC: DART/PSS_MODULE_PRD.md §5, DART/PSS_SCHEDULE_TRD.md §6.1.
+  UX ref: Dart-docs/design-system/DART_UX_REFERENCE.md (PSS schedule setup).
 
   Stateless / parallel-safe:
     • No Pinia store touched.
@@ -42,11 +43,14 @@
           </div>
           <div class="cfs-display" aria-live="polite">
             <span class="cfs-display__name">
-              {{ cfsLocationName || 'No CFS location on profile' }}
+              {{ cfsLocationName || (cfsLoading ? 'Loading…' : 'No CFS location on profile') }}
             </span>
             <span class="cfs-display__pill">Auto-filled</span>
           </div>
-          <p v-if="!cfsLocationName" class="setup-error">
+          <p v-if="cfsError === 'unassigned'" class="setup-error">
+            No CFS location is assigned to your account. Contact your supervisor.
+          </p>
+          <p v-else-if="!cfsLocationName && !cfsLoading" class="setup-error">
             Your account is not linked to a CFS location. Contact your organisation admin.
           </p>
         </section>
@@ -143,7 +147,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+/**
+ * @route   /activities/:id/pss/setup
+ * @description PSS weekly schedule setup screen — captures time periods,
+ *   age groups, and active days BEFORE the day-by-day stepper opens.
+ *   Hydrates the facilitator's CFS location (id + name) from the auth
+ *   store, refreshing from `GET /cfs/me/location` (DART-72) when online.
+ * @uxRef   Dart-docs/design-system/DART_UX_REFERENCE.md (PSS schedule setup)
+ * @offline Reads CFS location from localStorage via the auth store; the
+ *   network refresh is best-effort and does not block the form.
+ * @stores  useAuthStore (cfsLocationId, cfsLocationName)
+ * @composables usePssScheduleDraft, useCfsLocation, useToast
+ */
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '~/stores/auth';
 import {
@@ -151,6 +167,7 @@ import {
   PSS_DAY_OPTIONS,
   usePssScheduleDraft,
 } from '~/composables/usePssScheduleDraft';
+import { useCfsLocation } from '~/composables/useCfsLocation';
 import { useToast } from '~/composables/useToast';
 
 definePageMeta({ layout: false, middleware: ['auth'] });
@@ -162,16 +179,18 @@ const toast = useToast();
 
 const frameworkId = route.params.id as string;
 const cfsLocationName = computed<string>(() => auth.cfsLocationName ?? '');
-
-/**
- * The auth store currently exposes `cfsLocationName` for display but not
- * `cfsLocationId`. Until that field is added, we use the authenticated
- * user's id as the cfs identifier — facilitator accounts are 1:1 with
- * a CFS per the PRD. Flag carried in the DART-47 Jira comment for
- * Tech Lead alignment.
- */
-const cfsLocationIdFallback = computed<string>(() => auth.userId ?? '');
+const cfsLocationId = computed<string>(() => auth.cfsLocationId ?? '');
 const userId = computed<string>(() => auth.userId ?? '');
+
+// DART-72 — hydrate the real CFS location id+name from the backend on
+// mount. Offline-first: the composable short-circuits when offline if a
+// value is already cached in the auth store.
+const {
+  loading: cfsLoading,
+  error: cfsError,
+  fetchAndHydrate: hydrateCfsLocation,
+} = useCfsLocation();
+onMounted(() => { hydrateCfsLocation(); });
 
 const {
   draft,
@@ -186,7 +205,7 @@ const {
   issueFor,
   saveDraft,
 } = usePssScheduleDraft({
-  cfsLocationId: cfsLocationIdFallback.value,
+  cfsLocationId: cfsLocationId.value,
   cfsLocationName: cfsLocationName.value,
   userId: userId.value,
 });

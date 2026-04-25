@@ -148,20 +148,20 @@ const handleLogin = async () => {
     // (which is guaranteed to be correct since the login just succeeded).
     authStore.setUserEmail(payload?.user?.email ?? email.value);
 
-    // ── Fetch CFS location name for staff users ───────────────────────────
+    // ── Fetch CFS location (id + name) for staff users ────────────────────
+    // why: DART-72 — hydrate the facilitator's active CFS location into the
+    // auth store BEFORE navigating, so PSS schedule setup has the real
+    // cfs_location_id (no more userId fallback). Best-effort: a network
+    // failure here is non-fatal — the user lands on the dashboard and the
+    // composable will retry on screens that need the value.
     const userRole = payload?.user?.role;
-    const userId = payload?.user?.id;
-    if (userRole && userRole !== 'org_admin' && userId) {
+    if (userRole && userRole !== 'org_admin') {
       try {
-        const staffData = await cfsApi.getStaffAssignments(payload.tokens.access_token);
-        const myAssignment = staffData?.assignments?.find(
-          (a: any) => a.user_id === userId && a.is_active
-        );
-        if (myAssignment?.location_name) {
-          authStore.setCfsLocationName(myAssignment.location_name);
-        }
+        const me = await cfsApi.getMyLocation(payload.tokens.access_token);
+        authStore.setCfsLocationId(me.id);
+        authStore.setCfsLocationName(me.name);
       } catch {
-        // Non-critical — location name won't show but login still succeeds
+        // Non-critical — login still succeeds; useCfsLocation will retry.
       }
     }
 
