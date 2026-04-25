@@ -60,7 +60,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { frameworkApi } from '../../../services/frameworkApi'
+import { frameworkApi } from '../../../../services/frameworkApi'
 
 definePageMeta({ layout: false, middleware: ['auth'] })
 
