@@ -22,35 +22,24 @@
           </div>
         </div>
 
-        <!-- Empty placeholder grid -->
+        <!--
+          PSS module tiles.
+          DART-71 (UX): "Coming soon" tiles are hidden until each feature
+          ships, per UX guide §empty-states. New tiles are added here as
+          their respective tickets land (Activity Library, Today's Sessions,
+          Reports).
+        -->
         <div class="grid">
-          <div class="tile tile--coming">
-            <AppIcon name="library" :size="20" class="tile-icon" />
-            <h2 class="tile-title">Activity Library</h2>
-            <p class="tile-sub">Browse the 69 built-in PSS sub-activities and your custom ones.</p>
-            <span class="tile-pill">Coming soon</span>
-          </div>
-
-          <div class="tile tile--coming">
+          <button
+            type="button"
+            class="tile tile--action"
+            @click="goTo(`/activities/${frameworkId}/pss/setup`)"
+          >
             <AppIcon name="calendar" :size="20" class="tile-icon" />
-            <h2 class="tile-title">Schedules</h2>
-            <p class="tile-sub">Build weekly schedules per CFS location and age group.</p>
-            <span class="tile-pill">Coming soon</span>
-          </div>
-
-          <div class="tile tile--coming">
-            <AppIcon name="check-square" :size="20" class="tile-icon" />
-            <h2 class="tile-title">Today's Sessions</h2>
-            <p class="tile-sub">Run today's scheduled PSS sub-activities and mark delivery.</p>
-            <span class="tile-pill">Coming soon</span>
-          </div>
-
-          <div class="tile tile--coming">
-            <AppIcon name="bar-chart-2" :size="20" class="tile-icon" />
-            <h2 class="tile-title">Reports</h2>
-            <p class="tile-sub">Coverage and delivery analytics for PSS programmes.</p>
-            <span class="tile-pill">Coming soon</span>
-          </div>
+            <h2 class="tile-title">New Schedule</h2>
+            <p class="tile-sub">Build a weekly schedule for your CFS location and age group.</p>
+            <span class="tile-pill tile-pill--ready">Available</span>
+          </button>
         </div>
       </template>
     </div>
@@ -59,13 +48,18 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { frameworkApi } from '../../../../services/frameworkApi'
 
 definePageMeta({ layout: false, middleware: ['auth'] })
 
 const route = useRoute()
+const router = useRouter()
 const frameworkId = route.params.id as string
+
+function goTo(path: string) {
+  router.push(path)
+}
 
 const loading = ref(true)
 const notAllowed = ref(false)
@@ -90,6 +84,12 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/*
+  DART-71: token sweep. All colours come from app/assets/css/main.css
+  via the canonical tokens listed in design-system/DART_UX_REFERENCE.md
+  §3. No hex literals, no fallbacks — see UX guide §4 for why fallbacks
+  silently break dark mode. Single-accent rule: --primary only.
+*/
 .pss-page {
   max-width: 960px;
   padding-bottom: 48px;
@@ -102,11 +102,12 @@ onMounted(async () => {
   margin-bottom: 28px;
 }
 .hero-icon {
-  color: var(--accent, #4f46e5);
+  color: var(--primary);
 }
 .hero-title {
   font-size: 1.4rem;
   font-weight: 600;
+  color: var(--text-primary);
   margin: 0;
 }
 .hero-sub {
@@ -127,26 +128,29 @@ onMounted(async () => {
   flex-direction: column;
   gap: 6px;
   padding: 18px;
-  background: var(--surface, #fff);
-  border: 1px solid var(--border, #e5e7eb);
-  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  /* ≥44px tap target on the action tile (Apple HIG); 140 covers it */
   min-height: 140px;
 }
 
 .tile-icon {
-  color: var(--accent, #4f46e5);
+  color: var(--primary);
 }
 .tile-title {
   font-size: 1rem;
   font-weight: 600;
+  color: var(--text-primary);
   margin: 4px 0 0;
 }
 .tile-sub {
   font-size: 0.82rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin: 0;
   line-height: 1.4;
 }
+
 .tile-pill {
   position: absolute;
   top: 14px;
@@ -155,13 +159,32 @@ onMounted(async () => {
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: 999px;
-  background: var(--muted-bg, #f3f4f6);
+  background: var(--bg-surface);
   color: var(--text-muted);
 }
-.tile--coming {
-  opacity: 0.85;
+.tile-pill--ready {
+  background: var(--primary-dim);
+  color: var(--primary);
+}
+
+.tile--action {
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition: border-color 120ms, transform 120ms, box-shadow 120ms;
+}
+.tile--action:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-elevated);
+}
+.tile--action:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .state {
@@ -172,10 +195,14 @@ onMounted(async () => {
   gap: 8px;
   color: var(--text-muted);
 }
-.state--error { color: #b91c1c; }
+.state--error { color: var(--error); }
+
 .pulse-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--text-muted); animation: pulse 1.4s infinite;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: pulse 1.4s infinite;
 }
 .pulse-dot:nth-child(2) { animation-delay: 0.2s; }
 .pulse-dot:nth-child(3) { animation-delay: 0.4s; }

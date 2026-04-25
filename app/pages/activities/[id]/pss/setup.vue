@@ -292,9 +292,9 @@ function navigateAwayToActiveSchedule(): void {
   justify-content: center;
   width: 40px;
   height: 40px;
-  background: rgba(129, 140, 248, 0.15);
-  color: var(--accent, #818cf8);
-  border-radius: 10px;
+  background: var(--primary-dim);
+  color: var(--primary);
+  border-radius: var(--radius-md);
   flex-shrink: 0;
 }
 
@@ -302,13 +302,13 @@ function navigateAwayToActiveSchedule(): void {
   margin: 0 0 0.25rem;
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--text, #fff);
+  color: var(--text-primary);
 }
 
 .setup-hero__sub {
   margin: 0;
   font-size: 0.9rem;
-  color: var(--text-muted, #9ca3af);
+  color: var(--text-muted);
   line-height: 1.4;
 }
 
@@ -331,7 +331,7 @@ function navigateAwayToActiveSchedule(): void {
 }
 
 .setup-section__icon {
-  color: var(--accent, #818cf8);
+  color: var(--primary);
   flex-shrink: 0;
 }
 
@@ -339,19 +339,19 @@ function navigateAwayToActiveSchedule(): void {
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text, #fff);
+  color: var(--text-primary);
 }
 
 .setup-section__hint {
   margin: 0;
   font-size: 0.85rem;
-  color: var(--text-muted, #9ca3af);
+  color: var(--text-muted);
 }
 
 .setup-error {
   margin: 0;
   font-size: 0.825rem;
-  color: var(--danger, #ef4444);
+  color: var(--error);
 }
 
 .cfs-display {
@@ -359,15 +359,15 @@ function navigateAwayToActiveSchedule(): void {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  background: var(--surface-2, #1a1a2e);
-  border: 1px solid var(--border, #2a2a3e);
-  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
   padding: 0.75rem 0.875rem;
 }
 
 .cfs-display__name {
   font-weight: 600;
-  color: var(--text, #fff);
+  color: var(--text-primary);
   font-size: 0.95rem;
 }
 
@@ -375,8 +375,8 @@ function navigateAwayToActiveSchedule(): void {
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--text-muted, #9ca3af);
-  background: var(--surface-3, #2a2a3e);
+  color: var(--text-muted);
+  background: var(--bg-surface);
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
 }
@@ -392,7 +392,7 @@ function navigateAwayToActiveSchedule(): void {
   background: linear-gradient(
     180deg,
     transparent 0%,
-    var(--surface-1, #0f0f1a) 30%
+    var(--bg-dark) 30%
   );
 }
 
@@ -402,7 +402,7 @@ function navigateAwayToActiveSchedule(): void {
   justify-content: center;
   gap: 0.5rem;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 0.75rem 1.25rem;
   font: inherit;
   font-size: 0.95rem;
@@ -418,26 +418,29 @@ function navigateAwayToActiveSchedule(): void {
 
 .btn--ghost {
   background: transparent;
-  color: var(--text, #fff);
-  border-color: var(--border, #2a2a3e);
+  color: var(--text-primary);
+  border-color: var(--border-color);
 }
 
 .btn--ghost:hover:not(:disabled) {
-  background: var(--surface-2, #1a1a2e);
+  background: var(--hover-bg);
+  border-color: var(--primary);
+  color: var(--text-primary);
 }
 
 .btn--primary {
-  background: var(--accent, #818cf8);
-  color: #0f0f1a;
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
 }
 
 .btn--primary:hover:not(:disabled) {
-  background: #6e7af0;
+  filter: brightness(1.05);
 }
 
 .btn:focus-visible {
-  outline: 2px solid var(--accent, #818cf8);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .btn__spinner {
