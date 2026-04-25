@@ -20,6 +20,7 @@ import type {
   RecordAttendanceResponse,
   DashboardStatsResponse,
   MyLocationDashboardResponse,
+  MyLocationResponse,
   BeneficiaryListResponse,
   BeneficiaryListParams,
 } from '../interfaces/cfs';
@@ -213,6 +214,19 @@ export const cfsApi = {
    */
   async getDashboardStats(token?: string): Promise<DashboardStatsResponse> {
     return request<DashboardStatsResponse>(`${BASE}/cfs/dashboard`, {
+      method: 'GET',
+    }, token);
+  },
+
+  /**
+   * 12b. Get My CFS Location (facilitator / case_worker) — DART-72.
+   * Returns the active CFS location for the authenticated user, or 404 when
+   * the user has no active assignment. Used to hydrate `auth.cfsLocationId`
+   * + `auth.cfsLocationName` after login so PSS schedule setup has the real
+   * UUID instead of the prior `userId` fallback.
+   */
+  async getMyLocation(token?: string): Promise<MyLocationResponse> {
+    return request<MyLocationResponse>(`${BASE}/cfs/me/location`, {
       method: 'GET',
     }, token);
   },

@@ -190,6 +190,18 @@ export interface MyLocationRecentSession {
   total_count: number;
 }
 
+/**
+ * Response shape for `GET /api/v1/cfs/me/location` (DART-72).
+ * Returns the active CFS location for the authenticated facilitator/case_worker.
+ * Source of truth: backend `internal/dto/cfs_dto.go` `MyLocationResponse`.
+ */
+export interface MyLocationResponse {
+  id: string;
+  name: string;
+  service_point_id?: string;
+  start_date: string;
+}
+
 export interface MyLocationDashboardResponse {
   location: {
     id: string;

@@ -27,6 +27,9 @@ const STORAGE_KEYS = {
   userRole: "dart_user_role",
   activities: "dart_activities",
   cfsLocationName: "dart_cfs_location_name",
+  // why: DART-72 — facilitator's active CFS location UUID, persisted so
+  // PSS schedule setup works offline-first without a network round-trip.
+  cfsLocationId: "dart_cfs_location_id",
   frameworkActivities: "dart_framework_activities",
   activeFramework: "dart_active_framework",
 } as const;
@@ -127,6 +130,9 @@ export const useAuthStore = defineStore("auth", () => {
   /** CFS location name for staff users — persisted to localStorage */
   const cfsLocationName = ref<string | null>(getStored(STORAGE_KEYS.cfsLocationName));
 
+  /** CFS location UUID for staff users (DART-72) — persisted to localStorage */
+  const cfsLocationId = ref<string | null>(getStored(STORAGE_KEYS.cfsLocationId));
+
   /** Framework activities with template info — drives sidebar navigation */
   const frameworkActivities = ref<FrameworkActivity[]>(
     JSON.parse(getStored(STORAGE_KEYS.frameworkActivities) || '[]'),
@@ -225,6 +231,14 @@ export const useAuthStore = defineStore("auth", () => {
     setStored(STORAGE_KEYS.cfsLocationName, name);
   }
 
+  /**
+   * Store the staff user's CFS location UUID and persist it (DART-72).
+   */
+  function setCfsLocationId(id: string): void {
+    cfsLocationId.value = id;
+    setStored(STORAGE_KEYS.cfsLocationId, id);
+  }
+
   /** Store framework activities (with template info) and persist. */
   function setFrameworkActivities(acts: FrameworkActivity[]): void {
     frameworkActivities.value = acts;
@@ -255,6 +269,7 @@ export const useAuthStore = defineStore("auth", () => {
     userRole.value = null;
     activities.value = [];
     cfsLocationName.value = null;
+    cfsLocationId.value = null;
     frameworkActivities.value = [];
     activeFramework.value = null;
 
@@ -287,6 +302,7 @@ export const useAuthStore = defineStore("auth", () => {
       userId.value    = getStored(STORAGE_KEYS.userId) || userId.value;
       userRole.value  = getStored(STORAGE_KEYS.userRole) || userRole.value;
       cfsLocationName.value = getStored(STORAGE_KEYS.cfsLocationName) || cfsLocationName.value;
+      cfsLocationId.value   = getStored(STORAGE_KEYS.cfsLocationId)   || cfsLocationId.value;
       
       const storedActs = getStored(STORAGE_KEYS.activities);
       if (storedActs) {
@@ -328,6 +344,7 @@ export const useAuthStore = defineStore("auth", () => {
     userRole,
     activities,
     cfsLocationName,
+    cfsLocationId,
     frameworkActivities,
     activeFramework,
     activeActivityCodes,
@@ -345,6 +362,7 @@ export const useAuthStore = defineStore("auth", () => {
     setUserRole,
     setActivities,
     setCfsLocationName,
+    setCfsLocationId,
     setFrameworkActivities,
     setActiveFramework,
     // session
