@@ -149,7 +149,9 @@ function activityIcon(a: FrameworkActivity): string {
 
 function activityRoute(a: FrameworkActivity): string {
   const code = a.template?.code
-  if (code === 'PSS') return `/activities/${frameworkId}/pss`
+  // Structured PSS Sessions (backend code preserved as CFS_ATTENDANCE for
+  // back-compat — see migration 000034) routes straight into the PSS module.
+  if (code === 'CFS_ATTENDANCE' || code === 'PSS') return `/activities/${frameworkId}/pss`
   return `/activities/${frameworkId}/${a.id}`
 }
 

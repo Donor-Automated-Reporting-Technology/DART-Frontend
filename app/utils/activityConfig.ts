@@ -13,20 +13,21 @@ export interface ActivityConfigEntry {
 }
 
 /**
- * MVP: Only CFS_ATTENDANCE (Structured PSS Activities) is active.
+ * MVP: Only PSS (Structured PSS Activities) is active.
  * All other activities are defined but disabled — they will show
  * "Coming Soon" in the UI and are excluded from sidebar navigation.
+ *
+ * NOTE: Backend template code is `CFS_ATTENDANCE` (migration 000020).
+ * Migration 000034 renamed the display label to "Structured PSS Sessions";
+ * the code itself is intentionally unchanged so existing framework_activities,
+ * dashboard queries and seed data keep resolving. The card on
+ * `/activities/[id]` routes directly to `/activities/[id]/pss` for this code.
  */
 export const ACTIVITY_CONFIG: Record<string, ActivityConfigEntry> = {
   CFS_ATTENDANCE: {
-    icon: 'check-square',
-    label: 'Daily Attendance (CFS)',
-    route: '/activities/attendance',
-  },
-  PSS: {
     icon: 'puzzle',
-    label: 'Structured PSS Activities',
-    route: '/pss',
+    label: 'Structured PSS Sessions',
+    route: '/activities/pss',
   },
 }
 

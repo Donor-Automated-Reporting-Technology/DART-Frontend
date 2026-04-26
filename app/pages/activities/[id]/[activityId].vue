@@ -237,8 +237,14 @@ function formatPattern(p?: string) {
 }
 
 const ACTIVITY_LINKS: Record<string, Array<{ to: string; icon: string; label: string }>> = {
+  // Backend code is CFS_ATTENDANCE (see migration 000034); 'PSS' kept as alias.
   CFS_ATTENDANCE: [
-    { to: `/activities/${frameworkId}/cfs-session`, icon: 'check-square', label: 'Create CFS Session' },
+    { to: `/activities/${frameworkId}/pss`, icon: 'puzzle', label: 'Open PSS Schedule' },
+    { to: `/activities/${frameworkId}/cfs-session`, icon: 'check-square', label: 'Take Session Attendance' },
+  ],
+  PSS: [
+    { to: `/activities/${frameworkId}/pss`, icon: 'puzzle', label: 'Open PSS Schedule' },
+    { to: `/activities/${frameworkId}/cfs-session`, icon: 'check-square', label: 'Take Session Attendance' },
   ],
   TEAMUP: [
     { to: '/activities/teamup', icon: 'users', label: 'TeamUp Sessions' },
