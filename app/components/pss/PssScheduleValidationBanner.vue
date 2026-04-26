@@ -155,15 +155,15 @@ const visible = computed(
 }
 
 .pss-validation__panel--block {
-  background: rgb(244 63 94 / 0.12);
-  border-color: rgb(244 63 94 / 0.4);
-  color: rgb(254 205 211);
+  background: var(--error-bg);
+  border-color: var(--error);
+  color: var(--error);
 }
 
 .pss-validation__panel--warn {
-  background: rgb(245 158 11 / 0.12);
-  border-color: rgb(245 158 11 / 0.4);
-  color: rgb(254 240 199);
+  background: var(--warning-bg);
+  border-color: var(--warning);
+  color: var(--warning);
 }
 
 .pss-validation__head {
@@ -206,8 +206,8 @@ const visible = computed(
   min-height: 24px;
   padding: 0.125rem 0.5rem;
   border-radius: 0.5rem;
-  background: rgb(255 255 255 / 0.08);
-  border: 1px solid rgb(255 255 255 / 0.18);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
   color: inherit;
   font-weight: 600;
   font-size: 0.75rem;
@@ -215,12 +215,12 @@ const visible = computed(
 }
 
 .pss-validation__day-link:hover {
-  background: rgb(255 255 255 / 0.16);
+  background: var(--hover-bg);
 }
 
 .pss-validation__day-link:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.6);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .pss-validation__msg {
@@ -239,7 +239,7 @@ const visible = computed(
 
 .pss-validation__dismiss:hover {
   opacity: 1;
-  background: rgb(255 255 255 / 0.08);
+  background: var(--hover-bg);
 }
 
 .pss-validation__dismiss-icon {

@@ -128,14 +128,14 @@ function onTimeInput(
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.75rem;
-  background: var(--surface-2, #1a1a2e);
-  border: 1px solid var(--border, #2a2a3e);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   transition: border-color 120ms ease;
 }
 
 .period-row--invalid {
-  border-color: var(--danger, #ef4444);
+  border-color: var(--error);
 }
 
 .period-row__head {
@@ -147,7 +147,7 @@ function onTimeInput(
 
 .period-label {
   background: transparent;
-  color: var(--text, #fff);
+  color: var(--text-primary);
   font: inherit;
   font-weight: 600;
   font-size: 0.95rem;
@@ -158,7 +158,7 @@ function onTimeInput(
 }
 
 .period-label:focus-visible {
-  outline: 2px solid var(--accent, #818cf8);
+  outline: 2px solid var(--text-muted);
   outline-offset: 2px;
 }
 
@@ -170,14 +170,14 @@ function onTimeInput(
   height: 28px;
   background: transparent;
   border: none;
-  color: var(--text-muted, #9ca3af);
+  color: var(--text-muted);
   border-radius: 6px;
   cursor: pointer;
 }
 
 .period-remove:hover {
-  background: var(--surface-3, #2a2a3e);
-  color: var(--danger, #ef4444);
+  background: var(--hover-bg);
+  color: var(--error);
 }
 
 .period-row__times {
@@ -196,15 +196,15 @@ function onTimeInput(
 
 .time-field__label {
   font-size: 0.75rem;
-  color: var(--text-muted, #9ca3af);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .time-input {
-  background: var(--surface-1, #0f0f1a);
-  color: var(--text, #fff);
-  border: 1px solid var(--border, #2a2a3e);
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   padding: 0.5rem 0.625rem;
   font: inherit;
@@ -213,20 +213,20 @@ function onTimeInput(
 }
 
 .time-input:focus-visible {
-  outline: 2px solid var(--accent, #818cf8);
+  outline: 2px solid var(--text-muted);
   outline-offset: 1px;
   border-color: transparent;
 }
 
 .time-sep {
-  color: var(--text-muted, #9ca3af);
+  color: var(--text-muted);
   padding: 0 0.25rem 0.5rem;
 }
 
 .period-error {
   margin: 0;
   font-size: 0.8rem;
-  color: var(--danger, #ef4444);
+  color: var(--error);
 }
 
 .period-add {
@@ -235,8 +235,8 @@ function onTimeInput(
   justify-content: center;
   gap: 0.5rem;
   background: transparent;
-  color: var(--accent, #818cf8);
-  border: 1px dashed var(--accent, #818cf8);
+  color: var(--text-secondary);
+  border: 1px dashed var(--border-color);
   border-radius: 8px;
   padding: 0.625rem 0.75rem;
   font: inherit;
@@ -247,7 +247,9 @@ function onTimeInput(
 }
 
 .period-add:hover {
-  background: rgba(129, 140, 248, 0.08);
+  background: var(--hover-bg);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
 }
 
 @media (max-width: 480px) {

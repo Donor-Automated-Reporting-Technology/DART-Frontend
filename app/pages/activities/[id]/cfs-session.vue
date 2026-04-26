@@ -286,10 +286,10 @@ async function saveAttendance() {
   submittingAttendance.value = true
   error.value = null
 
-  const cfsActivity = authStore.frameworkActivities.find(
-    (fa: any) => fa.template?.code === 'CFS_ATTENDANCE',
+  const pssActivity = authStore.frameworkActivities.find(
+    (fa: any) => fa.template?.code === 'PSS',
   )
-  const frameworkActivityId = cfsActivity?.id
+  const frameworkActivityId = pssActivity?.id
 
   try {
     if (!navigator.onLine) {

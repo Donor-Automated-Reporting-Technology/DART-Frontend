@@ -64,9 +64,9 @@ function isSelected(value: PssScheduleAgeGroup): boolean {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  background: var(--surface-2, #1a1a2e);
-  color: var(--text, #fff);
-  border: 1px solid var(--border, #2a2a3e);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 999px;
   padding: 0.5rem 0.875rem;
   font: inherit;
@@ -74,21 +74,22 @@ function isSelected(value: PssScheduleAgeGroup): boolean {
   font-weight: 500;
   cursor: pointer;
   min-height: 40px;
-  transition: background 120ms ease, border-color 120ms ease;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
 }
 
 .chip:hover {
-  border-color: var(--accent, #818cf8);
+  border-color: var(--text-muted);
+  color: var(--text-primary);
 }
 
 .chip--active {
-  background: rgba(129, 140, 248, 0.15);
-  border-color: var(--accent, #818cf8);
-  color: var(--accent, #818cf8);
+  background: var(--bg-card-hover);
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .chip:focus-visible {
-  outline: 2px solid var(--accent, #818cf8);
+  outline: 2px solid var(--text-muted);
   outline-offset: 2px;
 }
 

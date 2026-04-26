@@ -699,12 +699,12 @@ function isDragging(section: SectionView, slot: PssTemplateSlot): boolean {
 </template>
 
 <style scoped>
-/* WCAG-AA on the dark theme background (#0f0f1a). */
+/* Theme-aware: uses design tokens (works in dark & light). */
 .pss-day-stepper {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  color: #e5e7eb;
+  color: var(--text-primary);
   font-family: inherit;
   /* Disable native horizontal swipe pull-to-refresh during touch nav. */
   touch-action: pan-y;
@@ -716,15 +716,15 @@ function isDragging(section: SectionView, slot: PssTemplateSlot): boolean {
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
-  background: #1a1a2e;
-  border: 1px solid #27273a;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   outline: none;
 }
 
 .pss-day-stepper__header:focus-visible {
-  border-color: #818cf8;
-  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.4);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .pss-day-stepper__title {
@@ -738,13 +738,13 @@ function isDragging(section: SectionView, slot: PssTemplateSlot): boolean {
 .pss-day-stepper__day-name {
   font-size: 17px;
   font-weight: 700;
-  color: #f3f4f6;
+  color: var(--text-primary);
 }
 
 .pss-day-stepper__position {
   font-size: 12px;
   font-weight: 500;
-  color: #9ca3af;
+  color: var(--text-muted);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   font-variant-numeric: tabular-nums;
@@ -756,19 +756,20 @@ function isDragging(section: SectionView, slot: PssTemplateSlot): boolean {
   justify-content: center;
   width: 44px;
   height: 44px;
-  background: #27273a;
-  color: #e5e7eb;
-  border: 1px solid #3a3a52;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   cursor: pointer;
   padding: 0;
+  transition: background 0.15s, border-color 0.15s;
 }
 
 .pss-day-stepper__nav-btn:hover:not(:disabled),
 .pss-day-stepper__nav-btn:focus-visible {
-  background: #3a3a52;
+  background: var(--hover-bg);
   outline: none;
-  border-color: #818cf8;
+  border-color: var(--primary);
 }
 
 .pss-day-stepper__nav-btn:disabled {
@@ -787,10 +788,10 @@ function isDragging(section: SectionView, slot: PssTemplateSlot): boolean {
   padding: 24px 16px;
   text-align: center;
   font-size: 14px;
-  background: #1a1a2e;
-  border: 1px dashed #3a3a52;
+  background: var(--bg-panel);
+  border: 1px dashed var(--border-color);
   border-radius: 12px;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .pss-section {
@@ -798,14 +799,14 @@ function isDragging(section: SectionView, slot: PssTemplateSlot): boolean {
   flex-direction: column;
   gap: 8px;
   padding: 12px;
-  background: #1a1a2e;
-  border: 1px solid #27273a;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
 }
 
 .pss-section--locked {
   opacity: 0.78;
-  background: #14141f;
+  background: var(--bg-card);
 }
 
 .pss-section__header {
@@ -819,14 +820,14 @@ function isDragging(section: SectionView, slot: PssTemplateSlot): boolean {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: #c7d2fe;
+  color: var(--text-primary);
   letter-spacing: 0.01em;
 }
 
 .pss-section__lock {
   display: inline-flex;
   align-items: center;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .pss-section__slots {
@@ -843,9 +844,9 @@ function isDragging(section: SectionView, slot: PssTemplateSlot): boolean {
   padding: 12px;
   text-align: center;
   font-size: 13px;
-  color: #9ca3af;
-  background: #0f0f1a;
-  border: 1px dashed #27273a;
+  color: var(--text-muted);
+  background: var(--bg-input);
+  border: 1px dashed var(--border-color);
   border-radius: 8px;
 }
 
@@ -857,18 +858,19 @@ function isDragging(section: SectionView, slot: PssTemplateSlot): boolean {
   padding: 10px 12px;
   min-height: 44px;
   background: transparent;
-  color: #c7d2fe;
-  border: 1px dashed #4b5563;
+  color: var(--primary);
+  border: 1px dashed var(--border-color);
   border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
 }
 
 .pss-section__add:hover:not(:disabled),
 .pss-section__add:focus-visible {
-  background: rgba(129, 140, 248, 0.08);
-  border-color: #818cf8;
+  background: var(--primary-dim);
+  border-color: var(--primary);
   outline: none;
 }
 
@@ -880,7 +882,7 @@ function isDragging(section: SectionView, slot: PssTemplateSlot): boolean {
 .pss-section__add-note {
   font-size: 11px;
   font-weight: 500;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 /* ── Slot row ────────────────────────────────────────────────────────────── */
@@ -890,8 +892,8 @@ function isDragging(section: SectionView, slot: PssTemplateSlot): boolean {
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  background: #0f0f1a;
-  border: 1px solid #27273a;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   /* Reorder is the primary touch interaction — don't let scrolling steal it. */
   touch-action: none;
@@ -899,22 +901,22 @@ function isDragging(section: SectionView, slot: PssTemplateSlot): boolean {
 }
 
 .pss-slot--dragging {
-  background: #1f1f33;
-  border-color: #818cf8;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  background: var(--bg-card-hover);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-elevated);
 }
 
 .pss-slot__handle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
+  color: var(--text-muted);
   cursor: grab;
 }
 
 .pss-slot--dragging .pss-slot__handle {
   cursor: grabbing;
-  color: #c7d2fe;
+  color: var(--primary);
 }
 
 .pss-slot__body {
@@ -927,7 +929,7 @@ function isDragging(section: SectionView, slot: PssTemplateSlot): boolean {
 .pss-slot__name {
   font-size: 14px;
   font-weight: 600;
-  color: #f3f4f6;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -938,7 +940,7 @@ function isDragging(section: SectionView, slot: PssTemplateSlot): boolean {
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .pss-slot__badge {
@@ -949,14 +951,17 @@ function isDragging(section: SectionView, slot: PssTemplateSlot): boolean {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
 }
 
-.pss-slot__badge--play     { background: #1e3a8a; color: #93c5fd; }
-.pss-slot__badge--wellbeing { background: #14532d; color: #86efac; }
-.pss-slot__badge--learn    { background: #4a1d6f; color: #d8b4fe; }
+.pss-slot__badge--play      { color: #2563eb; border-color: rgba(37, 99, 235, 0.3); background: rgba(37, 99, 235, 0.08); }
+.pss-slot__badge--wellbeing { color: #16a34a; border-color: rgba(22, 163, 74, 0.3); background: rgba(22, 163, 74, 0.08); }
+.pss-slot__badge--learn     { color: #9333ea; border-color: rgba(147, 51, 234, 0.3); background: rgba(147, 51, 234, 0.08); }
 
 .pss-slot__age {
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .pss-slot__controls {
@@ -973,16 +978,18 @@ function isDragging(section: SectionView, slot: PssTemplateSlot): boolean {
   height: 32px;
   padding: 0;
   background: transparent;
-  color: #d1d5db;
+  color: var(--text-secondary);
   border: 1px solid transparent;
   border-radius: 6px;
   cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
 .pss-slot__icon-btn:hover:not(:disabled),
 .pss-slot__icon-btn:focus-visible {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: #3a3a52;
+  background: var(--hover-bg);
+  border-color: var(--border-color);
+  color: var(--text-primary);
   outline: none;
 }
 
@@ -993,8 +1000,9 @@ function isDragging(section: SectionView, slot: PssTemplateSlot): boolean {
 
 .pss-slot__icon-btn--danger:hover:not(:disabled),
 .pss-slot__icon-btn--danger:focus-visible {
-  color: #fca5a5;
-  border-color: #b91c1c;
+  color: var(--error);
+  border-color: var(--error);
+  background: var(--error-bg);
 }
 
 /* ── A11y utility ────────────────────────────────────────────────────────── */

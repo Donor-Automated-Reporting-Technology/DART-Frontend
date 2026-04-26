@@ -15,7 +15,7 @@
  *
  *   definePageMeta({
  *     middleware: ['auth', 'roleGuard'],
- *     requiredActivity: 'CFS_ATTENDANCE',
+ *     requiredActivity: 'PSS',
  *   });
  *
  * If the current user's role is not in the allowedRoles list,

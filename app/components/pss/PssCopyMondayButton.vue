@@ -174,7 +174,7 @@ function onConfirm(): void {
 function onCancel(): void {
   showDialog.value = false;
 }
-
+</script>
 
 <template>
   <div v-if="canCopy" class="pss-copy-monday">
@@ -249,9 +249,9 @@ function onCancel(): void {
   min-height: 44px;
   padding: 0.625rem 1rem;
   border-radius: 0.75rem;
-  border: 1px solid rgb(129 140 248 / 0.4);
-  background: rgb(129 140 248 / 0.12);
-  color: rgb(199 210 254);
+  border: 1px solid var(--border-color);
+  background: var(--primary-dim);
+  color: var(--primary);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -260,13 +260,13 @@ function onCancel(): void {
 }
 
 .pss-copy-monday__btn:hover {
-  background: rgb(129 140 248 / 0.2);
-  border-color: rgb(129 140 248 / 0.6);
+  background: var(--primary-hover);
+  border-color: var(--primary);
 }
 
 .pss-copy-monday__btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgb(129 140 248 / 0.7);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .pss-copy-monday__btn:active {
@@ -279,30 +279,32 @@ function onCancel(): void {
 }
 
 .pss-copy-monday__btn--ghost {
-  background: transparent;
-  border-color: rgb(148 163 184 / 0.4);
-  color: rgb(226 232 240);
+  background: var(--bg-input);
+  border-color: var(--border-color);
+  color: var(--text-secondary);
 }
 
 .pss-copy-monday__btn--ghost:hover {
-  background: rgb(148 163 184 / 0.12);
+  background: var(--hover-bg);
+  color: var(--text-primary);
 }
 
 .pss-copy-monday__btn--danger {
-  background: rgb(244 63 94 / 0.16);
-  border-color: rgb(244 63 94 / 0.5);
-  color: rgb(254 205 211);
+  background: var(--error-bg);
+  border-color: var(--error);
+  color: var(--error);
 }
 
 .pss-copy-monday__btn--danger:hover {
-  background: rgb(244 63 94 / 0.28);
-  border-color: rgb(244 63 94 / 0.7);
+  background: var(--error-bg);
+  border-color: var(--error);
+  opacity: 0.85;
 }
 
 .pss-copy-monday__overlay {
   position: fixed;
   inset: 0;
-  background: rgb(15 15 26 / 0.7);
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
   display: grid;
   place-items: center;
@@ -313,25 +315,26 @@ function onCancel(): void {
 .pss-copy-monday__dialog {
   width: 100%;
   max-width: 24rem;
-  background: rgb(24 24 39);
-  color: rgb(226 232 240);
-  border: 1px solid rgb(148 163 184 / 0.2);
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   border-radius: 1rem;
   padding: 1.25rem;
-  box-shadow: 0 24px 48px rgb(0 0 0 / 0.45);
+  box-shadow: var(--shadow-elevated);
 }
 
 .pss-copy-monday__title {
   font-size: 1rem;
   font-weight: 600;
   margin: 0 0 0.5rem;
+  color: var(--text-primary);
 }
 
 .pss-copy-monday__desc {
   font-size: 0.875rem;
   line-height: 1.4;
   margin: 0 0 1.25rem;
-  color: rgb(203 213 225);
+  color: var(--text-secondary);
 }
 
 .pss-copy-monday__actions {

@@ -390,13 +390,35 @@ export function usePssScheduleSave(
 
     const previousActive = context.previousActive ?? null;
     try {
-      const record = context.isOnline
-        ? await persistOnline(schedule, previousActive)
-        : await persistOffline(schedule, previousActive);
+      let synced = false;
+      let record: PssScheduleRecord;
+      if (context.isOnline) {
+        try {
+          record = await persistOnline(schedule, previousActive);
+          synced = true;
+        } catch (err) {
+          // Offline-first fallback: backend may be unreachable, slow,
+          // or (in the current pre-DART-61 backend) not yet implementing
+          // `/pss/schedules`. Don't lose the user's work — persist
+          // locally and queue the mutation for the sync worker to
+          // replay once the endpoint is live. The toast in the page
+          // will reflect `synced: false` so the facilitator knows it
+          // hasn't round-tripped.
+          // eslint-disable-next-line no-console
+          console.warn(
+            '[pss] online schedule save failed; falling back to offline queue',
+            err,
+          );
+          record = await persistOffline(schedule, previousActive);
+          synced = false;
+        }
+      } else {
+        record = await persistOffline(schedule, previousActive);
+      }
       return {
         ok: true,
         record,
-        synced: context.isOnline,
+        synced,
         validation,
       };
     } catch (err) {

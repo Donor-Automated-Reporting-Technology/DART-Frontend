@@ -87,10 +87,10 @@ export const useAttendance = () => {
   async function submitAttendance() {
     submitting.value = true
     error.value = null
-    const cfsActivity = authStore.frameworkActivities.find(
-      fa => fa.template?.code === 'CFS_ATTENDANCE',
+    const pssActivity = authStore.frameworkActivities.find(
+      fa => fa.template?.code === 'PSS',
     )
-    const frameworkActivityId = cfsActivity?.id
+    const frameworkActivityId = pssActivity?.id
     try {
       if (!navigator.onLine) {
         // Queue session + attendance records for later sync

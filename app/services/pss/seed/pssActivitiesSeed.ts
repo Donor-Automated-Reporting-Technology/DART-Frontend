@@ -34,6 +34,7 @@
  */
 
 import seedJson from '../../../assets/pss/pss_activities.seed.json';
+import { pssDb } from '../db';
 import { activitiesRepository } from '../repositories';
 import type {
   PssActivityRecord,
@@ -144,16 +145,29 @@ export async function applyPssActivitySeed(
     return { applied: false, written: 0, version: SEED_VERSION, reason: 'no-records' };
   }
 
-  // Fast path — same version already on disk.
+  // Fast path — same version already on disk AND the table actually
+  // contains rows. The row-count guard self-heals the case where a user
+  // (or DevTools) clears IndexedDB but leaves localStorage intact: the
+  // version key alone would otherwise wedge the picker into an empty
+  // state forever.
   if (!force) {
     const stored = readStoredVersion();
     if (stored === SEED_VERSION) {
-      return {
-        applied: false,
-        written: 0,
-        version: SEED_VERSION,
-        reason: 'already-current',
-      };
+      let existing = 0;
+      try {
+        existing = await pssDb.pss_activities.count();
+      } catch {
+        // If the count itself fails, fall through and re-seed — the
+        // bulkUpsert below will surface any real Dexie error.
+      }
+      if (existing > 0) {
+        return {
+          applied: false,
+          written: 0,
+          version: SEED_VERSION,
+          reason: 'already-current',
+        };
+      }
     }
   }
 
