@@ -116,6 +116,11 @@ export interface PssTemplateSlot {
 }
 
 export interface PssScheduleRecord extends PssLocalMeta {
+  /**
+   * Human-readable label for the schedule (e.g. "Week of 2026-04-26"). The
+   * backend `pss_schedules.name` column is NOT NULL — DART-73 contract.
+   */
+  name: string;
   cfsLocationId: string;
   status: PssScheduleStatus;
   activeDays: PssDayOfWeek[];
