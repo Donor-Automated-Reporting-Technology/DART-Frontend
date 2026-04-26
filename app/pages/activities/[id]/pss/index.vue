@@ -74,7 +74,10 @@
               <span class="tile-pill">Coming soon</span>
             </div>
 
-            <div class="tile tile--coming">
+            <NuxtLink
+              class="tile tile--link"
+              :to="`/activities/${frameworkId}/pss/today`"
+            >
               <span class="tile-icon">
                 <AppIcon name="check-square" :size="18" />
               </span>
@@ -84,8 +87,8 @@
                   Run today's scheduled PSS sub-activities and mark delivery.
                 </span>
               </span>
-              <span class="tile-pill">Coming soon</span>
-            </div>
+              <span class="tile-pill tile-pill--ready">Open</span>
+            </NuxtLink>
 
             <div class="tile tile--coming">
               <span class="tile-icon">
@@ -295,6 +298,19 @@ onMounted(async () => {
 .tile-pill--active {
   background: var(--primary-dim);
   color: var(--primary);
+}
+.tile--link {
+  text-decoration: none;
+  color: inherit;
+  transition: transform 120ms ease, border-color 120ms ease;
+}
+.tile--link:hover {
+  border-color: var(--accent, #4f46e5);
+  transform: translateY(-1px);
+}
+.tile-pill--ready {
+  background: rgba(79, 70, 229, 0.12);
+  color: var(--accent, #4f46e5);
 }
 
 /* ═══ API error (mirror canonical) ═══ */
