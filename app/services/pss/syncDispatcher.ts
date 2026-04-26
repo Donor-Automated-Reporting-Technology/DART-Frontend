@@ -22,11 +22,13 @@ import type {
 } from '~/composables/usePssSyncQueue';
 import type { PssSyncQueueItem, PssSyncResource } from '~/interfaces/pssDb';
 import { PSS_ACTIVITIES_SYNC_SENDER } from './syncSenders';
+import { PSS_SCHEDULES_SYNC_SENDER } from './schedulesSyncSender';
 
 const RESOURCE_SENDERS: Partial<
   Record<PssSyncResource, (item: PssSyncQueueItem) => Promise<PssSyncSendOutcome>>
 > = {
   pss_activities: PSS_ACTIVITIES_SYNC_SENDER,
+  pss_schedules: PSS_SCHEDULES_SYNC_SENDER,
 };
 
 export const pssSyncDispatcher: PssSyncSender = async (item) => {

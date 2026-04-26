@@ -34,12 +34,13 @@ import type {
   PssTemplateSlot,
   PssTimePeriodLabel,
 } from '~/interfaces/pssDb';
-import { schedulesRepository } from '~/services/pss/repositories';
+import { activitiesRepository, schedulesRepository } from '~/services/pss/repositories';
 import { enqueue as enqueueSync } from '~/composables/usePssSyncQueue';
 import {
   applyScheduleDto,
   toSchedulePayload,
   usePssSchedulesApi,
+  type PssActivityLookup,
 } from '~/services/pss/schedulesApi';
 
 // ── Validation contract ────────────────────────────────────────────────
@@ -260,6 +261,7 @@ export function validateSchedule(
 async function persistOnline(
   schedule: PssScheduleRecord,
   previousActive: PssScheduleRecord | null,
+  lookup: PssActivityLookup,
 ): Promise<PssScheduleRecord> {
   const api = usePssSchedulesApi();
 
@@ -270,12 +272,14 @@ async function persistOnline(
   const archiveKey = uuidv4();
 
   // 1. Create-or-update.
+  //    BE on develop after PR #6 only exposes POST (create). Edits to a
+  //    schedule that already has a server id are treated as new drafts
+  //    until the BE ships PATCH; the previous active record is archived
+  //    locally below and the server enforces the same UNIQUE-active
+  //    invariant on activate.
   const isNew = !schedule.serverId;
-  const dto = isNew
-    ? await api.create(schedule, { idempotencyKey: writeKey })
-    : await api.update(schedule.serverId as string, schedule, {
-        idempotencyKey: writeKey,
-      });
+  const dto = await api.create(schedule, lookup, { idempotencyKey: writeKey });
+  void isNew;
 
   // 2. Activate (server moves any other active schedule on the same CFS
   //    to status='archived' atomically).
@@ -316,6 +320,7 @@ async function persistOnline(
 async function persistOffline(
   schedule: PssScheduleRecord,
   previousActive: PssScheduleRecord | null,
+  lookup: PssActivityLookup,
 ): Promise<PssScheduleRecord> {
   const isNew = !schedule.serverId;
   const local: PssScheduleRecord = {
@@ -328,7 +333,7 @@ async function persistOffline(
 
   // Queue the create/update — payload mirrors the wire shape so the
   // worker can replay it without re-resolving the record.
-  const writePayload = toSchedulePayload(local);
+  const writePayload = toSchedulePayload(local, lookup);
   await enqueueSync({
     resource: 'pss_schedules',
     operation: isNew ? 'create' : 'update',
@@ -337,7 +342,9 @@ async function persistOffline(
   });
 
   // Queue the activate as a separate op so the worker can retry it
-  // independently if the create succeeded but activate failed.
+  // independently if the create succeeded but activate failed. The BE
+  // auto-archives any other active schedule on the same CFS via the
+  // UNIQUE-active constraint, so no separate archive op is needed.
   await enqueueSync({
     resource: 'pss_schedules',
     operation: 'update',
@@ -347,6 +354,8 @@ async function persistOffline(
 
   // Optimistic local archive of the previous active schedule so the
   // current-schedule view (DART-33) shows the right one immediately.
+  // No queued archive op: the server enforces the same invariant when
+  // it processes the activate above.
   if (
     previousActive &&
     previousActive.clientId !== local.clientId &&
@@ -354,16 +363,8 @@ async function persistOffline(
   ) {
     await schedulesRepository.patch(previousActive.clientId, {
       status: 'archived',
-      syncStatus: 'pending',
+      syncStatus: 'synced',
     });
-    if (previousActive.serverId) {
-      await enqueueSync({
-        resource: 'pss_schedules',
-        operation: 'update',
-        recordClientId: previousActive.clientId,
-        payload: { __op: 'archive', id: previousActive.serverId },
-      });
-    }
   }
 
   return local;
@@ -390,30 +391,49 @@ export function usePssScheduleSave(
 
     const previousActive = context.previousActive ?? null;
     try {
+      // Pre-fetch the activity catalogue once so the wire-shape mappers
+      // can denormalise each slot's `activityId` into the BE's
+      // `activity_name` / `activity_aim` / `activity_steps` / `materials`
+      // strings (DART-73 contract — server stores activity text inline,
+      // not a FK).
+      const activityIds = Array.from(
+        new Set(schedule.templateSlots.map((s) => s.activityId)),
+      );
+      const activityRows = await Promise.all(
+        activityIds.map((id) => activitiesRepository.getByEitherId(id)),
+      );
+      const activityMap = new Map(
+        activityRows
+          .filter((r): r is NonNullable<typeof r> => Boolean(r))
+          .flatMap((r) => [
+            [r.clientId, r] as const,
+            ...(r.serverId ? [[r.serverId, r] as const] : []),
+          ]),
+      );
+      const lookup: PssActivityLookup = (id) => activityMap.get(id);
+
       let synced = false;
       let record: PssScheduleRecord;
       if (context.isOnline) {
         try {
-          record = await persistOnline(schedule, previousActive);
+          record = await persistOnline(schedule, previousActive, lookup);
           synced = true;
         } catch (err) {
-          // Offline-first fallback: backend may be unreachable, slow,
-          // or (in the current pre-DART-61 backend) not yet implementing
-          // `/pss/schedules`. Don't lose the user's work — persist
-          // locally and queue the mutation for the sync worker to
-          // replay once the endpoint is live. The toast in the page
-          // will reflect `synced: false` so the facilitator knows it
-          // hasn't round-tripped.
+          // Offline-first fallback: backend may be unreachable or slow.
+          // Don't lose the user's work — persist locally and queue the
+          // mutation for the sync worker to replay later. The toast in
+          // the page will reflect `synced: false` so the facilitator
+          // knows it hasn't round-tripped.
           // eslint-disable-next-line no-console
           console.warn(
             '[pss] online schedule save failed; falling back to offline queue',
             err,
           );
-          record = await persistOffline(schedule, previousActive);
+          record = await persistOffline(schedule, previousActive, lookup);
           synced = false;
         }
       } else {
-        record = await persistOffline(schedule, previousActive);
+        record = await persistOffline(schedule, previousActive, lookup);
       }
       return {
         ok: true,

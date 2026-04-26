@@ -286,6 +286,7 @@ export function usePssScheduleDraft(ctx: PssScheduleDraftContext) {
       serverId: null,
       clientTimestamp: now,
       syncStatus: 'pending',
+      name: `Schedule ${now.slice(0, 10)}`,
       cfsLocationId: ctx.cfsLocationId,
       status: 'draft',
       activeDays: [...draft.activeDays],
