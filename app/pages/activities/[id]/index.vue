@@ -84,7 +84,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { frameworkApi } from '../../../services/frameworkApi'
-import { ACTIVITY_CONFIG, FUTURE_ACTIVITIES } from '../../../utils/activityConfig'
+import { ACTIVITY_CONFIG, FUTURE_ACTIVITIES, isPssActivityCode } from '../../../utils/activityConfig'
 import type { Framework, FrameworkActivity } from '../../../interfaces/framework'
 
 definePageMeta({ layout: false, middleware: ['auth'] })
@@ -148,10 +148,9 @@ function activityIcon(a: FrameworkActivity): string {
 }
 
 function activityRoute(a: FrameworkActivity): string {
-  const code = a.template?.code
   // Structured PSS Sessions (backend code preserved as CFS_ATTENDANCE for
   // back-compat — see migration 000034) routes straight into the PSS module.
-  if (code === 'CFS_ATTENDANCE' || code === 'PSS') return `/activities/${frameworkId}/pss`
+  if (isPssActivityCode(a.template?.code)) return `/activities/${frameworkId}/pss`
   return `/activities/${frameworkId}/${a.id}`
 }
 

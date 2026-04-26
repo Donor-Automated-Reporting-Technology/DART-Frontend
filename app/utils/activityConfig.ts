@@ -4,7 +4,44 @@
  * Maps activity template codes to their route, icon, and display label.
  * Used by the sidebar to dynamically render navigation items
  * based on the organisation's active framework activities.
+ *
+ * SINGLE SOURCE OF TRUTH for activity-template `code` strings consumed by
+ * the frontend. **Never hard-code `'CFS_ATTENDANCE'` / `'PSS'` / etc. in
+ * pages or components — import from `ACTIVITY_CODES` below.** That mirrors
+ * the backend `activity_templates.code` column (see DART migrations
+ * 000020 + 000034) and is the only way to keep the two halves in lock-step.
  */
+
+/**
+ * Canonical activity template codes that the frontend recognises.
+ *
+ * - `STRUCTURED_PSS` is the live PSS module entry-point. Backend code is
+ *   still `CFS_ATTENDANCE` for backwards compatibility (only the display
+ *   label was renamed in migration 000034). The legacy literal `'PSS'` is
+ *   intentionally NOT a valid code — guard against it via `isPssActivityCode`.
+ */
+export const ACTIVITY_CODES = {
+  STRUCTURED_PSS: 'CFS_ATTENDANCE',
+  TEAMUP: 'TEAMUP',
+  CHILDREN_SESSIONS: 'CHILDREN_SESSIONS',
+  PARENTING: 'PARENTING',
+  COMMUNITY_DIALOGUE: 'COMMUNITY_DIALOGUE',
+  MASS_AWARENESS: 'MASS_AWARENESS',
+  CASE_MANAGEMENT: 'CASE_MANAGEMENT',
+  CP_TRAINING: 'CP_TRAINING',
+  IGA: 'IGA',
+} as const
+
+export type ActivityCode = typeof ACTIVITY_CODES[keyof typeof ACTIVITY_CODES]
+
+/**
+ * Tolerant check for the Structured PSS activity. Accepts the canonical
+ * backend code plus the legacy `'PSS'` literal that some old data /
+ * bookmarks may still carry. Use this instead of `code === 'PSS'`.
+ */
+export function isPssActivityCode(code: string | null | undefined): boolean {
+  return code === ACTIVITY_CODES.STRUCTURED_PSS || code === 'PSS'
+}
 
 export interface ActivityConfigEntry {
   icon: string
@@ -24,7 +61,7 @@ export interface ActivityConfigEntry {
  * `/activities/[id]` routes directly to `/activities/[id]/pss` for this code.
  */
 export const ACTIVITY_CONFIG: Record<string, ActivityConfigEntry> = {
-  CFS_ATTENDANCE: {
+  [ACTIVITY_CODES.STRUCTURED_PSS]: {
     icon: 'puzzle',
     label: 'Structured PSS Sessions',
     route: '/activities/pss',
