@@ -32,9 +32,9 @@
               Set up time periods, age groups and active days — then map activities day-by-day.
             </p>
           </div>
-          <NuxtLink :to="`/activities/${frameworkId}/pss`" class="btn-back">
+          <NuxtLink :to="`/activities/${frameworkId}/pss/schedules`" class="btn-back">
             <AppIcon name="arrow-left" :size="14" />
-            <span class="btn-text">PSS</span>
+            <span class="btn-text">Schedules</span>
           </NuxtLink>
         </div>
       </div>
@@ -213,6 +213,7 @@ const breadcrumbs = computed(() => [
   { title: 'Projects', href: '/activities' },
   { title: 'Project', href: `/activities/${frameworkId}` },
   { title: 'PSS', href: `/activities/${frameworkId}/pss` },
+  { title: 'Schedules', href: `/activities/${frameworkId}/pss/schedules` },
   {
     title: 'New schedule',
     href: `/activities/${frameworkId}/pss/setup`,
@@ -275,8 +276,9 @@ function onConfirmDiscard(): void {
 }
 
 function navigateAwayToActiveSchedule(): void {
-  // Active-schedule view (DART-33) lives at the PSS hub for now.
-  router.push(`/activities/${frameworkId}/pss`);
+  // Cancelling "New schedule" returns to the Schedules list, where the
+  // facilitator can pick an existing schedule or start a fresh setup.
+  router.push(`/activities/${frameworkId}/pss/schedules`);
 }
 </script>
 

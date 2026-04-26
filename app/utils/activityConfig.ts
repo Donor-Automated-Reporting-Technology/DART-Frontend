@@ -35,12 +35,39 @@ export const ACTIVITY_CODES = {
 export type ActivityCode = typeof ACTIVITY_CODES[keyof typeof ACTIVITY_CODES]
 
 /**
- * Tolerant check for the Structured PSS activity. Accepts the canonical
- * backend code plus the legacy `'PSS'` literal that some old data /
- * bookmarks may still carry. Use this instead of `code === 'PSS'`.
+ * Tolerant check for the Structured PSS activity. Accepts every
+ * variant the backend has ever shipped (`CFS_ATTENDANCE`, `PSS`,
+ * `STRUCTURED_PSS`, lowercase, with/without spaces) so that re-seeded
+ * environments don't strand the user on the generic activity page.
+ *
+ * If the code is missing, callers can fall back to `isPssActivityName`.
  */
 export function isPssActivityCode(code: string | null | undefined): boolean {
-  return code === ACTIVITY_CODES.STRUCTURED_PSS || code === 'PSS'
+  if (!code) return false
+  const norm = String(code).trim().toUpperCase().replace(/[\s-]+/g, '_')
+  return (
+    norm === 'CFS_ATTENDANCE' ||
+    norm === 'PSS' ||
+    norm === 'STRUCTURED_PSS' ||
+    norm === 'STRUCTURED_PSS_SESSIONS' ||
+    norm === 'STRUCTURED_PSS_ACTIVITIES'
+  )
+}
+
+/**
+ * Name-based fallback: any template whose display name contains
+ * "Structured PSS" or starts with "PSS" is treated as the PSS module.
+ * Used when the backend seed left `code` blank but the name is set.
+ */
+export function isPssActivityName(name: string | null | undefined): boolean {
+  if (!name) return false
+  const n = String(name).trim().toLowerCase()
+  return (
+    n.includes('structured pss') ||
+    n.startsWith('pss ') ||
+    n === 'pss' ||
+    n.includes('psychosocial')
+  )
 }
 
 export interface ActivityConfigEntry {

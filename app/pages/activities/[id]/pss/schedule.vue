@@ -33,9 +33,9 @@
               Map activities to time periods for each active day.
             </p>
           </div>
-          <NuxtLink :to="`/activities/${frameworkId}/pss`" class="btn-back">
+          <NuxtLink :to="`/activities/${frameworkId}/pss/schedules`" class="btn-back">
             <AppIcon name="arrow-left" :size="14" />
-            <span>PSS</span>
+            <span>Schedules</span>
           </NuxtLink>
         </div>
       </div>
@@ -71,7 +71,7 @@
         </div>
 
         <div class="actions">
-          <NuxtLink :to="`/activities/${frameworkId}/pss`" class="btn-secondary">
+          <NuxtLink :to="`/activities/${frameworkId}/pss/schedules`" class="btn-secondary">
             Cancel
           </NuxtLink>
           <button
@@ -145,6 +145,7 @@ const breadcrumbs = computed(() => [
   { title: 'Projects', href: '/activities' },
   { title: 'Project', href: `/activities/${frameworkId}` },
   { title: 'PSS', href: `/activities/${frameworkId}/pss` },
+  { title: 'Schedules', href: `/activities/${frameworkId}/pss/schedules` },
   {
     title: 'Schedule',
     href: `/activities/${frameworkId}/pss/schedule`,
