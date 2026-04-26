@@ -65,9 +65,9 @@ function isActive(value: PssDayOfWeek): boolean {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--surface-2, #1a1a2e);
-  color: var(--text-muted, #9ca3af);
-  border: 1px solid var(--border, #2a2a3e);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 0.625rem 0;
   font: inherit;
@@ -79,13 +79,14 @@ function isActive(value: PssDayOfWeek): boolean {
 }
 
 .day-pill:hover {
-  border-color: var(--accent, #818cf8);
+  border-color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 .day-pill--active {
-  background: rgba(129, 140, 248, 0.15);
-  border-color: var(--accent, #818cf8);
-  color: var(--accent, #818cf8);
+  background: var(--bg-card-hover);
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .day-pill--weekend:not(.day-pill--active) {
@@ -94,7 +95,7 @@ function isActive(value: PssDayOfWeek): boolean {
 }
 
 .day-pill:focus-visible {
-  outline: 2px solid var(--accent, #818cf8);
+  outline: 2px solid var(--text-muted);
   outline-offset: 2px;
 }
 

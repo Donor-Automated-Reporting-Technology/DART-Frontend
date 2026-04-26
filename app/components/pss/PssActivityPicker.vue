@@ -68,6 +68,7 @@ import type {
 import type { PssApiError } from '../../interfaces/pss'
 import { usePssApi } from '../../composables/usePssApi'
 import { activitiesRepository } from '../../services/pss/repositories'
+import { applyPssActivitySeed } from '../../services/pss/seed/pssActivitiesSeed'
 import PssLoadingSkeleton from './PssLoadingSkeleton.vue'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -163,7 +164,16 @@ async function loadActivities(): Promise<void> {
   // Offline → straight to cache.
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
     try {
-      activities.value = await readFromCache(ageGroupParam)
+      let cached = await readFromCache(ageGroupParam)
+      if (cached.length === 0) {
+        try {
+          await applyPssActivitySeed(true)
+          cached = await readFromCache(ageGroupParam)
+        } catch {
+          // ignore — empty-state will render
+        }
+      }
+      activities.value = cached
     } catch (err) {
       loadError.value = toPssError(err)
     } finally {
@@ -184,7 +194,21 @@ async function loadActivities(): Promise<void> {
     if (ctrl.signal.aborted) return
     // Surface the error AND attempt the cache so the user can still pick.
     try {
-      const cached = await readFromCache(ageGroupParam)
+      let cached = await readFromCache(ageGroupParam)
+      // Self-heal: if the cache is empty (boot-time seed lost a race, or
+      // IndexedDB was wiped while localStorage persisted) force-run the
+      // bundled UNICEF seed and retry the cache read once. Backend has
+      // no `/pss/*` routes yet, so this is the only path to populated
+      // activities in the picker.
+      if (cached.length === 0) {
+        try {
+          await applyPssActivitySeed(true)
+          cached = await readFromCache(ageGroupParam)
+        } catch {
+          // Seed failed (private window / blocked storage). Fall through
+          // to the empty-state error banner below.
+        }
+      }
       activities.value = cached
       // Only show the error banner if the cache also turned up empty.
       if (cached.length === 0) loadError.value = toPssError(err)
@@ -290,6 +314,27 @@ function onPanelKeydown(event: KeyboardEvent): void {
 }
 
 // Open side-effects: lock body scroll, focus search, kick off load.
+//
+// NOTE: the body-scroll-lock helpers and their `previousBodyOverflow`
+// closure must be declared BEFORE this watcher because `immediate: true`
+// invokes the callback synchronously during setup — referencing a
+// `let`-binding declared further down would hit the temporal dead zone.
+let previousBodyOverflow: string | null = null
+
+function lockBodyScroll(): void {
+  if (typeof document === 'undefined') return
+  if (previousBodyOverflow !== null) return
+  previousBodyOverflow = document.body.style.overflow
+  document.body.style.overflow = 'hidden'
+}
+
+function unlockBodyScroll(): void {
+  if (typeof document === 'undefined') return
+  if (previousBodyOverflow === null) return
+  document.body.style.overflow = previousBodyOverflow
+  previousBodyOverflow = null
+}
+
 watch(
   () => props.open,
   async (isOpen, wasOpen) => {
@@ -338,22 +383,7 @@ function maybeAutoSelectPreset(): void {
 }
 
 // ─── Body-scroll lock ──────────────────────────────────────────────────────
-
-let previousBodyOverflow: string | null = null
-
-function lockBodyScroll(): void {
-  if (typeof document === 'undefined') return
-  if (previousBodyOverflow !== null) return
-  previousBodyOverflow = document.body.style.overflow
-  document.body.style.overflow = 'hidden'
-}
-
-function unlockBodyScroll(): void {
-  if (typeof document === 'undefined') return
-  if (previousBodyOverflow === null) return
-  document.body.style.overflow = previousBodyOverflow
-  previousBodyOverflow = null
-}
+// (Helpers are declared above the open-watcher to avoid TDZ — see note there.)
 
 onBeforeUnmount(() => {
   unlockBodyScroll()
@@ -586,13 +616,13 @@ import type { ComponentPublicInstance } from 'vue'
 .pss-picker__panel {
   width: 100%;
   max-height: 88vh;
-  background: #1a1a2e;
-  color: #e5e7eb;
-  border: 1px solid #27273a;
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   border-radius: 16px 16px 0 0;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow-elevated);
   overflow: hidden;
 }
 
@@ -605,7 +635,7 @@ import type { ComponentPublicInstance } from 'vue'
     max-width: 560px;
     max-height: 80vh;
     border-radius: 16px;
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+    box-shadow: var(--shadow-elevated);
   }
 }
 
@@ -615,7 +645,7 @@ import type { ComponentPublicInstance } from 'vue'
   align-items: center;
   gap: 8px;
   padding: 14px 16px 8px;
-  border-bottom: 1px solid #27273a;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .pss-picker__title {
@@ -623,7 +653,7 @@ import type { ComponentPublicInstance } from 'vue'
   margin: 0;
   font-size: 17px;
   font-weight: 700;
-  color: #f3f4f6;
+  color: var(--text-primary);
 }
 
 .pss-picker__close {
@@ -633,7 +663,7 @@ import type { ComponentPublicInstance } from 'vue'
   width: 44px;
   height: 44px;
   background: transparent;
-  color: #d1d5db;
+  color: var(--text-secondary);
   border: 1px solid transparent;
   border-radius: 8px;
   cursor: pointer;
@@ -642,8 +672,8 @@ import type { ComponentPublicInstance } from 'vue'
 
 .pss-picker__close:hover,
 .pss-picker__close:focus-visible {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: #3a3a52;
+  background: var(--hover-bg);
+  border-color: var(--border-color);
   outline: none;
 }
 
@@ -658,7 +688,7 @@ import type { ComponentPublicInstance } from 'vue'
   left: 26px;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
+  color: var(--text-muted);
   pointer-events: none;
 }
 
@@ -666,9 +696,9 @@ import type { ComponentPublicInstance } from 'vue'
   width: 100%;
   height: 44px;
   padding: 0 12px 0 38px;
-  background: #0f0f1a;
-  color: #f3f4f6;
-  border: 1px solid #27273a;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   font-size: 14px;
   outline: none;
@@ -683,12 +713,12 @@ import type { ComponentPublicInstance } from 'vue'
 }
 
 .pss-picker__search-input:focus {
-  border-color: #818cf8;
-  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.4);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .pss-picker__search-input::placeholder {
-  color: #6b7280;
+  color: var(--text-placeholder);
 }
 
 /* ── Tabs ──────────────────────────────────────────────────────────────── */
@@ -698,8 +728,8 @@ import type { ComponentPublicInstance } from 'vue'
   gap: 4px;
   padding: 4px;
   margin: 0 16px 8px;
-  background: #0f0f1a;
-  border: 1px solid #27273a;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
 }
 
@@ -707,24 +737,26 @@ import type { ComponentPublicInstance } from 'vue'
   height: 36px;
   padding: 0 8px;
   background: transparent;
-  color: #d1d5db;
+  color: var(--text-secondary);
   border: 1px solid transparent;
   border-radius: 7px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .pss-picker__tab:hover,
 .pss-picker__tab:focus-visible {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--hover-bg);
+  color: var(--text-primary);
   outline: none;
 }
 
 .pss-picker__tab--active {
-  background: #27273a;
-  color: #f3f4f6;
-  border-color: #3a3a52;
+  background: var(--primary-dim);
+  color: var(--primary);
+  border-color: var(--primary);
 }
 
 /* ── Body ──────────────────────────────────────────────────────────────── */
@@ -743,7 +775,7 @@ import type { ComponentPublicInstance } from 'vue'
 .pss-picker__empty {
   padding: 32px 16px;
   text-align: center;
-  color: #9ca3af;
+  color: var(--text-muted);
   font-size: 14px;
 }
 
@@ -756,13 +788,13 @@ import type { ComponentPublicInstance } from 'vue'
   gap: 12px;
   padding: 12px;
   margin: 8px 0;
-  background: rgba(220, 38, 38, 0.12);
-  border: 1px solid rgba(220, 38, 38, 0.4);
+  background: var(--error-bg);
+  border: 1px solid var(--error);
   border-radius: 10px;
 }
 
 .pss-picker__error-icon {
-  color: #fca5a5;
+  color: var(--error);
 }
 
 .pss-picker__error-body {
@@ -773,13 +805,14 @@ import type { ComponentPublicInstance } from 'vue'
   margin: 0;
   font-size: 13px;
   font-weight: 700;
-  color: #fecaca;
+  color: var(--error);
 }
 
 .pss-picker__error-message {
   margin: 2px 0 0;
   font-size: 12px;
-  color: #fda4a4;
+  color: var(--error);
+  opacity: 0.85;
   word-break: break-word;
 }
 
@@ -789,7 +822,7 @@ import type { ComponentPublicInstance } from 'vue'
   gap: 4px;
   height: 36px;
   padding: 0 10px;
-  background: #b91c1c;
+  background: var(--error);
   color: #ffffff;
   border: none;
   border-radius: 8px;
@@ -800,7 +833,7 @@ import type { ComponentPublicInstance } from 'vue'
 
 .pss-picker__retry:hover,
 .pss-picker__retry:focus-visible {
-  background: #dc2626;
+  opacity: 0.9;
   outline: none;
 }
 
@@ -826,29 +859,30 @@ import type { ComponentPublicInstance } from 'vue'
   padding: 10px 12px;
   min-height: 64px;
   text-align: left;
-  background: #0f0f1a;
+  background: var(--bg-input);
   color: inherit;
-  border: 1px solid #27273a;
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
 }
 
 .pss-picker__row-btn:hover,
 .pss-picker__row-btn:focus-visible {
-  background: #1f1f33;
-  border-color: #818cf8;
+  background: var(--hover-bg);
+  border-color: var(--primary);
   outline: none;
 }
 
 .pss-picker__row-name {
   font-size: 14px;
   font-weight: 600;
-  color: #f3f4f6;
+  color: var(--text-primary);
 }
 
 .pss-picker__row-desc {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--text-muted);
   /* 2-line clamp keeps rows compact on small screens. */
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -872,15 +906,18 @@ import type { ComponentPublicInstance } from 'vue'
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
 }
 
-.pss-picker__badge--play     { background: #1e3a8a; color: #93c5fd; }
-.pss-picker__badge--wellbeing { background: #14532d; color: #86efac; }
-.pss-picker__badge--learn    { background: #4a1d6f; color: #d8b4fe; }
+.pss-picker__badge--play      { color: #2563eb; border-color: rgba(37, 99, 235, 0.3); background: rgba(37, 99, 235, 0.08); }
+.pss-picker__badge--wellbeing { color: #16a34a; border-color: rgba(22, 163, 74, 0.3); background: rgba(22, 163, 74, 0.08); }
+.pss-picker__badge--learn     { color: #9333ea; border-color: rgba(147, 51, 234, 0.3); background: rgba(147, 51, 234, 0.08); }
 
 .pss-picker__row-age {
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .pss-picker__row-custom {
@@ -888,8 +925,9 @@ import type { ComponentPublicInstance } from 'vue'
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #fcd34d;
-  border: 1px solid rgba(252, 211, 77, 0.4);
+  color: var(--warning);
+  border: 1px solid var(--warning);
+  background: var(--warning-bg);
   padding: 1px 5px;
   border-radius: 4px;
 }
@@ -897,8 +935,8 @@ import type { ComponentPublicInstance } from 'vue'
 /* ── Footer ────────────────────────────────────────────────────────────── */
 .pss-picker__footer {
   padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0));
-  border-top: 1px solid #27273a;
-  background: #14141f;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-card);
 }
 
 .pss-picker__create {
@@ -909,18 +947,19 @@ import type { ComponentPublicInstance } from 'vue'
   gap: 6px;
   height: 44px;
   background: transparent;
-  color: #c7d2fe;
-  border: 1px dashed #4b5563;
+  color: var(--primary);
+  border: 1px dashed var(--border-color);
   border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
 }
 
 .pss-picker__create:hover,
 .pss-picker__create:focus-visible {
-  background: rgba(129, 140, 248, 0.08);
-  border-color: #818cf8;
+  background: var(--primary-dim);
+  border-color: var(--primary);
   outline: none;
 }
 

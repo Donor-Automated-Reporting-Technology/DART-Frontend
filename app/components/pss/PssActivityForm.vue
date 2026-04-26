@@ -635,13 +635,13 @@ const titleId = `${fieldId}-title`
 .pss-form__panel {
   width: 100%;
   max-height: 92vh;
-  background: #1a1a2e;
-  color: #e5e7eb;
-  border: 1px solid #27273a;
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   border-radius: 16px 16px 0 0;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-elevated);
   overflow: hidden;
 }
 
@@ -663,7 +663,7 @@ const titleId = `${fieldId}-title`
   align-items: center;
   gap: 8px;
   padding: 14px 16px 8px;
-  border-bottom: 1px solid #27273a;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .pss-form__title {
@@ -671,7 +671,7 @@ const titleId = `${fieldId}-title`
   margin: 0;
   font-size: 17px;
   font-weight: 700;
-  color: #f3f4f6;
+  color: var(--text-primary);
 }
 
 .pss-form__close {
@@ -681,7 +681,7 @@ const titleId = `${fieldId}-title`
   width: 44px;
   height: 44px;
   background: transparent;
-  color: #d1d5db;
+  color: var(--text-secondary);
   border: 1px solid transparent;
   border-radius: 8px;
   cursor: pointer;
@@ -690,8 +690,8 @@ const titleId = `${fieldId}-title`
 
 .pss-form__close:hover:not(:disabled),
 .pss-form__close:focus-visible {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: #3a3a52;
+  background: var(--hover-bg);
+  border-color: var(--border-color);
   outline: none;
 }
 
@@ -707,10 +707,10 @@ const titleId = `${fieldId}-title`
   gap: 8px;
   padding: 10px 12px;
   margin: 8px 16px;
-  background: rgba(220, 38, 38, 0.12);
-  border: 1px solid rgba(220, 38, 38, 0.4);
+  background: var(--error-bg);
+  border: 1px solid var(--error);
   border-radius: 8px;
-  color: #fecaca;
+  color: var(--error);
   font-size: 13px;
 }
 
@@ -736,18 +736,18 @@ const titleId = `${fieldId}-title`
 .pss-form__label {
   font-size: 13px;
   font-weight: 600;
-  color: #c7d2fe;
+  color: var(--text-primary);
   letter-spacing: 0.01em;
 }
 
-.pss-form__required { color: #fca5a5; }
+.pss-form__required { color: var(--error); }
 
 .pss-form__input,
 .pss-form__textarea {
   width: 100%;
-  background: #0f0f1a;
-  color: #f3f4f6;
-  border: 1px solid #27273a;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 14px;
@@ -761,21 +761,21 @@ const titleId = `${fieldId}-title`
 
 .pss-form__input:focus,
 .pss-form__textarea:focus {
-  border-color: #818cf8;
-  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.4);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .pss-form__input::placeholder,
 .pss-form__textarea::placeholder {
-  color: #6b7280;
+  color: var(--text-placeholder);
 }
 
 .pss-form__input--error {
-  border-color: #b91c1c;
+  border-color: var(--error);
 }
 
 .pss-form__input--error:focus {
-  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.4);
+  box-shadow: 0 0 0 2px var(--error-bg);
 }
 
 .pss-form__input:disabled,
@@ -787,7 +787,7 @@ const titleId = `${fieldId}-title`
 .pss-form__field-error {
   margin: 0;
   font-size: 12px;
-  color: #fca5a5;
+  color: var(--error);
 }
 
 /* ── Radio + chip groups ──────────────────────────────────────────────── */
@@ -810,14 +810,15 @@ const titleId = `${fieldId}-title`
   justify-content: center;
   min-height: 44px;
   padding: 6px 10px;
-  background: #0f0f1a;
-  color: #d1d5db;
-  border: 1px solid #27273a;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   user-select: none;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .pss-form__chip {
@@ -842,21 +843,22 @@ const titleId = `${fieldId}-title`
 
 .pss-form__radio:hover:not(:has(input:disabled)),
 .pss-form__chip:hover:not(:has(input:disabled)) {
-  background: #1f1f33;
-  border-color: #3a3a52;
+  background: var(--hover-bg);
+  border-color: var(--primary);
+  color: var(--text-primary);
 }
 
 .pss-form__radio:has(input:focus-visible),
 .pss-form__chip:has(input:focus-visible) {
-  border-color: #818cf8;
-  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.4);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .pss-form__radio--active,
 .pss-form__chip--active {
-  background: #312e81;
-  color: #ffffff;
-  border-color: #818cf8;
+  background: var(--primary-dim);
+  color: var(--primary);
+  border-color: var(--primary);
 }
 
 .pss-form__radio:has(input:disabled),
@@ -870,8 +872,8 @@ const titleId = `${fieldId}-title`
   display: flex;
   gap: 8px;
   padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0));
-  border-top: 1px solid #27273a;
-  background: #14141f;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-card);
 }
 
 .pss-form__btn {
@@ -886,29 +888,32 @@ const titleId = `${fieldId}-title`
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
+  transition: opacity 0.15s, background 0.15s, border-color 0.15s;
 }
 
 .pss-form__btn--ghost {
-  background: transparent;
-  color: #d1d5db;
-  border-color: #3a3a52;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
 }
 
 .pss-form__btn--ghost:hover:not(:disabled),
 .pss-form__btn--ghost:focus-visible {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--hover-bg);
+  color: var(--text-primary);
+  border-color: var(--primary);
   outline: none;
 }
 
 .pss-form__btn--primary {
-  background: #4f46e5;
+  background: var(--primary);
   color: #ffffff;
-  border-color: #4f46e5;
+  border-color: var(--primary);
 }
 
 .pss-form__btn--primary:hover:not(:disabled),
 .pss-form__btn--primary:focus-visible {
-  background: #6366f1;
+  opacity: 0.9;
   outline: none;
 }
 

@@ -21,120 +21,113 @@
 -->
 <template>
   <NuxtLayout name="app" :breadcrumbs="breadcrumbs">
-    <div class="setup-page">
-      <header class="setup-hero">
-        <div class="setup-hero__icon">
-          <AppIcon name="calendar" :size="22" />
+    <div class="pss-setup">
+
+      <!-- ═══ Page Header (mirrors settings/organization.vue) ═══ -->
+      <div class="page-header">
+        <div class="header-row">
+          <div>
+            <h1 class="page-title">New weekly schedule</h1>
+            <p class="page-subtitle">
+              Set up time periods, age groups and active days — then map activities day-by-day.
+            </p>
+          </div>
+          <NuxtLink :to="`/activities/${frameworkId}/pss/schedules`" class="btn-back">
+            <AppIcon name="arrow-left" :size="14" />
+            <span class="btn-text">Schedules</span>
+          </NuxtLink>
         </div>
-        <div>
-          <h1 class="setup-hero__title">New weekly schedule</h1>
-          <p class="setup-hero__sub">
-            Set up time periods, age groups and active days — then map activities day-by-day.
-          </p>
-        </div>
-      </header>
+      </div>
 
       <form class="setup-form" novalidate @submit.prevent="onContinue">
+
         <!-- CFS location (read-only) -->
-        <section class="setup-section">
-          <div class="setup-section__head">
-            <AppIcon name="building" :size="18" class="setup-section__icon" />
-            <h2 class="setup-section__title">CFS location</h2>
+        <div class="form-section">
+          <div class="section-label">CFS location</div>
+          <div class="section-card">
+            <div class="cfs-display" aria-live="polite">
+              <span class="cfs-display__name">
+                {{ cfsLocationName || (cfsLoading ? 'Loading…' : 'No CFS location on profile') }}
+              </span>
+              <span class="cfs-display__pill">Auto-filled</span>
+            </div>
+            <p v-if="cfsError === 'unassigned'" class="err-msg">
+              No CFS location is assigned to your account. Contact your supervisor.
+            </p>
+            <p v-else-if="!cfsLocationName && !cfsLoading" class="err-msg">
+              Your account is not linked to a CFS location. Contact your organisation admin.
+            </p>
           </div>
-          <div class="cfs-display" aria-live="polite">
-            <span class="cfs-display__name">
-              {{ cfsLocationName || (cfsLoading ? 'Loading…' : 'No CFS location on profile') }}
-            </span>
-            <span class="cfs-display__pill">Auto-filled</span>
-          </div>
-          <p v-if="cfsError === 'unassigned'" class="setup-error">
-            No CFS location is assigned to your account. Contact your supervisor.
-          </p>
-          <p v-else-if="!cfsLocationName && !cfsLoading" class="setup-error">
-            Your account is not linked to a CFS location. Contact your organisation admin.
-          </p>
-        </section>
+        </div>
 
         <!-- Time periods -->
-        <section class="setup-section">
-          <div class="setup-section__head">
-            <AppIcon name="clock" :size="18" class="setup-section__icon" />
-            <h2 class="setup-section__title">Time periods</h2>
+        <div class="form-section">
+          <div class="section-label">Time periods</div>
+          <div class="section-card">
+            <p class="section-hint">
+              Defaults: Morning 08:00–12:00, Afternoon 14:00–16:00. Edit or add as needed.
+            </p>
+            <PssTimePeriodEditor
+              :periods="draft.timePeriods"
+              :errors="timePeriodErrorsMap"
+              @add="addTimePeriod"
+              @remove="removeTimePeriod"
+              @update="updateTimePeriod"
+            />
+            <p v-if="issueFor('time_periods_empty')" class="err-msg">
+              {{ issueFor('time_periods_empty')!.message }}
+            </p>
           </div>
-          <p class="setup-section__hint">
-            Defaults: Morning 08:00–12:00, Afternoon 14:00–16:00. Edit or add as needed.
-          </p>
-          <PssTimePeriodEditor
-            :periods="draft.timePeriods"
-            :errors="timePeriodErrorsMap"
-            @add="addTimePeriod"
-            @remove="removeTimePeriod"
-            @update="updateTimePeriod"
-          />
-          <p v-if="issueFor('time_periods_empty')" class="setup-error">
-            {{ issueFor('time_periods_empty')!.message }}
-          </p>
-        </section>
+        </div>
 
         <!-- Age groups -->
-        <section class="setup-section">
-          <div class="setup-section__head">
-            <AppIcon name="users" :size="18" class="setup-section__icon" />
-            <h2 class="setup-section__title">Age groups</h2>
+        <div class="form-section">
+          <div class="section-label">Age groups</div>
+          <div class="section-card">
+            <p class="section-hint">Pick one or more.</p>
+            <PssAgeGroupSelector
+              :options="ageGroupOptions"
+              :selected="draft.ageGroups"
+              aria-label="Schedule age groups"
+              @toggle="toggleAgeGroup"
+            />
+            <p v-if="issueFor('age_groups_empty')" class="err-msg">
+              {{ issueFor('age_groups_empty')!.message }}
+            </p>
           </div>
-          <p class="setup-section__hint">Pick one or more.</p>
-          <PssAgeGroupSelector
-            :options="ageGroupOptions"
-            :selected="draft.ageGroups"
-            aria-label="Schedule age groups"
-            @toggle="toggleAgeGroup"
-          />
-          <p v-if="issueFor('age_groups_empty')" class="setup-error">
-            {{ issueFor('age_groups_empty')!.message }}
-          </p>
-        </section>
+        </div>
 
         <!-- Active days -->
-        <section class="setup-section">
-          <div class="setup-section__head">
-            <AppIcon name="calendar" :size="18" class="setup-section__icon" />
-            <h2 class="setup-section__title">Active days</h2>
+        <div class="form-section">
+          <div class="section-label">Active days</div>
+          <div class="section-card">
+            <p class="section-hint">Mon–Fri are on by default. Tap to toggle.</p>
+            <PssActiveDaysSelector
+              :options="dayOptions"
+              :active="draft.activeDays"
+              aria-label="Schedule active days"
+              @toggle="toggleDay"
+            />
+            <p v-if="issueFor('active_days_empty')" class="err-msg">
+              {{ issueFor('active_days_empty')!.message }}
+            </p>
           </div>
-          <p class="setup-section__hint">Mon–Fri are on by default. Tap to toggle.</p>
-          <PssActiveDaysSelector
-            :options="dayOptions"
-            :active="draft.activeDays"
-            aria-label="Schedule active days"
-            @toggle="toggleDay"
-          />
-          <p v-if="issueFor('active_days_empty')" class="setup-error">
-            {{ issueFor('active_days_empty')!.message }}
-          </p>
-        </section>
+        </div>
 
-        <!-- Sticky footer actions -->
-        <footer class="setup-footer">
-          <button
-            type="button"
-            class="btn btn--ghost"
-            @click="onCancel"
-          >
+        <!-- Actions -->
+        <div class="actions">
+          <button type="button" class="btn-secondary" @click="onCancel">
             Cancel
           </button>
           <button
             type="submit"
-            class="btn btn--primary"
+            class="btn-primary"
             :disabled="!canContinue || saving || !cfsLocationName"
           >
-            <AppIcon
-              v-if="saving"
-              name="loader"
-              :size="16"
-              class="btn__spinner"
-            />
-            <span>{{ saving ? 'Saving…' : 'Continue' }}</span>
+            <span v-if="saving" class="btn-spinner" />
+            {{ saving ? 'Saving…' : 'Continue' }}
           </button>
-        </footer>
+        </div>
       </form>
     </div>
 
@@ -220,6 +213,7 @@ const breadcrumbs = computed(() => [
   { title: 'Projects', href: '/activities' },
   { title: 'Project', href: `/activities/${frameworkId}` },
   { title: 'PSS', href: `/activities/${frameworkId}/pss` },
+  { title: 'Schedules', href: `/activities/${frameworkId}/pss/schedules` },
   {
     title: 'New schedule',
     href: `/activities/${frameworkId}/pss/setup`,
@@ -282,190 +276,201 @@ function onConfirmDiscard(): void {
 }
 
 function navigateAwayToActiveSchedule(): void {
-  // Active-schedule view (DART-33) lives at the PSS hub for now.
-  router.push(`/activities/${frameworkId}/pss`);
+  // Cancelling "New schedule" returns to the Schedules list, where the
+  // facilitator can pick an existing schedule or start a fresh setup.
+  router.push(`/activities/${frameworkId}/pss/schedules`);
 }
 </script>
 
 <style scoped>
-.setup-page {
+.pss-setup {
   --pad-x: clamp(1rem, 4vw, 1.5rem);
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  padding: 1rem var(--pad-x) 6rem;
-  max-width: 720px;
-  margin: 0 auto;
-  width: 100%;
+  max-width: 600px;
 }
 
-.setup-hero {
+/* ═══ Page Header (mirrors settings/organization.vue) ═══ */
+.page-header {
+  margin-bottom: 24px;
+}
+
+.header-row {
   display: flex;
   align-items: flex-start;
-  gap: 0.875rem;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.setup-hero__icon {
+.page-title {
+  font-size: 1.35rem;
+  font-weight: 750;
+  color: var(--text-primary);
+  margin: 0 0 2px;
+  letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.btn-back {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: rgba(129, 140, 248, 0.15);
-  color: var(--accent, #818cf8);
-  border-radius: 10px;
-  flex-shrink: 0;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+  min-height: 36px;
 }
+.btn-back:hover { border-color: var(--text-muted); color: var(--text-primary); }
 
-.setup-hero__title {
-  margin: 0 0 0.25rem;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text, #fff);
-}
-
-.setup-hero__sub {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--text-muted, #9ca3af);
-  line-height: 1.4;
-}
-
+/* ═══ Form ═══ */
 .setup-form {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 20px;
 }
 
-.setup-section {
+/* ═══ Form Sections ═══ */
+.form-section {
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
+  gap: 8px;
 }
 
-.setup-section__head {
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding-left: 2px;
+}
+
+.section-card {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 18px;
 }
 
-.setup-section__icon {
-  color: var(--accent, #818cf8);
-  flex-shrink: 0;
-}
-
-.setup-section__title {
+.section-hint {
   margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text, #fff);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
 }
 
-.setup-section__hint {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--text-muted, #9ca3af);
-}
-
-.setup-error {
-  margin: 0;
-  font-size: 0.825rem;
-  color: var(--danger, #ef4444);
-}
-
+/* ═══ CFS read-only display ═══ */
 .cfs-display {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  background: var(--surface-2, #1a1a2e);
-  border: 1px solid var(--border, #2a2a3e);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 0.75rem 0.875rem;
+  padding: 10px 12px;
 }
 
 .cfs-display__name {
   font-weight: 600;
-  color: var(--text, #fff);
-  font-size: 0.95rem;
+  color: var(--text-primary);
+  font-size: 0.9rem;
 }
 
 .cfs-display__pill {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted, #9ca3af);
-  background: var(--surface-3, #2a2a3e);
-  padding: 0.2rem 0.5rem;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  padding: 3px 8px;
   border-radius: 999px;
 }
 
-.setup-footer {
-  position: sticky;
-  bottom: 0;
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
-  padding: 0.75rem var(--pad-x);
-  margin: 1rem calc(var(--pad-x) * -1) 0;
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    var(--surface-1, #0f0f1a) 30%
-  );
+/* ═══ Inline error text (mirrors .err-msg) ═══ */
+.err-msg {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--error);
 }
 
-.btn {
+/* ═══ Actions ═══ */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Primary CTA — mirrors settings/organization.vue brand button. */
+.btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  border: 1px solid transparent;
+  gap: 6px;
+  padding: 10px 20px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
   border-radius: 8px;
-  padding: 0.75rem 1.25rem;
-  font: inherit;
-  font-size: 0.95rem;
+  font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
-  min-height: 44px;
+  transition: opacity 0.15s, transform 0.1s;
+  font-family: inherit;
+  min-height: 40px;
 }
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn--ghost {
-  background: transparent;
-  color: var(--text, #fff);
-  border-color: var(--border, #2a2a3e);
-}
-
-.btn--ghost:hover:not(:disabled) {
-  background: var(--surface-2, #1a1a2e);
-}
-
-.btn--primary {
-  background: var(--accent, #818cf8);
-  color: #0f0f1a;
-}
-
-.btn--primary:hover:not(:disabled) {
-  background: #6e7af0;
-}
-
-.btn:focus-visible {
-  outline: 2px solid var(--accent, #818cf8);
+.btn-primary:hover:not(:disabled)  { opacity: 0.9; }
+.btn-primary:active:not(:disabled) { transform: scale(0.98); }
+.btn-primary:focus-visible {
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
+.btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
 
-.btn__spinner {
-  animation: btn-spin 0.8s linear infinite;
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 40px;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-secondary:hover {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
 }
 
-@keyframes btn-spin {
-  to {
-    transform: rotate(360deg);
-  }
+.btn-spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
 }
+
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>

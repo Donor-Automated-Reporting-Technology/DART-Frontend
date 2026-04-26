@@ -84,7 +84,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { frameworkApi } from '../../../services/frameworkApi'
-import { ACTIVITY_CONFIG, FUTURE_ACTIVITIES } from '../../../utils/activityConfig'
+import { ACTIVITY_CONFIG, FUTURE_ACTIVITIES, isPssActivityCode, isPssActivityName } from '../../../utils/activityConfig'
 import type { Framework, FrameworkActivity } from '../../../interfaces/framework'
 
 definePageMeta({ layout: false, middleware: ['auth'] })
@@ -102,8 +102,12 @@ const activities = computed(() =>
   allActivities.value.filter(a => {
     if (!a.is_active) return false
     // PSS is exclusive to Child Protection — hide it for any other framework type
-    // even if a stale framework_activities row exists.
-    if (a.template?.code === 'PSS' && framework.value?.framework_type !== 'child_protection') {
+    // even if a stale framework_activities row exists. Match every PSS code
+    // variant + name fallback so re-seeded data still gets gated correctly.
+    const isPss =
+      isPssActivityCode(a.template?.code) ||
+      isPssActivityName(a.template?.name)
+    if (isPss && framework.value?.framework_type !== 'child_protection') {
       return false
     }
     return true
@@ -148,8 +152,22 @@ function activityIcon(a: FrameworkActivity): string {
 }
 
 function activityRoute(a: FrameworkActivity): string {
-  const code = a.template?.code
-  if (code === 'PSS') return `/activities/${frameworkId}/pss`
+  // Structured PSS Sessions routes straight into the PSS module.
+  // Detection order:
+  //   1. Canonical code match (CFS_ATTENDANCE / PSS / STRUCTURED_PSS variants)
+  //   2. Display-name fallback (re-seeded envs may leave `code` blank)
+  //   3. Pattern-type fallback (daily_attendance is PSS in MVP)
+  //   4. Framework-type safety net: in MVP the ONLY active activity for a
+  //      child_protection framework is PSS, so route anything in a CP
+  //      project straight to /pss instead of the generic detail page.
+  if (
+    isPssActivityCode(a.template?.code) ||
+    isPssActivityName(a.template?.name) ||
+    a.template?.pattern_type === 'daily_attendance' ||
+    framework.value?.framework_type === 'child_protection'
+  ) {
+    return `/activities/${frameworkId}/pss`
+  }
   return `/activities/${frameworkId}/${a.id}`
 }
 

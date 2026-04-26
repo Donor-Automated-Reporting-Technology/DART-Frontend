@@ -1,55 +1,104 @@
+<!--
+  PSS module landing — DART-36 hub.
+
+  Mirrors the canonical settings/organization.vue page pattern:
+    • page-header (title + subtitle + back button)
+    • form-section + section-card content blocks
+
+  Sourced AC: DART/PSS_MODULE_PRD.md §4 (PSS as parent module).
+  UX ref: Dart-docs/design-system/DART_UX_REFERENCE.md.
+-->
 <template>
   <NuxtLayout name="app" :breadcrumbs="breadcrumbs">
-    <div class="pss-page">
+    <div class="pss-hub">
+
+      <!-- ═══ Page Header ═══ -->
+      <div class="page-header">
+        <div class="header-row">
+          <div>
+            <h1 class="page-title">Structured PSS Activities</h1>
+            <p class="page-subtitle">
+              Plan and run UNICEF psychosocial support sessions in your CFS.
+            </p>
+          </div>
+          <NuxtLink :to="`/activities/${frameworkId}`" class="btn-back">
+            <AppIcon name="arrow-left" :size="14" />
+            <span class="btn-text">Project</span>
+          </NuxtLink>
+        </div>
+      </div>
+
       <!-- Loading -->
-      <div v-if="loading" class="state state--loading">
-        <div class="pulse-dot" /><div class="pulse-dot" /><div class="pulse-dot" />
+      <div v-if="loading" class="loading-state">
+        <div class="skeleton-field" />
+        <div class="skeleton-field" />
       </div>
 
       <!-- Not allowed (non-CP framework) -->
-      <div v-else-if="notAllowed" class="state state--error">
-        <AppIcon name="alert-circle" :size="18" />
-        <span>PSS is only available for Child Protection projects.</span>
+      <div v-else-if="notAllowed" class="api-err">
+        <AppIcon name="alert-circle" :size="14" />
+        PSS is only available for Child Protection projects.
       </div>
 
       <template v-else>
-        <!-- Hero -->
-        <div class="hero">
-          <AppIcon name="puzzle" :size="24" class="hero-icon" />
-          <div>
-            <h1 class="hero-title">Structured PSS Activities</h1>
-            <p class="hero-sub">Plan and run UNICEF psychosocial support sessions</p>
-          </div>
-        </div>
+        <!-- ═══ Modules ═══ -->
+        <div class="form-section">
+          <div class="section-label">Modules</div>
+          <div class="tile-grid">
+            <NuxtLink
+              :to="`/activities/${frameworkId}/pss/schedules`"
+              class="tile tile--active"
+            >
+              <span class="tile-icon">
+                <AppIcon name="calendar" :size="18" />
+              </span>
+              <span class="tile-body">
+                <span class="tile-title">Schedules</span>
+                <span class="tile-sub">
+                  Build weekly schedules per CFS location and age group.
+                </span>
+              </span>
+              <span class="tile-pill tile-pill--active">Open</span>
+            </NuxtLink>
 
-        <!-- Empty placeholder grid -->
-        <div class="grid">
-          <div class="tile tile--coming">
-            <AppIcon name="library" :size="20" class="tile-icon" />
-            <h2 class="tile-title">Activity Library</h2>
-            <p class="tile-sub">Browse the 69 built-in PSS sub-activities and your custom ones.</p>
-            <span class="tile-pill">Coming soon</span>
-          </div>
+            <div class="tile tile--coming">
+              <span class="tile-icon">
+                <AppIcon name="book-open" :size="18" />
+              </span>
+              <span class="tile-body">
+                <span class="tile-title">Activity Library</span>
+                <span class="tile-sub">
+                  Browse the 69 built-in PSS sub-activities and your custom ones.
+                </span>
+              </span>
+              <span class="tile-pill">Coming soon</span>
+            </div>
 
-          <div class="tile tile--coming">
-            <AppIcon name="calendar" :size="20" class="tile-icon" />
-            <h2 class="tile-title">Schedules</h2>
-            <p class="tile-sub">Build weekly schedules per CFS location and age group.</p>
-            <span class="tile-pill">Coming soon</span>
-          </div>
+            <div class="tile tile--coming">
+              <span class="tile-icon">
+                <AppIcon name="check-square" :size="18" />
+              </span>
+              <span class="tile-body">
+                <span class="tile-title">Today's Sessions</span>
+                <span class="tile-sub">
+                  Run today's scheduled PSS sub-activities and mark delivery.
+                </span>
+              </span>
+              <span class="tile-pill">Coming soon</span>
+            </div>
 
-          <div class="tile tile--coming">
-            <AppIcon name="check-square" :size="20" class="tile-icon" />
-            <h2 class="tile-title">Today's Sessions</h2>
-            <p class="tile-sub">Run today's scheduled PSS sub-activities and mark delivery.</p>
-            <span class="tile-pill">Coming soon</span>
-          </div>
-
-          <div class="tile tile--coming">
-            <AppIcon name="bar-chart-2" :size="20" class="tile-icon" />
-            <h2 class="tile-title">Reports</h2>
-            <p class="tile-sub">Coverage and delivery analytics for PSS programmes.</p>
-            <span class="tile-pill">Coming soon</span>
+            <div class="tile tile--coming">
+              <span class="tile-icon">
+                <AppIcon name="bar-chart-2" :size="18" />
+              </span>
+              <span class="tile-body">
+                <span class="tile-title">Reports</span>
+                <span class="tile-sub">
+                  Coverage and delivery analytics for PSS programmes.
+                </span>
+              </span>
+              <span class="tile-pill">Coming soon</span>
+            </div>
           </div>
         </div>
       </template>
@@ -90,94 +139,182 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.pss-page {
-  max-width: 960px;
-  padding-bottom: 48px;
+.pss-hub {
+  max-width: 720px;
 }
 
-.hero {
+/* ═══ Page Header (mirror settings/organization.vue) ═══ */
+.page-header { margin-bottom: 24px; }
+.header-row {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 28px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
 }
-.hero-icon {
-  color: var(--accent, #4f46e5);
+.page-title {
+  font-size: 1.35rem;
+  font-weight: 750;
+  color: var(--text-primary);
+  margin: 0 0 2px;
+  letter-spacing: -0.02em;
 }
-.hero-title {
-  font-size: 1.4rem;
-  font-weight: 600;
+.page-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
   margin: 0;
 }
-.hero-sub {
-  font-size: 0.85rem;
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+  min-height: 36px;
+}
+.btn-back:hover { border-color: var(--text-muted); color: var(--text-primary); }
+
+/* ═══ Loading skeleton ═══ */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.skeleton-field {
+  height: 72px;
+  background: var(--bg-card);
+  border-radius: 10px;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.3; }
+}
+
+/* ═══ Section ═══ */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
-  margin: 2px 0 0;
+  padding-left: 2px;
 }
 
-.grid {
+/* ═══ Tiles ═══ */
+.tile-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
 }
-
 .tile {
   position: relative;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 18px;
-  background: var(--surface, #fff);
-  border: 1px solid var(--border, #e5e7eb);
-  border-radius: 12px;
-  min-height: 140px;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
 }
+.tile--active { cursor: pointer; }
+.tile--active:hover {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 4%, var(--bg-panel));
+}
+.tile--active:active { transform: scale(0.995); }
+.tile--active:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.tile--coming { opacity: 0.65; }
 
 .tile-icon {
-  color: var(--accent, #4f46e5);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.tile--active .tile-icon {
+  background: var(--primary-dim);
+  color: var(--primary);
+}
+
+.tile-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
 }
 .tile-title {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  margin: 4px 0 0;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 .tile-sub {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
-  margin: 0;
-  line-height: 1.4;
+  line-height: 1.45;
 }
+
 .tile-pill {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  top: 12px;
+  right: 12px;
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   padding: 3px 8px;
   border-radius: 999px;
-  background: var(--muted-bg, #f3f4f6);
+  background: var(--bg-input);
   color: var(--text-muted);
 }
-.tile--coming {
-  opacity: 0.85;
+.tile-pill--active {
+  background: var(--primary-dim);
+  color: var(--primary);
 }
 
-.state {
-  padding: 40px;
+/* ═══ API error (mirror canonical) ═══ */
+.api-err {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
-  color: var(--text-muted);
+  font-size: 0.82rem;
+  color: var(--error);
+  padding: 10px 14px;
+  background: var(--error-bg);
+  border: 1px solid rgba(248, 113, 113, 0.12);
+  border-radius: 8px;
 }
-.state--error { color: #b91c1c; }
-.pulse-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--text-muted); animation: pulse 1.4s infinite;
+
+/* ═══ Responsive ═══ */
+@media (max-width: 640px) {
+  .header-row { flex-direction: column; gap: 10px; }
+  .btn-text { display: none; }
+  .tile { padding: 14px; }
+  .tile-pill { top: 10px; right: 10px; }
 }
-.pulse-dot:nth-child(2) { animation-delay: 0.2s; }
-.pulse-dot:nth-child(3) { animation-delay: 0.4s; }
-@keyframes pulse { 0%,80%,100% { opacity: 0.3; } 40% { opacity: 1; } }
 </style>

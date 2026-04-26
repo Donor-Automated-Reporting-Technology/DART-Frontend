@@ -29,8 +29,13 @@ import { applyPssActivitySeed } from '../services/pss/seed/pssActivitiesSeed';
 
 export default defineNuxtPlugin(() => {
   // Fire-and-forget — boot must not block on the seed.
-  void applyPssActivitySeed().catch((err: unknown) => {
-    // eslint-disable-next-line no-console
-    console.warn('[pss] activity seed failed; will retry on next boot', err);
-  });
+  void applyPssActivitySeed()
+    .then((result) => {
+      // eslint-disable-next-line no-console
+      console.info('[pss] activity seed result', result);
+    })
+    .catch((err: unknown) => {
+      // eslint-disable-next-line no-console
+      console.warn('[pss] activity seed failed; will retry on next boot', err);
+    });
 });

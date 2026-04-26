@@ -191,7 +191,7 @@ import { useRoute } from 'vue-router'
 import { frameworkApi } from '../../../services/frameworkApi'
 import { beneficiaryApi } from '../../../services/beneficiaryApi'
 import { cfsApi } from '../../../services/cfsApi'
-import { ACTIVITY_CONFIG, FUTURE_ACTIVITIES } from '../../../utils/activityConfig'
+import { ACTIVITY_CONFIG, ACTIVITY_CODES, FUTURE_ACTIVITIES } from '../../../utils/activityConfig'
 import type { Framework, FrameworkActivity } from '../../../interfaces/framework'
 import type { Beneficiary } from '../../../interfaces/beneficiary'
 import BeneficiaryTable from '../../../components/beneficiaries/BeneficiaryTable.vue'
@@ -237,8 +237,15 @@ function formatPattern(p?: string) {
 }
 
 const ACTIVITY_LINKS: Record<string, Array<{ to: string; icon: string; label: string }>> = {
-  CFS_ATTENDANCE: [
-    { to: `/activities/${frameworkId}/cfs-session`, icon: 'check-square', label: 'Create CFS Session' },
+  // Backend code is CFS_ATTENDANCE (see migration 000034); 'PSS' kept as alias
+  // for any legacy data still floating around.
+  [ACTIVITY_CODES.STRUCTURED_PSS]: [
+    { to: `/activities/${frameworkId}/pss`, icon: 'puzzle', label: 'Open PSS Schedule' },
+    { to: `/activities/${frameworkId}/cfs-session`, icon: 'check-square', label: 'Take Session Attendance' },
+  ],
+  PSS: [
+    { to: `/activities/${frameworkId}/pss`, icon: 'puzzle', label: 'Open PSS Schedule' },
+    { to: `/activities/${frameworkId}/cfs-session`, icon: 'check-square', label: 'Take Session Attendance' },
   ],
   TEAMUP: [
     { to: '/activities/teamup', icon: 'users', label: 'TeamUp Sessions' },
