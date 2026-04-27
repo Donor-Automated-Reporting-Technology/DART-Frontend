@@ -55,7 +55,7 @@
             >
               <div class="row-main">
                 <div class="row-heading">
-                  <span class="row-title">{{ activeRow.activeDays.length }}-day schedule</span>
+                  <span class="row-title">{{ titleFor(activeRow) }}</span>
                   <span class="pill pill--active">Active</span>
                   <span
                     v-if="activeRow.syncStatus !== 'synced'"
@@ -88,7 +88,7 @@
             >
               <div class="row-main">
                 <div class="row-heading">
-                  <span class="row-title">{{ row.activeDays.length }}-day schedule</span>
+                  <span class="row-title">{{ titleFor(row) }}</span>
                   <span class="pill pill--draft">Draft</span>
                   <span
                     v-if="row.syncStatus !== 'synced'"
@@ -104,6 +104,20 @@
                   Updated {{ formatDate(row.updatedAt || row.clientTimestamp) }}
                 </p>
               </div>
+              <button
+                type="button"
+                class="btn-activate"
+                :disabled="!row.serverId || activatingId === row.clientId"
+                :title="
+                  !row.serverId
+                    ? 'Schedule has not synced yet'
+                    : 'Activate this schedule'
+                "
+                @click.prevent.stop="onActivate(row)"
+              >
+                <span v-if="activatingId === row.clientId" class="btn-spinner" />
+                {{ activatingId === row.clientId ? 'Activating…' : 'Activate' }}
+              </button>
               <AppIcon name="chevron-right" :size="16" class="row-chev" />
             </NuxtLink>
           </div>
@@ -121,7 +135,7 @@
             >
               <div class="row-main">
                 <div class="row-heading">
-                  <span class="row-title">{{ row.activeDays.length }}-day schedule</span>
+                  <span class="row-title">{{ titleFor(row) }}</span>
                   <span class="pill pill--archived">Archived</span>
                 </div>
                 <p class="row-sub">{{ summary(row) }}</p>
@@ -164,7 +178,10 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../../../../stores/auth'
-import { schedulesRepository } from '../../../../services/pss/repositories'
+import {
+  activitiesRepository,
+  schedulesRepository,
+} from '../../../../services/pss/repositories'
 import {
   applyScheduleDto,
   dtoToScheduleRecord,
@@ -172,7 +189,10 @@ import {
   type PssScheduleDto,
 } from '../../../../services/pss/schedulesApi'
 import { useOfflineStatus } from '../../../../composables/useOfflineStatus'
+import { useToast } from '../../../../composables/useToast'
 import type {
+  PssActivityAgeGroup,
+  PssActivityRecord,
   PssScheduleRecord,
   PssDayOfWeek,
   PssLocalSyncStatus,
@@ -189,6 +209,8 @@ const cfsLocationName = computed<string>(() => auth.cfsLocationName ?? '')
 
 const loading = ref(true)
 const rows = ref<PssScheduleRecord[]>([])
+const activatingId = ref<string | null>(null)
+const toast = useToast()
 
 const breadcrumbs = computed(() => [
   { title: 'Projects', href: '/activities' },
@@ -233,6 +255,13 @@ function summary(r: PssScheduleRecord): string {
   const ages = r.ageGroups.join(', ')
   const slots = r.templateSlots.length
   return `${days || 'No days'} • Ages ${ages || '—'} • ${slots} activit${slots === 1 ? 'y' : 'ies'}`
+}
+
+function titleFor(r: PssScheduleRecord): string {
+  if (r.name && r.name.trim()) return r.name
+  return r.activeDays.length > 0
+    ? `${r.activeDays.length}-day schedule`
+    : 'Untitled schedule'
 }
 
 function formatDate(iso: string | undefined): string {
@@ -287,6 +316,94 @@ function mergeServerIntoLocal(
   return merged
 }
 
+async function onActivate(row: PssScheduleRecord): Promise<void> {
+  if (!row.serverId || activatingId.value) return
+  activatingId.value = row.clientId
+  try {
+    const dto = await schedulesApi.activate(row.serverId)
+    // BE auto-archives any other active schedule on the same CFS in the
+    // same transaction; mirror that locally so the list reflects truth
+    // before the next pull.
+    const merged = applyScheduleDto(row, dto)
+    merged.syncStatus = 'synced'
+    merged.syncError = undefined
+    await schedulesRepository.upsert(merged)
+    for (const other of rows.value) {
+      if (
+        other.clientId !== row.clientId &&
+        other.cfsLocationId === row.cfsLocationId &&
+        other.status === 'active'
+      ) {
+        await schedulesRepository.patch(other.clientId, {
+          status: 'archived',
+          syncStatus: 'synced',
+        })
+      }
+    }
+    rows.value = await schedulesRepository.listByCfs(cfsLocationId.value)
+    toast.success('Schedule activated.')
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Could not activate schedule.'
+    toast.error('Could not activate schedule.', { detail: message })
+  } finally {
+    activatingId.value = null
+  }
+}
+
+/**
+ * Best-effort category guess from the activity name. The BE wire shape
+ * does not carry a category for slot rows, so synthesised catalogue
+ * entries default to `wellbeing` (the dominant category in the UNICEF
+ * manual) and only flip when the name contains an obvious keyword.
+ */
+function guessCategory(name: string): 'play' | 'wellbeing' | 'learn' {
+  const n = name.toLowerCase()
+  if (/\b(game|play|football|dance|music|tower|jumping)\b/.test(n)) return 'play'
+  if (/\b(learn|learning|vocational|study|skill)\b/.test(n)) return 'learn'
+  return 'wellbeing'
+}
+
+function normaliseAgeGroup(g: string | undefined): PssActivityAgeGroup {
+  if (g === '6-10' || g === '11-14' || g === '15-17') return g
+  if (g === 'parents' || g === 'all') return g
+  return 'all'
+}
+
+async function syncSlotActivities(dtos: PssScheduleDto[]): Promise<void> {
+  const synthetic: PssActivityRecord[] = []
+  const seen = new Set<string>()
+  for (const dto of dtos) {
+    for (const slot of dto.slots ?? []) {
+      const id = slot.id
+      if (!id || seen.has(id)) continue
+      seen.add(id)
+      const existing = await activitiesRepository.getByClientId(id)
+      if (existing) continue
+      synthetic.push({
+        clientId: id,
+        serverId: id,
+        clientTimestamp: slot.created_at || new Date().toISOString(),
+        syncStatus: 'synced',
+        syncError: undefined,
+        name: slot.activity_name || 'Untitled activity',
+        description: slot.activity_aim || '',
+        category: guessCategory(slot.activity_name || ''),
+        ageGroup: normaliseAgeGroup(slot.age_group),
+        source: 'custom',
+        steps: slot.activity_steps ? [slot.activity_steps] : [],
+        materials: slot.materials || '',
+        conclusion: '',
+        attentionNote: '',
+        cfsId: null,
+        createdBy: null,
+      })
+    }
+  }
+  if (synthetic.length > 0) {
+    await activitiesRepository.bulkUpsert(synthetic)
+  }
+}
+
 onMounted(async () => {
   try {
     if (!cfsLocationId.value) return
@@ -300,7 +417,31 @@ onMounted(async () => {
       const serverDtos = await schedulesApi.list({
         cfsLocationId: cfsLocationId.value,
       })
-      const merged = mergeServerIntoLocal(localRows, serverDtos)
+      // The list endpoint returns headers without `slots`. Hydrate each
+      // schedule via GET /pss/schedules/:id so the UI can render days,
+      // age groups, and activity counts. Failures are non-fatal — the
+      // header alone still renders (with name + status).
+      const hydrated = await Promise.all(
+        serverDtos.map(async (dto) => {
+          if (dto.slots && dto.slots.length > 0) return dto
+          try {
+            return await schedulesApi.get(dto.id)
+          } catch (err) {
+            // eslint-disable-next-line no-console
+            console.warn(`[pss] failed to hydrate schedule ${dto.id}`, err)
+            return dto
+          }
+        }),
+      )
+      // Synthesize catalogue entries for each hydrated slot so the
+      // schedule editor's `getActivity(slot.activityId)` lookup resolves.
+      // The BE stores activity text inline on each slot row (DART-73
+      // contract), so server-pulled slots carry a slot-UUID as their
+      // `activityId` rather than a real activity FK; without these
+      // synthetic entries the editor renders "Unknown activity" for
+      // every slot.
+      await syncSlotActivities(hydrated)
+      const merged = mergeServerIntoLocal(localRows, hydrated)
       if (merged.length > 0) {
         await schedulesRepository.bulkUpsert(merged)
       }
@@ -479,6 +620,37 @@ onMounted(async () => {
   font-size: 0.66rem;
   color: var(--text-muted);
 }
+
+.btn-activate {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  min-height: 32px;
+  transition: opacity 0.12s, transform 0.1s;
+}
+.btn-activate:hover:not(:disabled)  { opacity: 0.9; }
+.btn-activate:active:not(:disabled) { transform: scale(0.97); }
+.btn-activate:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-spinner {
+  width: 11px;
+  height: 11px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ═══ Actions (mirror canonical) ═══ */
 .actions {

@@ -214,12 +214,48 @@ export function applyScheduleDto(
           g === '6-10' || g === '11-14' || g === '15-17',
         ),
     );
+    // Replace templateSlots with the server's authoritative slot list.
+    // Without this, a local record that was first persisted with empty
+    // slots (e.g. from a failed create-then-activate cycle that left
+    // activeDays defaulted but slots unset) keeps an empty templateSlots
+    // forever and the editor renders "0 activities" even when the
+    // server has them. Slot `activityId` is set to the server slot UUID
+    // — schedules.vue seeds a synthetic catalogue entry per slot so the
+    // editor's `getActivity(slot.activityId)` lookup resolves.
+    merged.templateSlots = dto.slots.map((s) => ({
+      day: INT_TO_DAY[s.day_of_week] ?? 'mon',
+      timePeriod: s.time_period,
+      ageGroup:
+        s.age_group === 'parents'
+          ? '6-10'
+          : (s.age_group as PssScheduleAgeGroup),
+      order: s.order_index,
+      activityId: s.id ?? '',
+    }));
+    merged.timePeriods = derivedTimePeriods(dto.slots);
   }
   return merged;
 }
 
 function uniq<T>(arr: T[]): T[] {
   return Array.from(new Set(arr));
+}
+
+/**
+ * Derive the schedule's time-period list from its slots. The BE wire
+ * shape carries `time_period` only as a string per slot — no top-level
+ * Morning/Afternoon definition with start/end times — so we project the
+ * UNICEF defaults (PRD §5.3) for any period that appears in the slots.
+ */
+function derivedTimePeriods(
+  slots: Array<{ time_period: 'morning' | 'afternoon' }>,
+): { label: 'morning' | 'afternoon'; startTime: string; endTime: string }[] {
+  const labels = uniq(slots.map((s) => s.time_period));
+  return labels.map((label) =>
+    label === 'morning'
+      ? { label, startTime: '08:00', endTime: '12:00' }
+      : { label, startTime: '14:00', endTime: '16:00' },
+  );
 }
 
 // ── HTTP wrapper ───────────────────────────────────────────────────────
@@ -276,7 +312,7 @@ export function dtoToScheduleRecord(dto: PssScheduleDto): PssScheduleRecord {
     cfsLocationId: dto.cfs_location_id,
     status: dto.status,
     activeDays,
-    timePeriods: [],
+    timePeriods: derivedTimePeriods(slots),
     ageGroups,
     templateSlots,
     createdBy: dto.created_by,
@@ -306,6 +342,17 @@ export interface PssSchedulesApi {
     query?: PssScheduleListQuery,
     opts?: { signal?: AbortSignal },
   ): Promise<PssScheduleDto[]>;
+
+  /**
+   * Fetch a single schedule including its slots. The list endpoint
+   * returns headers only (no `slots`), so the schedules page must
+   * hydrate each row before it can render activity / day / age
+   * summaries.
+   */
+  get(
+    id: string,
+    opts?: { signal?: AbortSignal },
+  ): Promise<PssScheduleDto>;
 
   /** Not yet implemented on BE — throws PssEndpointNotShippedError. */
   update(
@@ -345,6 +392,12 @@ export function usePssSchedulesApi(): PssSchedulesApi {
         },
         signal: opts?.signal,
       });
+    },
+    get(id, opts) {
+      return api.get<PssScheduleDto>(
+        `/pss/schedules/${encodeURIComponent(id)}`,
+        { signal: opts?.signal },
+      );
     },
     update(_id, _record, _lookup, _opts) {
       return Promise.reject(

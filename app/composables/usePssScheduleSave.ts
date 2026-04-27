@@ -282,7 +282,8 @@ async function persistOnline(
   void isNew;
 
   // 2. Activate (server moves any other active schedule on the same CFS
-  //    to status='archived' atomically).
+  //    to status='archived' atomically per the BE transaction in
+  //    `pss_repository.go:ActivateSchedule`).
   const activatedDto = await api.activate(dto.id, {
     idempotencyKey: activateKey,
   });
