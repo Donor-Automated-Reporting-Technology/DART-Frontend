@@ -117,7 +117,12 @@ import { useOfflineStatus } from '~/composables/useOfflineStatus';
 import { usePssScheduleSave } from '~/composables/usePssScheduleSave';
 import { schedulesRepository } from '~/services/pss/repositories/schedulesRepository';
 import { activitiesRepository } from '~/services/pss/repositories/activitiesRepository';
+import {
+  applyScheduleDto,
+  usePssSchedulesApi,
+} from '~/services/pss/schedulesApi';
 import type {
+  PssActivityAgeGroup,
   PssActivityRecord,
   PssScheduleRecord,
   PssTemplateSlot,
@@ -182,18 +187,55 @@ onMounted(async () => {
     return;
   }
   try {
-    const [draft, allActivities] = await Promise.all([
+    const [draftInitial, allActivitiesInitial] = await Promise.all([
       schedulesRepository.getByClientId(draftId.value),
       activitiesRepository.list(),
     ]);
-    if (!draft) {
+    if (!draftInitial) {
       loadError.value = 'Draft not found. It may have been cleared.';
       return;
     }
+    let draft = draftInitial;
+    let allActivities = allActivitiesInitial;
+
+    // If the local draft is server-bound and we are online, always
+    // refresh from the server. The local record can be stale in subtle
+    // ways (empty `templateSlots`, missing `timePeriods`, missing
+    // `ageGroups`, mismatched `activeDays`) — server is authoritative
+    // for slot content, so a single GET reconciles all of them.
+    if (draft.serverId && offline.isOnline.value) {
+      try {
+        const schedulesApi = usePssSchedulesApi();
+        const dto = await schedulesApi.get(draft.serverId);
+        if (dto.slots && dto.slots.length > 0) {
+          await seedSlotActivities(dto.slots);
+          const merged = applyScheduleDto(draft, dto);
+          merged.syncStatus = 'synced';
+          await schedulesRepository.upsert(merged);
+          draft = merged;
+          allActivities = await activitiesRepository.list();
+        }
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.warn('[pss] could not hydrate schedule from server', err);
+      }
+    }
+
     record.value = draft;
     activityById.value = new Map(
       allActivities.map((a) => [a.clientId, a]),
     );
+    // eslint-disable-next-line no-console
+    console.info('[pss][editor] loaded schedule', {
+      clientId: draft.clientId,
+      serverId: draft.serverId,
+      activeDays: draft.activeDays,
+      ageGroups: draft.ageGroups,
+      timePeriods: draft.timePeriods,
+      slots: draft.templateSlots.length,
+      slotIds: draft.templateSlots.map((s) => s.activityId),
+      catalogueIds: Array.from(activityById.value.keys()),
+    });
   } catch (err) {
     loadError.value =
       err instanceof Error ? err.message : 'Could not load schedule.';
@@ -356,6 +398,62 @@ function getActivityView(
   const a = activityById.value.get(activityId);
   if (!a) return undefined;
   return { name: a.name, category: a.category, ageGroup: a.ageGroup };
+}
+
+/**
+ * Seed synthetic catalogue entries for each server slot so the day
+ * stepper's `getActivity(slot.activityId)` lookup resolves. The BE wire
+ * shape stores `activity_name / aim / steps / materials` inline on each
+ * slot row; we project that into a `PssActivityRecord` keyed by the
+ * slot's UUID so the editor's existing lookup contract works without
+ * changes.
+ */
+async function seedSlotActivities(
+  slots: Array<{
+    id?: string;
+    activity_name: string;
+    activity_aim?: string;
+    activity_steps?: string;
+    materials?: string;
+    age_group?: string;
+    created_at?: string;
+  }>,
+): Promise<void> {
+  const synthetic: PssActivityRecord[] = [];
+  for (const s of slots) {
+    if (!s.id) continue;
+    const existing = await activitiesRepository.getByClientId(s.id);
+    if (existing) continue;
+    const name = s.activity_name || 'Untitled activity';
+    const ag = (s.age_group as PssActivityAgeGroup) || 'all';
+    synthetic.push({
+      clientId: s.id,
+      serverId: s.id,
+      clientTimestamp: s.created_at || new Date().toISOString(),
+      syncStatus: 'synced',
+      syncError: undefined,
+      name,
+      description: s.activity_aim || '',
+      category: /\b(game|play|football|dance|music|tower|jumping)\b/i.test(name)
+        ? 'play'
+        : /\b(learn|learning|vocational|study|skill)\b/i.test(name)
+          ? 'learn'
+          : 'wellbeing',
+      ageGroup: ['6-10', '11-14', '15-17', 'parents', 'all'].includes(ag)
+        ? ag
+        : 'all',
+      source: 'custom',
+      steps: s.activity_steps ? [s.activity_steps] : [],
+      materials: s.materials || '',
+      conclusion: '',
+      attentionNote: '',
+      cfsId: null,
+      createdBy: null,
+    });
+  }
+  if (synthetic.length > 0) {
+    await activitiesRepository.bulkUpsert(synthetic);
+  }
 }
 
 /**

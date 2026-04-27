@@ -152,7 +152,7 @@
  * @stores  useAuthStore (cfsLocationId, cfsLocationName)
  * @composables usePssScheduleDraft, useCfsLocation, useToast
  */
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '~/stores/auth';
 import {
@@ -197,11 +197,21 @@ const {
   toggleDay,
   issueFor,
   saveDraft,
+  setCfsLocation,
 } = usePssScheduleDraft({
   cfsLocationId: cfsLocationId.value,
   cfsLocationName: cfsLocationName.value,
   userId: userId.value,
 });
+
+// Keep the draft's cfsLocationId in sync when fetchAndHydrate() resolves
+// after onMounted. The composable is initialised with a snapshot (.value)
+// which may be empty if the auth store hasn't loaded from the API yet.
+watch(
+  [cfsLocationId, cfsLocationName],
+  ([id, name]) => { setCfsLocation(id, name); },
+  { immediate: true },
+);
 
 const ageGroupOptions = PSS_AGE_GROUP_OPTIONS;
 const dayOptions = PSS_DAY_OPTIONS;
