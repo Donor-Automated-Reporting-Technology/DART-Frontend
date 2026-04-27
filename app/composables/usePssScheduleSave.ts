@@ -419,14 +419,27 @@ export function usePssScheduleSave(
           record = await persistOnline(schedule, previousActive, lookup);
           synced = true;
         } catch (err) {
-          // Offline-first fallback: backend may be unreachable or slow.
-          // Don't lose the user's work — persist locally and queue the
-          // mutation for the sync worker to replay later. The toast in
-          // the page will reflect `synced: false` so the facilitator
-          // knows it hasn't round-tripped.
+          // Only fall back to the offline queue on transport-level
+          // failures (DNS, connection refused, abort) — `usePssApi`
+          // normalises those to `status: 0`. HTTP responses (4xx/5xx)
+          // are real server decisions and must surface to the user
+          // rather than silently queueing a write the server already
+          // rejected. Without this guard a 422/500 would be hidden
+          // behind a "saved offline" toast and the schedule would
+          // never persist.
+          const status =
+            typeof err === 'object' && err !== null && 'status' in err
+              ? (err as { status?: unknown }).status
+              : undefined;
+          const isTransport = status === 0;
+          if (!isTransport) {
+            // Re-throw so the outer catch marks the local record as
+            // failed and the caller sees `ok: false` with the error.
+            throw err;
+          }
           // eslint-disable-next-line no-console
           console.warn(
-            '[pss] online schedule save failed; falling back to offline queue',
+            '[pss] online schedule save failed (network); queueing for retry',
             err,
           );
           record = await persistOffline(schedule, previousActive, lookup);

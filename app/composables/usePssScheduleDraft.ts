@@ -270,6 +270,14 @@ export function usePssScheduleDraft(ctx: PssScheduleDraftContext) {
 
   // ── Persistence ─────────────────────────────────────────────────────
 
+  // Allow the parent page to push a refreshed CFS location into the draft
+  // after an async hydration (e.g. useCfsLocation.fetchAndHydrate in onMounted)
+  // without discarding the rest of the draft state.
+  function setCfsLocation(id: string, name: string): void {
+    draft.cfsLocationId = id;
+    draft.cfsLocationName = name;
+  }
+
   async function saveDraft(): Promise<
     PssScheduleDraftSaveResult | PssScheduleDraftSaveError
   > {
@@ -287,7 +295,9 @@ export function usePssScheduleDraft(ctx: PssScheduleDraftContext) {
       clientTimestamp: now,
       syncStatus: 'pending',
       name: `Schedule ${now.slice(0, 10)}`,
-      cfsLocationId: ctx.cfsLocationId,
+      // Read from the reactive draft so a post-mount CFS hydration is captured
+      // (ctx.cfsLocationId is a snapshot taken at composable construction time).
+      cfsLocationId: draft.cfsLocationId,
       status: 'draft',
       activeDays: [...draft.activeDays],
       timePeriods: draft.timePeriods.map((p) => ({ ...p })),
@@ -326,6 +336,7 @@ export function usePssScheduleDraft(ctx: PssScheduleDraftContext) {
     // lifecycle
     saveDraft,
     reset,
+    setCfsLocation,
   };
 }
 

@@ -165,6 +165,13 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../../../../stores/auth'
 import { schedulesRepository } from '../../../../services/pss/repositories'
+import {
+  applyScheduleDto,
+  dtoToScheduleRecord,
+  usePssSchedulesApi,
+  type PssScheduleDto,
+} from '../../../../services/pss/schedulesApi'
+import { useOfflineStatus } from '../../../../composables/useOfflineStatus'
 import type {
   PssScheduleRecord,
   PssDayOfWeek,
@@ -240,10 +247,70 @@ function formatDate(iso: string | undefined): string {
   })
 }
 
+const offline = useOfflineStatus()
+const schedulesApi = usePssSchedulesApi()
+
+/**
+ * Reconcile the server list with local IndexedDB:
+ *   - Records present on the server are upserted locally and marked `synced`,
+ *     preserving the local `clientId` (and local `templateSlots[].activityId`
+ *     FKs) when we already had a copy.
+ *   - Local records that have no `serverId` yet (offline-pending creates)
+ *     are kept as-is so the user does not lose unsent work.
+ *   - Local records whose `serverId` no longer appears on the server are
+ *     dropped from the active view (server is authoritative for "exists").
+ */
+function mergeServerIntoLocal(
+  local: PssScheduleRecord[],
+  serverDtos: PssScheduleDto[],
+): PssScheduleRecord[] {
+  const localByServerId = new Map<string, PssScheduleRecord>()
+  for (const r of local) {
+    if (r.serverId) localByServerId.set(r.serverId, r)
+  }
+  const merged: PssScheduleRecord[] = []
+  for (const dto of serverDtos) {
+    const existing = localByServerId.get(dto.id)
+    if (existing) {
+      const next = applyScheduleDto(existing, dto)
+      next.syncStatus = 'synced'
+      next.syncError = undefined
+      merged.push(next)
+    } else {
+      merged.push(dtoToScheduleRecord(dto))
+    }
+  }
+  // Keep purely-local pending records (never round-tripped to the server yet).
+  for (const r of local) {
+    if (!r.serverId) merged.push(r)
+  }
+  return merged
+}
+
 onMounted(async () => {
   try {
     if (!cfsLocationId.value) return
-    rows.value = await schedulesRepository.listByCfs(cfsLocationId.value)
+    // 1. Local-first: render whatever we have so the page is never blank.
+    const localRows = await schedulesRepository.listByCfs(cfsLocationId.value)
+    rows.value = localRows
+
+    // 2. Online: pull the server list and reconcile.
+    if (!offline.isOnline.value) return
+    try {
+      const serverDtos = await schedulesApi.list({
+        cfsLocationId: cfsLocationId.value,
+      })
+      const merged = mergeServerIntoLocal(localRows, serverDtos)
+      if (merged.length > 0) {
+        await schedulesRepository.bulkUpsert(merged)
+      }
+      rows.value = await schedulesRepository.listByCfs(cfsLocationId.value)
+    } catch (err) {
+      // Network or auth blip — leave the local view in place. The list is
+      // offline-first; a missing pull is not a hard error.
+      // eslint-disable-next-line no-console
+      console.warn('[pss] schedule list pull failed; using local cache', err)
+    }
   } finally {
     loading.value = false
   }
