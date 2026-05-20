@@ -74,7 +74,10 @@
               <span class="tile-pill">Coming soon</span>
             </div>
 
-            <div class="tile tile--coming">
+            <NuxtLink
+              :to="`/activities/${frameworkId}/pss/today`"
+              class="tile"
+            >
               <span class="tile-icon">
                 <AppIcon name="check-square" :size="18" />
               </span>
@@ -84,8 +87,8 @@
                   Run today's scheduled PSS sub-activities and mark delivery.
                 </span>
               </span>
-              <span class="tile-pill">Coming soon</span>
-            </div>
+              <span class="tile-pill tile-pill--active">Open</span>
+            </NuxtLink>
 
             <div class="tile tile--coming">
               <span class="tile-icon">
