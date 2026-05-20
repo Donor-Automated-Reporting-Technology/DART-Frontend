@@ -29,9 +29,9 @@
  * • Each row: name, truncated description, age tag, category badge.
  * • Tapping a row emits `select` with the full activity record and
  *   closes the sheet via `update:open`.
- * • '+ Create New Activity' link emits `create-new` (parent routes to
- *   DART-29 form, then re-opens the picker with the new activity
- *   pre-selected by setting `presetActivityId`).
+ * • The picker enforces a curated catalogue for schedule-building:
+ *   UNICEF built-in activities only (`source = 'built-in'`), deduped by
+ *   activity name so repeated entries do not appear in the list.
  *
  * What this component does NOT do
  * -------------------------------
@@ -173,7 +173,7 @@ async function loadActivities(): Promise<void> {
           // ignore — empty-state will render
         }
       }
-      activities.value = cached
+      activities.value = sanitisePickerRows(cached, ageGroupParam)
     } catch (err) {
       loadError.value = toPssError(err)
     } finally {
@@ -189,7 +189,7 @@ async function loadActivities(): Promise<void> {
       signal: ctrl.signal,
     })
     if (ctrl.signal.aborted) return
-    activities.value = rows ?? []
+    activities.value = sanitisePickerRows(rows ?? [], ageGroupParam)
   } catch (err) {
     if (ctrl.signal.aborted) return
     // Surface the error AND attempt the cache so the user can still pick.
@@ -209,7 +209,7 @@ async function loadActivities(): Promise<void> {
           // to the empty-state error banner below.
         }
       }
-      activities.value = cached
+      activities.value = sanitisePickerRows(cached, ageGroupParam)
       // Only show the error banner if the cache also turned up empty.
       if (cached.length === 0) loadError.value = toPssError(err)
     } catch {
@@ -234,15 +234,50 @@ async function readFromCache(
     activitiesRepository.filter({ ageGroup }),
     activitiesRepository.filter({ ageGroup: 'all' }),
   ])
-  const seen = new Set<string>()
-  const out: PssActivityRecord[] = []
-  for (const row of [...forAge, ...allTagged]) {
-    const key = row.clientId || row.id
-    if (seen.has(key)) continue
-    seen.add(key)
-    out.push(row)
+  return [...forAge, ...allTagged]
+}
+
+/**
+ * Keep only UNICEF built-ins and collapse duplicate names.
+ *
+ * Preference order for duplicate names:
+ *  1) exact age-group match,
+ *  2) then 'all'-tagged fallback,
+ *  3) then richer guidance content (steps/description/materials).
+ */
+function sanitisePickerRows(
+  rows: readonly PssActivityRecord[],
+  requestedAgeGroup: PssActivityAgeGroup,
+): PssActivityRecord[] {
+  const builtInRows = rows.filter((r) => {
+    const src = String(r.source).toLowerCase()
+    return src === 'built-in' || src === 'built_in'
+  })
+  const byName = new Map<string, PssActivityRecord>()
+
+  for (const row of builtInRows) {
+    const key = row.name.trim().toLowerCase()
+    const existing = byName.get(key)
+    if (!existing) {
+      byName.set(key, row)
+      continue
+    }
+    if (scoreRow(row, requestedAgeGroup) > scoreRow(existing, requestedAgeGroup)) {
+      byName.set(key, row)
+    }
   }
-  return out
+
+  return Array.from(byName.values()).sort((a, b) => a.name.localeCompare(b.name))
+}
+
+function scoreRow(row: PssActivityRecord, requestedAgeGroup: PssActivityAgeGroup): number {
+  let score = 0
+  if (row.ageGroup === requestedAgeGroup) score += 4
+  else if (row.ageGroup === 'all') score += 2
+  if (row.steps.length > 0) score += 1
+  if (row.description.trim().length > 0) score += 1
+  if (row.materials.trim().length > 0) score += 1
+  return score
 }
 
 function toPssError(err: unknown): PssApiError {

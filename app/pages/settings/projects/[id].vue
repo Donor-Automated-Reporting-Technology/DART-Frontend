@@ -81,6 +81,48 @@
           </Transition>
         </form>
 
+        <!-- ─── Project Target ─── -->
+        <div class="activities-section">
+          <div class="section-label">Project Target</div>
+          <p class="section-hint">Overall beneficiary target for this project, broken down by gender and disability.</p>
+          <div class="section-card">
+            <div class="target-summary">
+              <span class="target-total-label">Total target</span>
+              <span class="target-total-value">{{ targetForm.target_girls + targetForm.target_boys }}</span>
+            </div>
+            <div class="form-grid">
+              <div class="field">
+                <label class="field-label" for="pt-girls">Girls *</label>
+                <input id="pt-girls" v-model.number="targetForm.target_girls" type="number" min="0" class="field-input" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="pt-boys">Boys *</label>
+                <input id="pt-boys" v-model.number="targetForm.target_boys" type="number" min="0" class="field-input" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="pt-girls-d">Girls with disability</label>
+                <input id="pt-girls-d" v-model.number="targetForm.target_girls_disability" type="number" min="0" class="field-input" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="pt-boys-d">Boys with disability</label>
+                <input id="pt-boys-d" v-model.number="targetForm.target_boys_disability" type="number" min="0" class="field-input" />
+              </div>
+            </div>
+          </div>
+
+          <div v-if="ptError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ ptError }}</div>
+
+          <div class="actions">
+            <Transition name="toast">
+              <span v-if="ptSuccess" class="save-feedback save-feedback--ok"><AppIcon name="check-circle" :size="14" /> Saved</span>
+            </Transition>
+            <button class="btn-primary" :disabled="ptSaving" @click="saveProjectTarget">
+              <span v-if="ptSaving" class="btn-spinner" />
+              {{ ptSaving ? 'Saving…' : 'Save project target' }}
+            </button>
+          </div>
+        </div>
+
         <!-- ─── Activities ─── -->
         <div class="activities-section">
           <div class="section-label">Activities</div>
@@ -97,61 +139,28 @@
               :model-active="fa.is_active"
               :target-count="fa.target_count"
               :target-unit="fa.target_unit || 'children'"
+              :target-girls="(fa as any).target_girls ?? 0"
+              :target-boys="(fa as any).target_boys ?? 0"
+              :target-girls-disability="(fa as any).target_girls_disability ?? 0"
+              :target-boys-disability="(fa as any).target_boys_disability ?? 0"
               @update:model-active="handleToggle(fa.id, $event)"
               @update:target-count="handleTargetCount(fa.id, $event, fa.target_unit || 'children')"
               @update:target-unit="handleTargetUnit(fa.id, fa.target_count, $event)"
+              @update:breakdown="handleBreakdown(fa.id, $event)"
             />
           </div>
-        </div>
 
-        <!-- ─── Grant Targets (CP only) ─── -->
-        <div v-if="project.framework_type === 'child_protection'" class="activities-section">
-          <form class="form" @submit.prevent="saveGrantTargets">
-            <div class="section-label">Grant Targets</div>
-            <p class="section-hint">Reporting period and target numbers for the CFS grant.</p>
+          <div v-if="atError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ atError }}</div>
 
-            <div class="section-card">
-              <div class="form-grid">
-                <div class="field">
-                  <label class="field-label" for="gt-start">Period start</label>
-                  <input id="gt-start" v-model="grantForm.period_start" type="date" class="field-input" />
-                </div>
-                <div class="field">
-                  <label class="field-label" for="gt-end">Period end</label>
-                  <input id="gt-end" v-model="grantForm.period_end" type="date" class="field-input" />
-                </div>
-                <div class="field">
-                  <label class="field-label" for="gt-total">Total children</label>
-                  <input id="gt-total" v-model.number="grantForm.total_children" type="number" min="0" class="field-input" />
-                </div>
-                <div class="field">
-                  <label class="field-label" for="gt-girls">Girls sub-target</label>
-                  <input id="gt-girls" v-model.number="grantForm.girls" type="number" min="0" class="field-input" />
-                </div>
-                <div class="field">
-                  <label class="field-label" for="gt-disability">Children with disability</label>
-                  <input id="gt-disability" v-model.number="grantForm.children_with_disability" type="number" min="0" class="field-input" />
-                </div>
-                <div class="field">
-                  <label class="field-label" for="gt-sessions">Sessions target</label>
-                  <input id="gt-sessions" v-model.number="grantForm.sessions" type="number" min="0" class="field-input" />
-                </div>
-              </div>
-            </div>
-
-            <div v-if="gtError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ gtError }}</div>
-
-            <div class="actions">
-              <button type="submit" class="btn-primary" :disabled="gtSaving">
-                <span v-if="gtSaving" class="btn-spinner" />
-                {{ gtSaving ? 'Saving…' : 'Save grant targets' }}
-              </button>
-            </div>
-
+          <div class="actions">
             <Transition name="toast">
-              <div v-if="gtSuccess" class="toast-success">Grant targets updated</div>
+              <span v-if="atSuccess" class="save-feedback save-feedback--ok"><AppIcon name="check-circle" :size="14" /> Saved</span>
             </Transition>
-          </form>
+            <button class="btn-primary" :disabled="atSaving || !activities.length" @click="saveActivityTargets">
+              <span v-if="atSaving" class="btn-spinner" />
+              {{ atSaving ? 'Saving…' : 'Save activity targets' }}
+            </button>
+          </div>
         </div>
       </template>
     </div>
@@ -162,7 +171,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { frameworkApi } from '../../../services/frameworkApi'
-import { cfsApi } from '../../../services/cfsApi'
+// cfsApi import removed — grant targets deprecated in favour of project targets
 import { ApiError } from '../../../services/api'
 import { useAuthStore } from '../../../stores/auth'
 import type { Framework, FrameworkActivity, FrameworkType } from '../../../interfaces/framework'
@@ -210,6 +219,11 @@ function seedForm() {
   form.reporting_to = project.value.reporting_to ?? ''
   form.period_start = project.value.period_start?.slice(0, 10) ?? ''
   form.period_end = project.value.period_end?.slice(0, 10) ?? ''
+  // Hydrate project target
+  targetForm.target_girls = project.value.target_girls ?? 0
+  targetForm.target_boys = project.value.target_boys ?? 0
+  targetForm.target_girls_disability = project.value.target_girls_disability ?? 0
+  targetForm.target_boys_disability = project.value.target_boys_disability ?? 0
 }
 
 async function fetchProject() {
@@ -221,7 +235,7 @@ async function fetchProject() {
     if (!project.value) { loadError.value = 'Project not found'; return }
     seedForm()
     await fetchActivities()
-    if (project.value.framework_type === 'child_protection') await loadGrantTargets()
+    // Grant targets deprecated — project-level targets used instead
   } catch (e: any) {
     loadError.value = e?.message ?? 'Failed to load project'
   } finally {
@@ -240,6 +254,10 @@ async function fetchActivities() {
     is_active: item.is_active ?? false,
     target_count: item.target_count ?? 0,
     target_unit: item.target_unit ?? 'children',
+    target_girls: item.target_girls ?? 0,
+    target_boys: item.target_boys ?? 0,
+    target_girls_disability: item.target_girls_disability ?? 0,
+    target_boys_disability: item.target_boys_disability ?? 0,
     custom_config: item.custom_config ?? item.default_config ?? null,
     created_at: item.created_at ?? '',
     updated_at: item.updated_at ?? '',
@@ -283,7 +301,52 @@ async function saveProject() {
 }
 
 // Activity toggling / targets
-let targetTimer: ReturnType<typeof setTimeout> | null = null
+
+// Project-level target
+const targetForm = reactive({
+  target_girls: 0,
+  target_boys: 0,
+  target_girls_disability: 0,
+  target_boys_disability: 0,
+})
+const ptSaving = ref(false)
+const ptError = ref('')
+const ptSuccess = ref(false)
+
+async function saveProjectTarget() {
+  ptError.value = ''
+  ptSuccess.value = false
+
+  if (targetForm.target_girls + targetForm.target_boys === 0) {
+    ptError.value = 'Total target (girls + boys) must be greater than zero'
+    return
+  }
+  if (targetForm.target_girls_disability > targetForm.target_girls) {
+    ptError.value = 'Girls with disability cannot exceed total girls'
+    return
+  }
+  if (targetForm.target_boys_disability > targetForm.target_boys) {
+    ptError.value = 'Boys with disability cannot exceed total boys'
+    return
+  }
+
+  ptSaving.value = true
+  try {
+    await frameworkApi.setProjectTarget(projectId, {
+      target_girls: targetForm.target_girls,
+      target_boys: targetForm.target_boys,
+      target_girls_disability: targetForm.target_girls_disability,
+      target_boys_disability: targetForm.target_boys_disability,
+    })
+    await fetchProject()
+    ptSuccess.value = true
+    setTimeout(() => { ptSuccess.value = false }, 3000)
+  } catch (e: any) {
+    ptError.value = e instanceof ApiError ? e.message : (e?.message ?? 'Save failed')
+  } finally {
+    ptSaving.value = false
+  }
+}
 
 async function handleToggle(activityId: string, isActive: boolean) {
   await frameworkApi.toggleActivity(projectId, activityId, { is_active: isActive })
@@ -291,75 +354,59 @@ async function handleToggle(activityId: string, isActive: boolean) {
   authStore.setFrameworkActivities(activities.value)
 }
 
-function handleTargetCount(activityId: string, count: number, unit: string) {
-  if (targetTimer) clearTimeout(targetTimer)
-  targetTimer = setTimeout(async () => {
-    await frameworkApi.setTarget(projectId, activityId, { target_count: count, target_unit: unit })
-    await fetchActivities()
-  }, 600)
+function handleTargetCount(activityId: string, count: number, _unit: string) {
+  const fa = activities.value.find((a) => a.id === activityId) as any
+  if (fa) fa.target_count = count
 }
 
-function handleTargetUnit(activityId: string, count: number, unit: string) {
-  if (targetTimer) clearTimeout(targetTimer)
-  targetTimer = setTimeout(async () => {
-    await frameworkApi.setTarget(projectId, activityId, { target_count: count, target_unit: unit })
-    await fetchActivities()
-  }, 300)
+function handleTargetUnit(activityId: string, _count: number, unit: string) {
+  const fa = activities.value.find((a) => a.id === activityId) as any
+  if (fa) fa.target_unit = unit
 }
 
-// Grant targets
-const grantForm = reactive({
-  period_start: '',
-  period_end: '',
-  total_children: 0,
-  girls: 0,
-  children_with_disability: 0,
-  sessions: 0,
-})
-const gtSaving = ref(false)
-const gtError = ref('')
-const gtSuccess = ref(false)
-
-async function loadGrantTargets() {
-  try {
-    const data = await cfsApi.getGrantTargets()
-    if (data) {
-      grantForm.period_start = data.period_start?.slice(0, 10) ?? ''
-      grantForm.period_end = data.period_end?.slice(0, 10) ?? ''
-      grantForm.total_children = data.target_values?.total_children ?? 0
-      grantForm.girls = data.target_values?.girls ?? 0
-      grantForm.children_with_disability = data.target_values?.children_with_disability ?? 0
-      grantForm.sessions = data.target_values?.sessions ?? 0
-    }
-  } catch { /* none yet */ }
-}
-
-async function saveGrantTargets() {
-  gtError.value = ''
-  gtSuccess.value = false
-  if (!grantForm.period_start || !grantForm.period_end) { gtError.value = 'Period start and end are required'; return }
-  if (grantForm.period_end < grantForm.period_start) { gtError.value = 'End date must be after start date'; return }
-
-  gtSaving.value = true
-  try {
-    await cfsApi.upsertGrantTargets({
-      period_start: grantForm.period_start,
-      period_end: grantForm.period_end,
-      target_values: {
-        total_children: grantForm.total_children,
-        girls: grantForm.girls,
-        children_with_disability: grantForm.children_with_disability,
-        sessions: grantForm.sessions,
-      },
-    })
-    gtSuccess.value = true
-    setTimeout(() => { gtSuccess.value = false }, 3000)
-  } catch (e: any) {
-    gtError.value = e instanceof ApiError ? e.message : (e?.message ?? 'Save failed')
-  } finally {
-    gtSaving.value = false
+function handleBreakdown(activityId: string, breakdown: { target_girls: number; target_boys: number; target_girls_disability: number; target_boys_disability: number }) {
+  const fa = activities.value.find((a) => a.id === activityId) as any
+  if (fa) {
+    fa.target_girls = breakdown.target_girls
+    fa.target_boys = breakdown.target_boys
+    fa.target_girls_disability = breakdown.target_girls_disability
+    fa.target_boys_disability = breakdown.target_boys_disability
+    fa.target_count = breakdown.target_girls + breakdown.target_boys
   }
 }
+
+// Activity batch save
+const atSaving = ref(false)
+const atError = ref('')
+const atSuccess = ref(false)
+
+async function saveActivityTargets() {
+  atError.value = ''
+  atSuccess.value = false
+  atSaving.value = true
+  try {
+    const active = activities.value.filter((fa) => fa.is_active)
+    for (const fa of active) {
+      await frameworkApi.setTarget(projectId, fa.id, {
+        target_count: fa.target_count,
+        target_unit: fa.target_unit || 'children',
+        target_girls: (fa as any).target_girls ?? 0,
+        target_boys: (fa as any).target_boys ?? 0,
+        target_girls_disability: (fa as any).target_girls_disability ?? 0,
+        target_boys_disability: (fa as any).target_boys_disability ?? 0,
+      })
+    }
+    await fetchActivities()
+    atSuccess.value = true
+    setTimeout(() => { atSuccess.value = false }, 3000)
+  } catch (e: any) {
+    atError.value = e instanceof ApiError ? e.message : (e?.message ?? 'Save failed')
+  } finally {
+    atSaving.value = false
+  }
+}
+
+// Grant targets — DEPRECATED (replaced by project-level targets above)
 
 onMounted(fetchProject)
 </script>
@@ -431,6 +478,15 @@ onMounted(fetchProject)
 
 .activities-section { margin-top: 12px; }
 .activities-list { display: flex; flex-direction: column; gap: 8px; }
+
+.target-summary {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0 14px; margin-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+.target-total-label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+.target-total-value { font-size: 1.2rem; font-weight: 750; color: var(--primary); }
+
 .empty-inline {
   padding: 14px; font-size: 0.82rem; color: var(--text-muted);
   background: var(--bg-surface); border-radius: 8px;
@@ -442,4 +498,14 @@ onMounted(fetchProject)
 .pulse-dot:nth-child(2) { animation-delay: 0.2s; }
 .pulse-dot:nth-child(3) { animation-delay: 0.4s; }
 @keyframes pulse { 0%,80%,100% { opacity: 0.3; } 40% { opacity: 1; } }
+
+/* ── Inline save feedback ── */
+.save-feedback {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+.save-feedback--ok { color: var(--success); }
 </style>

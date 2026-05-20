@@ -671,7 +671,7 @@ function isDragging(section: SectionView, slot: PssTemplateSlot): boolean {
         </ul>
 
         <p v-else class="pss-section__empty" role="status">
-          No activities yet — tap + Add
+          No activities yet — tap Add Activity
         </p>
 
         <button

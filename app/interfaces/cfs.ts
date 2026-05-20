@@ -122,7 +122,9 @@ export interface BeneficiaryResponse {
 }
 
 export interface CreateCFSRegistrationPayload {
-  beneficiary_id: string;
+  beneficiary_id?: string;
+  beneficiary_ids?: string[];
+  cfs_location_id?: string;
 }
 
 export interface CFSRegistrationResponse {

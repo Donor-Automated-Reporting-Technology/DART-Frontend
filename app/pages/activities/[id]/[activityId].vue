@@ -430,9 +430,13 @@ async function fetchData() {
   }
 }
 
-onMounted(() => {
-  fetchData()
+onMounted(async () => {
+  await fetchData()
   fetchEnrolled()
+  const enrollFlag = route.query.enroll
+  if (enrollFlag === '1' || enrollFlag === 'true') {
+    openEnrollModal()
+  }
 })
 </script>
 

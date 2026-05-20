@@ -12,6 +12,8 @@ export { activitiesRepository } from './activitiesRepository';
 export { schedulesRepository } from './schedulesRepository';
 export { sessionsRepository } from './sessionsRepository';
 export { sessionActivitiesRepository } from './sessionActivitiesRepository';
+export { sessionAttendanceRepository } from './sessionAttendanceRepository';
 export { smileyRepository } from './smileyRepository';
+export { daySmileyRepository, buildDayId } from './daySmileyRepository';
 export { syncQueueRepository } from './syncQueueRepository';
 export { BaseRepository } from './baseRepository';

@@ -18,6 +18,8 @@ export interface Beneficiary {
   guardian_name: string | null
   guardian_phone: string | null
   registration_date: string
+  registered_by?: string | null
+  is_enrolled?: boolean
   cfs_location: {
     id: string
     name: string

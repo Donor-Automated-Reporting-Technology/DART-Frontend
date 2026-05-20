@@ -39,24 +39,103 @@
         <option value="cases">cases</option>
         <option value="participants">participants</option>
       </select>
+      <button type="button" class="breakdown-toggle" @click="showBreakdown = !showBreakdown">
+        <AppIcon :name="showBreakdown ? 'chevron-up' : 'chevron-down'" :size="14" />
+      </button>
+    </div>
+
+    <!-- Gender + disability breakdown (expandable) -->
+    <div v-if="modelActive && showBreakdown" class="breakdown">
+      <div class="breakdown-grid">
+        <div class="bk-field">
+          <label class="bk-label">Girls</label>
+          <input
+            type="number"
+            class="bk-input"
+            :value="targetGirls"
+            min="0"
+            placeholder="0"
+            @input="onBreakdownChange('girls', Number(($event.target as HTMLInputElement).value))"
+          />
+        </div>
+        <div class="bk-field">
+          <label class="bk-label">Boys</label>
+          <input
+            type="number"
+            class="bk-input"
+            :value="targetBoys"
+            min="0"
+            placeholder="0"
+            @input="onBreakdownChange('boys', Number(($event.target as HTMLInputElement).value))"
+          />
+        </div>
+        <div class="bk-field">
+          <label class="bk-label">Girls w/ disability</label>
+          <input
+            type="number"
+            class="bk-input"
+            :value="targetGirlsDisability"
+            min="0"
+            placeholder="0"
+            @input="onBreakdownChange('girls_disability', Number(($event.target as HTMLInputElement).value))"
+          />
+        </div>
+        <div class="bk-field">
+          <label class="bk-label">Boys w/ disability</label>
+          <input
+            type="number"
+            class="bk-input"
+            :value="targetBoysDisability"
+            min="0"
+            placeholder="0"
+            @input="onBreakdownChange('boys_disability', Number(($event.target as HTMLInputElement).value))"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { ref } from 'vue'
+
+const props = defineProps<{
   name: string
   description?: string
   modelActive: boolean
   targetCount: number
   targetUnit: string
+  targetGirls: number
+  targetBoys: number
+  targetGirlsDisability: number
+  targetBoysDisability: number
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'update:modelActive', value: boolean): void
   (e: 'update:targetCount', value: number): void
   (e: 'update:targetUnit', value: string): void
+  (e: 'update:breakdown', value: { target_girls: number; target_boys: number; target_girls_disability: number; target_boys_disability: number }): void
 }>()
+
+const showBreakdown = ref(false)
+
+function onBreakdownChange(field: string, value: number) {
+  const breakdown = {
+    target_girls: props.targetGirls,
+    target_boys: props.targetBoys,
+    target_girls_disability: props.targetGirlsDisability,
+    target_boys_disability: props.targetBoysDisability,
+  }
+  if (field === 'girls') breakdown.target_girls = value
+  else if (field === 'boys') breakdown.target_boys = value
+  else if (field === 'girls_disability') breakdown.target_girls_disability = value
+  else if (field === 'boys_disability') breakdown.target_boys_disability = value
+
+  emit('update:breakdown', breakdown)
+  // Auto-update the total count from gender breakdown
+  emit('update:targetCount', breakdown.target_girls + breakdown.target_boys)
+}
 </script>
 
 <style scoped>
@@ -70,6 +149,7 @@ defineEmits<{
   border-radius: 10px;
   transition: border-color 0.15s, opacity 0.15s, background 0.15s;
   opacity: 0.5;
+  flex-wrap: wrap;
 }
 
 .activity-row--active {
@@ -206,13 +286,80 @@ defineEmits<{
   border-color: var(--text-muted);
 }
 
+.breakdown-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: border-color 0.15s, color 0.15s;
+}
+.breakdown-toggle:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* ── Breakdown ── */
+.breakdown {
+  width: 100%;
+  padding: 12px 0 0 50px;
+  animation: slideDown 0.15s ease-out;
+}
+
+.breakdown-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.bk-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.bk-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.bk-input {
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  text-align: right;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.bk-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-dim);
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 600px) {
-  .activity-row {
-    flex-wrap: wrap;
-  }
   .target-group {
     width: 100%;
     padding-left: 46px;
+  }
+  .breakdown {
+    padding-left: 0;
   }
 }
 </style>

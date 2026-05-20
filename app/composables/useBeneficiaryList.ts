@@ -26,6 +26,8 @@ export function useBeneficiaryList() {
       }
       if (search.value.trim()) params.search = search.value.trim()
       if (centreId.value) params.cfs_location_id = centreId.value
+      if (sex.value) params.sex = sex.value
+      if (disabilityStatus.value) params.disability_status = disabilityStatus.value
       const res = await beneficiaryApi.list(params)
       beneficiaries.value = res.beneficiaries ?? []
       total.value = res.pagination?.total_items ?? 0
@@ -65,6 +67,8 @@ export function useBeneficiaryList() {
       const params: BeneficiaryFilter = {}
       if (search.value.trim()) params.search = search.value.trim()
       if (centreId.value) params.cfs_location_id = centreId.value
+      if (sex.value) params.sex = sex.value
+      if (disabilityStatus.value) params.disability_status = disabilityStatus.value
       const blob = await beneficiaryApi.exportExcel(params)
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')

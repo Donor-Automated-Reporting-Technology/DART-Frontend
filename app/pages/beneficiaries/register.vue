@@ -199,7 +199,7 @@ import { reactive, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { beneficiaryApi } from '../../services/beneficiaryApi'
 import { ApiError } from '../../services/api'
-import { saveBeneficiaryOffline, saveCfsRegistrationOffline } from '../../services/offlineDb'
+import { saveBeneficiaryOffline } from '../../services/offlineDb'
 import { v4 as uuidv4 } from 'uuid'
 import type { BentoGroup } from '../../components/beneficiaries/SummaryBento.vue'
 
@@ -338,7 +338,7 @@ async function onSubmit() {
   saving.value = true
   try {
     if (!navigator.onLine) {
-      // Save beneficiary to IndexedDB and queue a CFS registration for later sync
+      // Save beneficiary to IndexedDB; CFS enrollment happens in a separate flow.
       const id = uuidv4()
       await saveBeneficiaryOffline({
         id,
@@ -356,12 +356,6 @@ async function onSubmit() {
         knownLearningDifficulties: '',
         additionalNotes: form.additional_notes.trim(),
         primeroCaseId: '',
-        syncStatus: 'pending',
-        clientTimestamp: new Date().toISOString(),
-      })
-      await saveCfsRegistrationOffline({
-        id: uuidv4(),
-        beneficiaryId: id,
         syncStatus: 'pending',
         clientTimestamp: new Date().toISOString(),
       })
@@ -384,7 +378,9 @@ async function onSubmit() {
       additional_notes: form.additional_notes.trim() || undefined,
     })
 
-    router.push('/beneficiaries')
+    // Land on the project picker so the facilitator can step straight
+    // into the PSS hub to enroll the child they just registered.
+    router.push({ path: '/activities', query: { enrolled: '1' } })
   } catch (e: any) {
     if (e instanceof ApiError && e.data?.errors) Object.assign(errors, e.data.errors)
     else apiError.value = e?.message ?? 'Registration failed. Please try again.'

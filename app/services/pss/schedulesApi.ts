@@ -321,6 +321,70 @@ export function dtoToScheduleRecord(dto: PssScheduleDto): PssScheduleRecord {
   };
 }
 
+// ── Daily facilitator report ───────────────────────────────────────────
+
+export interface PssDailyReportParticipantsDto {
+  total: number;
+  girls: number;
+  boys: number;
+  age_6_9: number;
+  age_10_14: number;
+  age_15_17: number;
+  with_disabilities: number;
+}
+
+/**
+ * Per-session record in the daily facilitator report.
+ *
+ * Wire shape mirrors `internal/dto.DailyReportSession` on the backend
+ * (commit 2026-04-XX). `activities` is a list of rich `PSSSessionActivity`
+ * rows (denormalised on the slot — see `models/pss.go:61`), and
+ * `flagged_children` is the full list of `PSSFlaggedChild` rows raised
+ * during the session — not a count.
+ */
+export interface PssDailyReportActivityDto {
+  id: string;
+  activity_name: string;
+  activity_aim?: string | null;
+  order_index: number;
+  status: 'pending' | 'completed';
+  notes?: string | null;
+  completed_at?: string | null;
+}
+
+export interface PssDailyReportFlaggedChildDto {
+  id: string;
+  beneficiary_id: string;
+  session_activity_id?: string | null;
+  concern: string;
+  flagged_by: string;
+  flagged_at: string;
+}
+
+export interface PssDailyReportSessionDto {
+  session_id: string;
+  facilitator_id: string;
+  time_period: 'morning' | 'afternoon';
+  age_group: string;
+  status: 'in-progress' | 'completed';
+  objectives: string[];
+  activities: PssDailyReportActivityDto[];
+  key_observations?: string | null;
+  protection_notes?: string | null;
+  challenges?: string | null;
+  follow_up_actions: string[];
+  reflection?: string | null;
+  flagged_children: PssDailyReportFlaggedChildDto[];
+}
+
+export interface PssDailyFacilitatorReportDto {
+  date: string;
+  schedule_id: string;
+  cfs_location_id: string;
+  participants: PssDailyReportParticipantsDto;
+  sessions: PssDailyReportSessionDto[];
+}
+
 export interface PssScheduleListQuery {
   cfsLocationId?: string;
   status?: PssScheduleStatus;
@@ -372,6 +436,16 @@ export interface PssSchedulesApi {
     id: string,
     opts?: { idempotencyKey?: string; signal?: AbortSignal },
   ): Promise<PssScheduleDto>;
+
+  /**
+   * Pull the facilitator daily report for a (schedule, date) pair.
+   * `date` is YYYY-MM-DD in the user's local timezone.
+   */
+  getDailyReport(
+    scheduleId: string,
+    date: string,
+    opts?: { signal?: AbortSignal },
+  ): Promise<PssDailyFacilitatorReportDto>;
 }
 
 export function usePssSchedulesApi(): PssSchedulesApi {
@@ -414,6 +488,12 @@ export function usePssSchedulesApi(): PssSchedulesApi {
     archive(_id, _opts) {
       return Promise.reject(
         new PssEndpointNotShippedError('POST /pss/schedules/:id/archive'),
+      );
+    },
+    getDailyReport(scheduleId, date, opts) {
+      return api.get<PssDailyFacilitatorReportDto>(
+        `/pss/schedules/${encodeURIComponent(scheduleId)}/daily-report`,
+        { query: { date }, signal: opts?.signal },
       );
     },
   };

@@ -51,7 +51,7 @@ export const beneficiaryApi = {
     if (params?.page) qs.set('page', String(params.page))
     if (params?.page_size) qs.set('page_size', String(params.page_size))
     const query = qs.toString() ? `?${qs.toString()}` : ''
-    return request<BeneficiaryListResponse>(`${BASE_URL}/cfs/beneficiaries/list${query}`, { method: 'GET' }, token)
+    return request<BeneficiaryListResponse>(`${BASE_URL}/beneficiaries/list${query}`, { method: 'GET' }, token)
   },
 
   async exportExcel(params?: BeneficiaryFilter, token?: string): Promise<Blob> {
@@ -62,7 +62,7 @@ export const beneficiaryApi = {
     if (params?.sex) qs.set('sex', params.sex)
     if (params?.disability_status) qs.set('disability_status', params.disability_status)
     const query = qs.toString() ? `?${qs.toString()}` : ''
-    const response = await fetch(`${BASE_URL}/cfs/beneficiaries/export${query}`, {
+    const response = await fetch(`${BASE_URL}/beneficiaries/export${query}`, {
       headers: {
         ...(resolved ? { Authorization: `Bearer ${resolved}` } : {}),
       },
@@ -76,7 +76,7 @@ export const beneficiaryApi = {
   async assignToServicePoint(beneficiaryId: string, servicePointId: string, token?: string) {
     return request(`${BASE_URL}/cfs/registrations`, {
       method: 'POST',
-      body: JSON.stringify({ beneficiary_id: beneficiaryId }),
+      body: JSON.stringify({ beneficiary_id: beneficiaryId, cfs_location_id: servicePointId }),
     }, token)
   },
 

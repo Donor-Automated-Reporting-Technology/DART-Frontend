@@ -92,6 +92,7 @@
       v-if="pickerSection"
       :open="pickerOpen"
       :age-group="pickerSection.ageGroup"
+      :hide-create-new="true"
       title="Add activity"
       @update:open="onPickerOpenChange"
       @select="onPickerSelect"

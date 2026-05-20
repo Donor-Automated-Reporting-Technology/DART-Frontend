@@ -244,17 +244,26 @@
           </nav>
         </div>
 
-        <!-- Right side: theme toggle + onboarding pill -->
+        <!-- Right side: sync status + theme toggle + onboarding pill -->
         <div class="header-end">
-          <!-- Theme toggle button -->
+          <DSyncStatusFooter />
+
+          <!-- Theme toggle — pill switch -->
           <button
-            class="header-theme-btn"
+            class="theme-pill"
             type="button"
+            :class="{ 'theme-pill--dark': isDark }"
             :title="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
             :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
             @click="toggleTheme"
           >
-            <AppIcon :name="isDark ? 'moon' : 'sun'" :size="16" />
+            <span class="theme-pill__icon">
+              <AppIcon name="sun" :size="13" />
+            </span>
+            <span class="theme-pill__thumb" />
+            <span class="theme-pill__icon">
+              <AppIcon name="moon" :size="13" />
+            </span>
           </button>
 
           <div
@@ -277,12 +286,7 @@
         <slot />
       </main>
 
-      <!-- ── Sync status footer (Frame A — internal trust signal) ───────────
-           Lives as a sibling AFTER <main> inside .sidebar-inset so it pins to
-           the bottom of the viewport via the existing flex column without
-           needing position:fixed. See sprint-tickets/sync-status-footer-v1.md. -->
-      <DSyncStatusFooter />
-
+      <!-- ── Sync status moved to header ── -->
     </div><!-- /sidebar-inset -->
 
   </div><!-- /app-shell -->
@@ -451,22 +455,26 @@ async function handleLogout(): Promise<void> {
 
 .app-shell {
   display: flex;
-  min-height: 100vh;
-  background-color: var(--bg-dark);
+  background-color: var(--bg-panel);
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  height: 100vh;
+  overflow: hidden;
   color: var(--text-primary);
 }
 
 /* ─── Sidebar ──────────────────────────────────────────────────────────────── */
 
 .sidebar {
-  /* Fixed to the left edge, full viewport height */
-  position: fixed;
-  inset: 0 auto 0 0;
+  position: relative;
   width: var(--sidebar-width);
   background-color: var(--sidebar-bg);
-  backdrop-filter: blur(var(--glass-blur, 20px));
-  -webkit-backdrop-filter: blur(var(--glass-blur, 20px));
-  border-right: 1px solid var(--border-subtle);
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  inset: 0 auto 0 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   z-index: 200;
@@ -474,6 +482,7 @@ async function handleLogout(): Promise<void> {
   transition: transform 0.22s ease, width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   /* Clip content that overflows when collapsing */
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 /* ── Brand block ───────────────────────────────────────────────────────────── */
@@ -484,7 +493,7 @@ async function handleLogout(): Promise<void> {
   gap: 10px;
   padding: 0 14px;
   height: var(--topbar-height);
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: none;
   flex-shrink: 0;
   /* Prevent text wrapping during the width transition */
   white-space: nowrap;
@@ -622,7 +631,7 @@ async function handleLogout(): Promise<void> {
   transition: height 0.2s ease;
 }
 
-.nav-item:hover {
+.nav-item:hover:not(.nav-item--active) {
   background: var(--hover-bg);
   color: var(--text-primary);
   text-decoration: none;
@@ -630,16 +639,30 @@ async function handleLogout(): Promise<void> {
 
 /* Active / current page */
 .nav-item--active {
-  background: var(--primary-dim);
-  color: var(--text-primary);
+  background: var(--primary);
+  color: #000;
+  font-weight: 600;
 }
 
 .nav-item--active .nav-icon {
-  color: var(--primary);
+  color: #000;
+  opacity: 1;
 }
 
 .nav-item--active .nav-item-indicator {
-  height: 16px;
+  display: none;
+}
+
+/* ── Light mode: White text on dark primary bg ── */
+[data-theme="light"] .nav-item--active {
+  color: #ffffff;
+}
+[data-theme="light"] .nav-item--active .nav-icon {
+  color: #ffffff;
+}
+[data-theme="light"] .nav-item:hover:not(.nav-item--active) {
+  background: var(--primary-dim);
+  color: var(--primary);
 }
 
 .nav-icon {
@@ -666,7 +689,7 @@ async function handleLogout(): Promise<void> {
 
 .sidebar-footer {
   padding: 10px;
-  border-top: 1px solid var(--border-subtle);
+  border-top: none;
   flex-shrink: 0;
 }
 
@@ -715,8 +738,8 @@ async function handleLogout(): Promise<void> {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--primary-dim);
-  color: var(--primary);
+  background: var(--primary);
+  color: #000;
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.5px;
@@ -724,7 +747,12 @@ async function handleLogout(): Promise<void> {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 1px solid rgba(96, 165, 250, 0.15);
+  border: 1px solid transparent;
+}
+
+/* Light mode requires white text on dark teal */
+[data-theme="light"] .user-avatar {
+  color: #ffffff;
 }
 
 /* Text column next to avatar */
@@ -804,6 +832,60 @@ async function handleLogout(): Promise<void> {
   transform: scale(1.05);
 }
 
+/* ── Theme pill toggle ─────────────────────────────────────────────────────── */
+
+.theme-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  padding: 3px;
+  background: var(--hover-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+
+.theme-pill__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  color: var(--text-muted);
+  transition: color 0.2s;
+  position: relative;
+  z-index: 1;
+}
+
+/* Sliding thumb indicator */
+.theme-pill__thumb {
+  display: none; /* positioned via JS-less CSS trick below */
+}
+
+/* Light mode: sun icon is active (left side lit up) */
+.theme-pill:not(.theme-pill--dark) .theme-pill__icon:first-child {
+  color: var(--primary);
+}
+
+/* Dark mode: moon icon is active (right side lit up) */
+.theme-pill.theme-pill--dark .theme-pill__icon:last-child {
+  color: var(--primary);
+}
+
+/* Highlight pill background based on mode */
+.theme-pill:not(.theme-pill--dark) {
+  background: var(--primary-dim);
+  border-color: var(--primary-hover);
+}
+
+.theme-pill:hover {
+  border-color: var(--primary);
+}
+
 /* ── Mobile overlay backdrop ───────────────────────────────────────────────── */
 
 .sidebar-overlay {
@@ -822,27 +904,21 @@ async function handleLogout(): Promise<void> {
 
 .sidebar-inset {
   flex: 1;
-  /* Offset content by the fixed sidebar width */
-  margin-left: var(--sidebar-width);
   min-width: 0;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  /* Matches the sidebar width transition */
-  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
 /* ─── Sticky site header ──────────────────────────────────────────────────── */
 
 .site-header {
-  position: sticky;
-  top: 0;
   z-index: 100;
   height: var(--topbar-height);
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-panel);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -932,6 +1008,12 @@ async function handleLogout(): Promise<void> {
 .page-content {
   flex: 1;
   padding: 24px;
+  background-color: var(--bg-dark);
+  border: 1px solid var(--border-subtle);
+  border-right: none;
+  border-bottom: none;
+  border-radius: 20px 0 0 0;
+  margin: 0;
   overflow-y: auto;
 }
 
@@ -946,11 +1028,6 @@ async function handleLogout(): Promise<void> {
   /* Shrink the sidebar to the collapsed rail width */
   .app-shell.sidebar-collapsed .sidebar {
     width: var(--sidebar-collapsed-width);
-  }
-
-  /* Shift the main content area to match */
-  .app-shell.sidebar-collapsed .sidebar-inset {
-    margin-left: var(--sidebar-collapsed-width);
   }
 
   /* ── Hide text elements ──────────────────────────────────────────────────── */
@@ -1041,8 +1118,24 @@ async function handleLogout(): Promise<void> {
    ─────────────────────────────────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
-  /* Sidebar hides off to the left */
+  /* Reset outer container for mobile — flush, full-viewport */
+  .app-shell {
+    margin: 0;
+    padding: 0;
+    gap: 0;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  /* Sidebar becomes fixed overlay on mobile */
   .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+    border-right: 1px solid var(--border-subtle);
     transform: translateX(-100%);
   }
 
@@ -1056,14 +1149,14 @@ async function handleLogout(): Promise<void> {
     display: block;
   }
 
-  /* Main content takes full width on mobile */
-  .sidebar-inset {
-    margin-left: 0;
-  }
+  /* Header is already a simple bar; just ensure no extra styles on mobile */
 
-  /* Tighter content padding on small screens */
+  /* Tighter content padding on small screens, flush layout */
   .page-content {
     padding: 16px;
+    margin: 0;
+    border: none;
+    border-radius: 0;
   }
 
   /* ── Open state: triggered by .sidebar-open class on .app-shell ── */
@@ -1113,4 +1206,5 @@ async function handleLogout(): Promise<void> {
   flex-shrink: 0;
   color: var(--primary);
 }
+
 </style>

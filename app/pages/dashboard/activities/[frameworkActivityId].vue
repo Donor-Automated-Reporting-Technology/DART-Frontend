@@ -102,7 +102,7 @@
             </div>
             <span class="target-slash">/</span>
             <div class="metric-target-block">
-              <span class="target-number target-number--muted">{{ summary.target }}</span>
+              <span class="target-number target-number--muted">{{ summary.target_breakdown?.girls || 0 }}</span>
               <span class="target-caption">Target</span>
             </div>
           </div>
@@ -124,7 +124,7 @@
             </div>
             <span class="target-slash">/</span>
             <div class="metric-target-block">
-              <span class="target-number target-number--muted">{{ summary.target }}</span>
+              <span class="target-number target-number--muted">{{ summary.target_breakdown?.boys || 0 }}</span>
               <span class="target-caption">Target</span>
             </div>
           </div>
@@ -247,22 +247,62 @@
           <table class="sessions-table">
             <thead>
               <tr>
+                <th class="th-status" v-if="hasPssRows" aria-label="Status"></th>
                 <th>Date</th>
                 <th>Location</th>
-                <th>Present</th>
-                <th>Absent</th>
-                <th>Total</th>
-                <th>Rate</th>
+                <th v-if="hasPssRows">Facilitator</th>
+                <th v-if="hasPssRows">Slot</th>
+                <th class="th-attendance">Attendance</th>
+                <th class="th-rate">Rate</th>
+                <th class="th-chev" v-if="hasPssRows" aria-label=""></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="s in sortedSessions" :key="s.id">
+              <tr
+                v-for="s in sortedSessions"
+                :key="s.id"
+                :class="{ 'sessions-row--clickable': isPssSession(s) }"
+                :role="isPssSession(s) ? 'link' : undefined"
+                :tabindex="isPssSession(s) ? 0 : undefined"
+                @click="isPssSession(s) && goToSession(s.id)"
+                @keydown.enter="isPssSession(s) && goToSession(s.id)"
+              >
+                <td v-if="hasPssRows" class="td-status">
+                  <span
+                    v-if="s.status"
+                    class="status-dot"
+                    :class="`status-dot--${s.status}`"
+                    :title="s.status === 'in_progress' ? 'In progress' : 'Completed'"
+                  ></span>
+                </td>
                 <td class="td-date">{{ formatDate(s.date) }}</td>
                 <td class="td-name">{{ s.location_name }}</td>
-                <td>{{ s.present }}</td>
-                <td>{{ s.absent }}</td>
-                <td>{{ s.total }}</td>
-                <td :class="rateColor(sessionRate(s))">{{ sessionRate(s) }}%</td>
+                <td v-if="hasPssRows" class="td-facilitator">
+                  <span v-if="s.facilitator_name">{{ s.facilitator_name }}</span>
+                  <span v-else class="td-muted">—</span>
+                </td>
+                <td v-if="hasPssRows" class="td-slot">
+                  <template v-if="s.time_period || s.age_group">
+                    <span class="slot-period">{{ s.time_period ? capitalize(s.time_period) : '—' }}</span>
+                    <span v-if="s.age_group" class="slot-sep">·</span>
+                    <span v-if="s.age_group" class="slot-age">Age {{ s.age_group }}</span>
+                  </template>
+                  <span v-else class="td-muted">—</span>
+                </td>
+                <td class="td-attendance">
+                  <span class="att-fraction">
+                    <strong>{{ s.present }}</strong>
+                    <span class="att-sep">/</span>
+                    {{ s.total }}
+                  </span>
+                  <span v-if="s.absent" class="att-absent">{{ s.absent }} absent</span>
+                </td>
+                <td class="td-rate">
+                  <span class="rate-pill" :class="rateColor(sessionRate(s))">{{ sessionRate(s) }}%</span>
+                </td>
+                <td v-if="hasPssRows" class="td-chev">
+                  <AppIcon v-if="isPssSession(s)" name="chevron-right" :size="16" />
+                </td>
               </tr>
             </tbody>
           </table>
@@ -275,12 +315,14 @@
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useActivityDetail } from '../../../composables/useActivityDetail'
+import { isPssActivityCode } from '../../../utils/activityConfig'
 import DashboardBreadcrumb from '../../../components/dashboard/DashboardBreadcrumb.vue'
 import AppIcon from '../../../components/interfaces/AppIcon.vue'
 
 const route = useRoute()
+const router = useRouter()
 const frameworkActivityId = route.params.frameworkActivityId as string
 
 const {
@@ -303,13 +345,33 @@ const breadcrumbs = computed(() => [
   { title: activity.value.name || 'Activity', href: route.fullPath, current: true },
 ])
 
+function isPssSession(s: any): boolean {
+  return s.source === 'pss' || 
+    (s.facilitator_name !== undefined && s.facilitator_name !== null) || 
+    (s.status !== undefined && s.status !== null) || 
+    (s.time_period !== undefined && s.time_period !== null)
+}
+
+const hasPssRows = computed(() => {
+  if (isPssActivityCode(activity.value.code)) return true
+  return sortedSessions.value.some(isPssSession)
+})
+
+function goToSession(sessionId: string) {
+  router.push(`/dashboard/sessions/${sessionId}`)
+}
+
+function capitalize(s?: string | null): string {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''
+}
+
 const girlsPct = computed(() => {
-  const t = summary.value.target
+  const t = summary.value.target_breakdown?.girls || 0
   return t ? Math.min(Math.round((summary.value.girls / t) * 100), 100) : 0
 })
 
 const boysPct = computed(() => {
-  const t = summary.value.target
+  const t = summary.value.target_breakdown?.boys || 0
   return t ? Math.min(Math.round((summary.value.boys / t) * 100), 100) : 0
 })
 
@@ -664,8 +726,8 @@ onMounted(() => fetchActivityDetail(frameworkActivityId))
 .metric-bar-fill--boys { background: var(--data-purple); opacity: 0.7; }
 
 /* Card accent tints */
-[data-theme="light"] .metric-card--girls-accent { background: var(--data-teal-dim); border-color: rgba(13, 148, 136, 0.12); }
-[data-theme="light"] .metric-card--boys-accent { background: var(--data-purple-dim); border-color: rgba(124, 58, 237, 0.12); }
+.metric-card--girls-accent { background: var(--data-teal-dim); border-color: rgba(13, 148, 136, 0.12); }
+.metric-card--boys-accent { background: var(--data-purple-dim); border-color: rgba(124, 58, 237, 0.12); }
 
 /* ═══ Shared chips ════════════════════════════════ */
 .chip {
@@ -920,9 +982,80 @@ onMounted(() => fetchActivityDetail(frameworkActivityId))
 .sessions-table tbody tr:hover {
   background: var(--hover-bg, rgba(0, 0, 0, 0.02));
 }
-.td-date {
-  white-space: nowrap;
-  font-weight: 500;
+.sessions-row--clickable { cursor: pointer; transition: background 120ms ease; }
+.sessions-row--clickable:focus-visible {
+  outline: 2px solid var(--primary, #007aff);
+  outline-offset: -2px;
+}
+.sessions-row--clickable:hover .td-chev { color: var(--primary, #007aff); }
+
+.td-date { white-space: nowrap; font-weight: 500; }
+.td-name { font-weight: 500; }
+.td-facilitator { color: var(--text-strong, #111827); }
+.td-muted { color: var(--text-muted, #6b7280); }
+
+/* Status dot column — narrow, left-aligned */
+.th-status, .td-status {
+  width: 24px;
+  padding-right: 0 !important;
+  text-align: center;
+}
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border, #d1d5db);
+}
+.status-dot--in_progress {
+  background: var(--progress-mid, #FF9500);
+  box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.15);
+}
+.status-dot--completed {
+  background: var(--progress-high, #34C759);
+  box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.15);
+}
+
+/* Slot column — period · age */
+.td-slot { white-space: nowrap; font-size: 13px; }
+.slot-period { font-weight: 500; }
+.slot-sep { color: var(--text-muted, #9ca3af); margin: 0 6px; }
+.slot-age { color: var(--text-muted, #6b7280); }
+
+/* Attendance column — fraction with absent count below */
+.th-attendance, .td-attendance { white-space: nowrap; }
+.td-attendance {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.3;
+}
+.att-fraction { font-variant-numeric: tabular-nums; }
+.att-fraction strong { font-weight: 600; }
+.att-sep { color: var(--text-muted, #9ca3af); margin: 0 2px; }
+.att-absent { font-size: 11px; color: var(--text-muted, #6b7280); }
+
+/* Rate pill */
+.th-rate, .td-rate { text-align: right; }
+.rate-pill {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  background: var(--surface-2, rgba(0, 0, 0, 0.04));
+}
+.rate-pill.clr-green { background: rgba(52, 199, 89, 0.12); color: var(--progress-high, #34C759); }
+.rate-pill.clr-yellow { background: rgba(255, 149, 0, 0.12); color: var(--progress-mid, #FF9500); }
+.rate-pill.clr-red { background: rgba(255, 59, 48, 0.12); color: var(--progress-low, #FF3B30); }
+
+/* Chevron column */
+.th-chev, .td-chev {
+  width: 28px;
+  text-align: right;
+  color: var(--text-muted, #9ca3af);
+  transition: color 120ms ease;
 }
 
 /* ═══ Color helpers ═══════════════════════════════ */

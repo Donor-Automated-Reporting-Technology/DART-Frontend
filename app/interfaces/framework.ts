@@ -35,6 +35,11 @@ export interface Framework {
   period_start: string
   period_end: string
   is_active: boolean
+  target_count: number
+  target_girls: number
+  target_boys: number
+  target_girls_disability: number
+  target_boys_disability: number
   created_at: string
   updated_at: string
 }
@@ -75,8 +80,19 @@ export interface ToggleActivityRequest {
 }
 
 export interface SetTargetRequest {
-  target_count: number
-  target_unit: string
+  target_count?: number
+  target_unit?: string
+  target_girls?: number
+  target_boys?: number
+  target_girls_disability?: number
+  target_boys_disability?: number
+}
+
+export interface SetProjectTargetRequest {
+  target_girls: number
+  target_boys: number
+  target_girls_disability: number
+  target_boys_disability: number
 }
 
 export interface FrameworkListResponse {

@@ -61,6 +61,34 @@
               <span class="tile-pill tile-pill--active">Open</span>
             </NuxtLink>
 
+            <button
+              type="button"
+              class="tile tile--active tile--button"
+              @click="openEnrollModal"
+            >
+              <span class="tile-icon">
+                <AppIcon name="user-plus" :size="18" />
+              </span>
+              <span class="tile-body">
+                <span class="tile-title">Enroll children</span>
+                <span class="tile-sub">
+                  Link beneficiaries to this CFS so they can join PSS sessions.
+                </span>
+              </span>
+              <span class="tile-pill tile-pill--active">Open</span>
+            </button>
+
+            <!-- Enroll modal — same component used on the activity detail
+                 page; CFS enrollment is the canonical PSS enrollment. -->
+            <ActivitiesEnrollBeneficiariesModal
+              :open="enrollModalOpen"
+              :beneficiaries="unenrolledBeneficiaries"
+              :enrolling="enrolling"
+              :loading="enrollListLoading"
+              @close="enrollModalOpen = false"
+              @enroll="handleEnroll"
+            />
+
             <div class="tile tile--coming">
               <span class="tile-icon">
                 <AppIcon name="book-open" :size="18" />
@@ -74,7 +102,10 @@
               <span class="tile-pill">Coming soon</span>
             </div>
 
-            <div class="tile tile--coming">
+            <NuxtLink
+              :to="`/activities/${frameworkId}/pss/today`"
+              class="tile"
+            >
               <span class="tile-icon">
                 <AppIcon name="check-square" :size="18" />
               </span>
@@ -84,10 +115,13 @@
                   Run today's scheduled PSS sub-activities and mark delivery.
                 </span>
               </span>
-              <span class="tile-pill">Coming soon</span>
-            </div>
+              <span class="tile-pill tile-pill--active">Open</span>
+            </NuxtLink>
 
-            <div class="tile tile--coming">
+            <NuxtLink
+              :to="`/activities/${frameworkId}/pss/reports/daily`"
+              class="tile"
+            >
               <span class="tile-icon">
                 <AppIcon name="bar-chart-2" :size="18" />
               </span>
@@ -97,8 +131,23 @@
                   Coverage and delivery analytics for PSS programmes.
                 </span>
               </span>
-              <span class="tile-pill">Coming soon</span>
-            </div>
+              <span class="tile-pill tile-pill--active">Open</span>
+            </NuxtLink>
+            <NuxtLink
+              :to="`/activities/${frameworkId}/pss/week`"
+              class="tile tile--active"
+            >
+              <span class="tile-icon">
+                <AppIcon name="grid" :size="18" />
+              </span>
+              <span class="tile-body">
+                <span class="tile-title">Weekly Timetable</span>
+                <span class="tile-sub">
+                  View the week at a glance — days done, in progress, and upcoming.
+                </span>
+              </span>
+              <span class="tile-pill tile-pill--active">Open</span>
+            </NuxtLink>
           </div>
         </div>
       </template>
@@ -110,6 +159,8 @@
 import { computed, ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { frameworkApi } from '../../../../services/frameworkApi'
+import { beneficiaryApi } from '../../../../services/beneficiaryApi'
+import { cfsApi } from '../../../../services/cfsApi'
 
 definePageMeta({ layout: false, middleware: ['auth'] })
 
@@ -125,15 +176,74 @@ const breadcrumbs = computed(() => [
   { title: 'PSS', href: `/activities/${frameworkId}/pss`, current: true },
 ])
 
+/* ── Enroll modal state ───────────────────────────────────────────
+ * Mirrors the modal on the activity detail page. The PSS hub is the
+ * natural place facilitators land before running sessions, so we
+ * surface enrolment here too instead of forcing them to navigate to
+ * the activity card. */
+const enrollModalOpen = ref(false)
+const enrolling = ref(false)
+const enrollListLoading = ref(false)
+const unenrolledBeneficiaries = ref<Array<{
+  id: string
+  full_name: string
+  age: number
+  sex: string
+  disability_status: string
+}>>([])
+
+async function openEnrollModal() {
+  enrollModalOpen.value = true
+  enrollListLoading.value = true
+  unenrolledBeneficiaries.value = []
+
+  try {
+    const res = await beneficiaryApi.getUnenrolled()
+    const list = res.beneficiaries ?? (Array.isArray(res) ? (res as any[]) : [])
+    unenrolledBeneficiaries.value = list.map((b: any) => ({
+      id: b.id,
+      full_name: [b.personal_name, b.father_name, b.grandfather_name, b.family_name]
+        .filter(Boolean)
+        .join(' '),
+      age: b.age_at_registration,
+      sex: b.sex,
+      disability_status: b.disability_status ?? '',
+    }))
+  } catch (e) {
+    console.error('Failed to load unenrolled beneficiaries:', e)
+  } finally {
+    enrollListLoading.value = false
+  }
+}
+
+async function handleEnroll(ids: string[]) {
+  enrolling.value = true
+  try {
+    await cfsApi.batchEnrollBeneficiaries(ids)
+    enrollModalOpen.value = false
+  } catch (e) {
+    console.error('Enroll failed:', e)
+  } finally {
+    enrolling.value = false
+  }
+}
+
 onMounted(async () => {
   try {
-    const res = await frameworkApi.listFrameworks()
-    const fw = (res.frameworks ?? []).find((f: any) => f.id === frameworkId)
+    const fwRes = await frameworkApi.listFrameworks()
+    const fw = (fwRes.frameworks ?? []).find((f: any) => f.id === frameworkId)
     notAllowed.value = !fw || fw.framework_type !== 'child_protection'
   } catch {
     notAllowed.value = true
   } finally {
     loading.value = false
+  }
+
+  // If the user landed here via /pss?enroll=1 (e.g. straight after
+  // registering a beneficiary), auto-open the modal once the framework
+  // gate has cleared.
+  if (route.query.enroll === '1') {
+    void openEnrollModal()
   }
 })
 </script>
@@ -243,6 +353,18 @@ onMounted(async () => {
   outline-offset: 2px;
 }
 .tile--coming { opacity: 0.65; }
+
+/*
+ * Button-tile reset \u2014 browsers ship <button> with their own font,
+ * centered text, and shrink-to-fit width. Force the layout to match
+ * the <NuxtLink> tiles in the same grid so the row stays uniform.
+ */
+.tile--button {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
 
 .tile-icon {
   display: inline-flex;

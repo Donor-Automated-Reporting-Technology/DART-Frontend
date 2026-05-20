@@ -43,9 +43,10 @@ defineProps<{ crumbs: BreadcrumbItem[] }>()
   font-weight: 500;
   margin-bottom: 20px;
   padding: 10px 16px;
-  background: var(--surface-secondary, var(--bg-input, rgba(0,0,0,0.02)));
-  border: 1px solid var(--border-subtle, rgba(0,0,0,0.06));
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md, 12px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .crumb-home {

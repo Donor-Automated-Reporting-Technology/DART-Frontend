@@ -80,13 +80,15 @@
                   <span class="fac-header-badge">YOUR LOCATION</span>
                   <h2 class="fac-header-name">{{ locations[0].name }}</h2>
                   <div class="fac-header-chips">
-                    <span class="chip">{{ demographics.total_beneficiaries }} beneficiaries</span>
-                    <span class="chip">{{ recentSessions.length }} recent sessions</span>
+                    <span v-if="locations[0].sector" class="chip">Sector {{ locations[0].sector }}</span>
+                    <span v-if="locations[0].geographic_area" class="chip">{{ locations[0].geographic_area }}</span>
+                    <span class="chip">{{ demographics.total_beneficiaries }} enrolled</span>
+                    <span class="chip">{{ recentSessions.length }} recent PSS sessions</span>
                   </div>
                 </div>
                 <div class="fac-header-ring">
                   <span class="fac-header-ring-num">{{ demographics.total_beneficiaries }}</span>
-                  <span class="fac-header-ring-label">Total</span>
+                  <span class="fac-header-ring-label">Enrolled</span>
                 </div>
               </div>
             </div>
@@ -107,11 +109,11 @@
               </div>
             </div>
 
-            <!-- Recent sessions -->
+            <!-- Recent PSS sessions -->
             <div v-if="recentSessions.length" class="fac-sessions-section">
               <div class="section-header">
                 <div class="section-header-left">
-                  <h3 class="section-title">Recent Sessions</h3>
+                  <h3 class="section-title">Recent PSS Sessions</h3>
                   <span class="section-count">{{ recentSessions.length }}</span>
                 </div>
               </div>
@@ -120,20 +122,27 @@
                   <thead>
                     <tr>
                       <th>Date</th>
-                      <th>Activity</th>
-                      <th>Present</th>
-                      <th>Total</th>
-                      <th>Rate</th>
+                      <th>Period</th>
+                      <th>Age group</th>
+                      <th>Activities</th>
+                      <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="s in recentSessions" :key="s.id">
+                    <tr
+                      v-for="s in recentSessions"
+                      :key="s.id"
+                      :class="['fac-session-row', { 'fac-session-row--clickable': s.source === 'pss' }]"
+                      @click="s.source === 'pss' && openSession(s.id)"
+                    >
                       <td class="td-date">{{ formatDate(s.session_date) }}</td>
-                      <td class="td-name">{{ formatActivityName(s.activity_name) }}</td>
-                      <td>{{ s.present_count }}</td>
-                      <td>{{ s.total_count }}</td>
-                      <td :class="barColor(s.total_count ? Math.round((s.present_count / s.total_count) * 100) : 0)">
-                        {{ s.total_count ? Math.round((s.present_count / s.total_count) * 100) : 0 }}%
+                      <td>{{ formatTimePeriod(s.time_period) }}</td>
+                      <td>{{ s.age_group || '—' }}</td>
+                      <td>{{ s.activities_completed ?? 0 }} / {{ s.activities_total ?? 0 }}</td>
+                      <td>
+                        <span class="status-pill" :class="statusClass(s.status)">
+                          {{ formatStatus(s.status) }}
+                        </span>
                       </td>
                     </tr>
                   </tbody>
@@ -531,8 +540,29 @@ function barColor(pct: number): string {
   return 'clr-red'
 }
 
+function formatTimePeriod(p?: string): string {
+  if (!p) return '—'
+  return p.charAt(0).toUpperCase() + p.slice(1)
+}
+
+function formatStatus(s?: string): string {
+  if (s === 'completed') return 'Completed'
+  if (s === 'in_progress') return 'In progress'
+  return s ? s.replace(/_/g, ' ') : '—'
+}
+
+function statusClass(s?: string): string {
+  if (s === 'completed') return 'status-pill--success'
+  if (s === 'in_progress') return 'status-pill--warn'
+  return ''
+}
+
 function navigateToProject(id: string) {
   router.push(`/dashboard/projects/${id}`)
+}
+
+function openSession(id: string) {
+  router.push(`/dashboard/sessions/${id}`)
 }
 
 onMounted(fetchDashboard)
@@ -859,9 +889,9 @@ onMounted(fetchDashboard)
 .split-card--boys .split-card-value { color: var(--data-purple); }
 .split-card--disability .split-card-value { color: var(--warning); }
 
-[data-theme="light"] .split-card--girls { background: var(--data-teal-dim); }
-[data-theme="light"] .split-card--boys { background: var(--data-purple-dim); }
-[data-theme="light"] .split-card--disability { background: rgba(255, 149, 0, 0.08); }
+.split-card--girls { background: var(--data-teal-dim); }
+.split-card--boys { background: var(--data-purple-dim); }
+.split-card--disability { background: rgba(255, 149, 0, 0.08); }
 .split-card-label {
   font-size: 0.68rem;
   color: var(--text-muted, #AEAEB2);
@@ -1197,8 +1227,6 @@ onMounted(fetchDashboard)
   display: flex;
   flex-direction: column;
   gap: 24px;
-  position: sticky;
-  top: calc(var(--topbar-height, 56px) + 24px);
 }
 @media (max-width: 1100px) {
   .dashboard-insights {
@@ -1540,13 +1568,40 @@ onMounted(fetchDashboard)
   font-weight: 600;
 }
 
+.fac-session-row {
+  cursor: default;
+}
+.fac-session-row--clickable {
+  cursor: pointer;
+}
+.fac-session-row--clickable:hover td {
+  background: var(--hover-bg);
+}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--hover-bg);
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+.status-pill--success {
+  background: var(--success-bg);
+  color: var(--success);
+}
+.status-pill--warn {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
 /* ── Sidebar ── */
 .fac-sidebar {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  position: sticky;
-  top: 80px;
 }
 
 /* ── Insight cards ── */

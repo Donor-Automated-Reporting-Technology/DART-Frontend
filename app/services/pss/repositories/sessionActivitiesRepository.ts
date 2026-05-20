@@ -42,6 +42,10 @@ class SessionActivitiesRepository extends BaseRepository<PssSessionActivityRecor
     const flaggedChildren = [...(existing.flaggedChildren ?? []), flag];
     return this.patch(clientId, { flaggedChildren } as Partial<PssSessionActivityRecord>);
   }
+
+  deleteBySession(sessionId: string): Promise<number> {
+    return this.table.where('sessionId').equals(sessionId).delete();
+  }
 }
 
 export const sessionActivitiesRepository = new SessionActivitiesRepository();

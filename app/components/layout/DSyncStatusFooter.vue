@@ -193,7 +193,8 @@ const pendingLabelSuffix = computed<string>(() => {
   background: var(--glass-bg, rgba(15, 17, 21, 0.92));
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+  border-radius: 20px;
   font-size: 13px;
   line-height: 1;
   color: var(--text-secondary);

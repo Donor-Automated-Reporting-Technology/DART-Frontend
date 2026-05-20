@@ -639,9 +639,9 @@ onMounted(() => fetchProjectDetail(frameworkId))
 .metric-bar-fill--disability { background: var(--warning); opacity: 0.7; }
 
 /* Card accent tints (light mode) */
-[data-theme="light"] .metric-card--girls-accent { background: var(--data-teal-dim); border-color: rgba(13, 148, 136, 0.12); }
-[data-theme="light"] .metric-card--boys-accent { background: var(--data-purple-dim); border-color: rgba(124, 58, 237, 0.12); }
-[data-theme="light"] .metric-card--disability-accent { background: rgba(255, 149, 0, 0.06); border-color: rgba(255, 149, 0, 0.12); }
+.metric-card--girls-accent { background: var(--data-teal-dim); border-color: rgba(13, 148, 136, 0.12); }
+.metric-card--boys-accent { background: var(--data-purple-dim); border-color: rgba(124, 58, 237, 0.12); }
+.metric-card--disability-accent { background: rgba(255, 149, 0, 0.06); border-color: rgba(255, 149, 0, 0.12); }
 
 /* Bento grid: 3 columns for reach cards */
 @media (min-width: 900px) {

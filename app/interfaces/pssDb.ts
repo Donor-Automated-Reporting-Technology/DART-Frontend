@@ -116,11 +116,6 @@ export interface PssTemplateSlot {
 }
 
 export interface PssScheduleRecord extends PssLocalMeta {
-  /**
-   * Human-readable label for the schedule (e.g. "Week of 2026-04-26"). The
-   * backend `pss_schedules.name` column is NOT NULL — DART-73 contract.
-   */
-  name: string;
   cfsLocationId: string;
   status: PssScheduleStatus;
   activeDays: PssDayOfWeek[];
@@ -136,6 +131,13 @@ export interface PssScheduleRecord extends PssLocalMeta {
 
 export interface PssSessionRecord extends PssLocalMeta {
   scheduleId: string;
+  /**
+   * CFS the session was created under. Stored locally so attendance
+   * (which lists CFS-registered children) targets the session's CFS,
+   * not whatever the facilitator's auth-store CFS happens to be — they
+   * can drift if the user is reassigned or the schedule was moved.
+   */
+  cfsLocationId?: string;
   /** YYYY-MM-DD. */
   date: string;
   timePeriod: PssTimePeriodLabel;
@@ -145,6 +147,18 @@ export interface PssSessionRecord extends PssLocalMeta {
   remarks: string;
   startedAt: string | null;
   completedAt: string | null;
+  /** Session objectives set at the start. */
+  objectives: string[];
+  /** Facilitator's key observations from the session. */
+  keyObservations: string;
+  /** Protection/safeguarding notes for the supervisor. */
+  protectionNotes: string;
+  /** Challenges encountered during the session. */
+  challenges: string;
+  /** Follow-up actions for next session(s). */
+  followUpActions: string[];
+  /** Facilitator's reflection on what worked and what to change. */
+  reflection: string;
 }
 
 // ── pss_session_activities ────────────────────────────────────────────────
@@ -165,6 +179,20 @@ export interface PssSessionActivityRecord extends PssLocalMeta {
   flaggedChildren: PssFlaggedChild[];
 }
 
+// ── pss_session_attendance ────────────────────────────────────────────────
+
+export type PssAttendanceStatus = 'present' | 'absent';
+
+export interface PssSessionAttendanceRecord extends PssLocalMeta {
+  sessionId: string;
+  beneficiaryId: string;
+  status: PssAttendanceStatus;
+  markedBy: string;
+  markedAt: string;
+  /** Display-only — pulled from the beneficiary list at mark time. */
+  beneficiaryName?: string;
+}
+
 // ── pss_smiley ────────────────────────────────────────────────────────────
 
 export interface PssSmileyRecord extends PssLocalMeta {
@@ -179,6 +207,31 @@ export interface PssSmileyRecord extends PssLocalMeta {
   totalChildren: number;
 }
 
+// ── pss_day_smiley ────────────────────────────────────────────────────────
+//
+// End-of-day UNICEF 5-face wellbeing evaluation. One record per
+// (scheduleId, date). Existence of the record means the active day is
+// "done + locked". The local primary key (`clientId`) is the composite
+// `${scheduleId}:${date}` so re-entry is idempotent.
+
+export interface PssDaySmileyRecord extends PssLocalMeta {
+  scheduleId: string;
+  /** YYYY-MM-DD. */
+  date: string;
+  veryHappy: number;
+  happy: number;
+  ok: number;
+  unhappy: number;
+  veryUnhappy: number;
+  /** Children who did not place a stone (paper "Blank" column). */
+  blank: number;
+  /** Sum of the five faces + blank. */
+  totalChildren: number;
+  facilitatorId: string;
+  /** ISO-8601 — day moves to locked state at this instant. */
+  lockedAt: string;
+}
+
 // ── pss_sync_queue ────────────────────────────────────────────────────────
 
 export type PssSyncResource =
@@ -186,7 +239,9 @@ export type PssSyncResource =
   | 'pss_schedules'
   | 'pss_sessions'
   | 'pss_session_activities'
-  | 'pss_smiley';
+  | 'pss_session_attendance'
+  | 'pss_smiley'
+  | 'pss_day_smiley';
 
 export type PssSyncOperation = 'create' | 'update' | 'delete';
 

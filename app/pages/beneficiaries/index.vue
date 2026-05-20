@@ -14,6 +14,14 @@
               <AppIcon name="download" :size="14" />
               <span class="btn-text">Export</span>
             </button>
+            <NuxtLink
+              to="/activities"
+              class="btn-secondary"
+              title="Open PSS Sessions to enroll children"
+            >
+              <AppIcon name="users" :size="14" />
+              <span class="btn-text">Enroll to PSS</span>
+            </NuxtLink>
             <NuxtLink to="/beneficiaries/register" class="btn-primary">
               <AppIcon name="user-plus" :size="14" />
               <span class="btn-text">Register New</span>
@@ -216,10 +224,13 @@ function handleRemoveTag(key: string) {
     case 'chip':
       activeChip.value = ''
       list.sex.value = ''
-      list.disabilityStatus.value = ''
+      list.disabilityStatus.value = drawerFilters.value.disabilityStatus ? drawerFilters.value.disabilityStatus : ''
       break
     case 'centre': drawerFilters.value.centreId = ''; list.centreId.value = ''; break
-    case 'disability': drawerFilters.value.disabilityStatus = ''; break
+    case 'disability':
+      drawerFilters.value.disabilityStatus = ''
+      list.disabilityStatus.value = activeChip.value === 'disability' ? 'has_disability' : ''
+      break
     case 'type': drawerFilters.value.beneficiaryType = 'all'; break
     case 'dateFrom': drawerFilters.value.dateJoinedFrom = ''; break
     case 'dateTo': drawerFilters.value.dateJoinedTo = ''; break
@@ -250,6 +261,9 @@ function handleClearAll() {
 function handleDrawerApply(filters: typeof drawerFilters.value) {
   drawerFilters.value = { ...filters }
   list.centreId.value = filters.centreId
+  if (filters.disabilityStatus) {
+    list.disabilityStatus.value = filters.disabilityStatus
+  }
   list.applyFilter()
 }
 
@@ -265,6 +279,9 @@ function handleDrawerReset() {
     householdSizeMax: null,
   }
   list.centreId.value = ''
+  if (!activeChip.value) {
+    list.disabilityStatus.value = ''
+  }
   list.applyFilter()
 }
 

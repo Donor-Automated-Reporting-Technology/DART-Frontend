@@ -7,6 +7,7 @@ import type {
   UpdateFrameworkRequest,
   ToggleActivityRequest,
   SetTargetRequest,
+  SetProjectTargetRequest,
   FrameworkListResponse,
   FrameworkActivitiesResponse,
   ActivityTemplate,
@@ -99,6 +100,18 @@ export const frameworkApi = {
     return request<ActivityTemplatesResponse>(
       `${BASE_URL}/activity-templates${qs}`,
       { method: 'GET' },
+      token,
+    )
+  },
+
+  async setProjectTarget(
+    frameworkId: string,
+    payload: SetProjectTargetRequest,
+    token?: string,
+  ): Promise<any> {
+    return request<any>(
+      `${BASE_URL}/frameworks/${frameworkId}/targets`,
+      { method: 'PUT', body: JSON.stringify(payload) },
       token,
     )
   },

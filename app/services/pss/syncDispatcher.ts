@@ -23,12 +23,14 @@ import type {
 import type { PssSyncQueueItem, PssSyncResource } from '~/interfaces/pssDb';
 import { PSS_ACTIVITIES_SYNC_SENDER } from './syncSenders';
 import { PSS_SCHEDULES_SYNC_SENDER } from './schedulesSyncSender';
+import { PSS_DAY_SMILEY_SYNC_SENDER } from './daySmileySyncSender';
 
 const RESOURCE_SENDERS: Partial<
   Record<PssSyncResource, (item: PssSyncQueueItem) => Promise<PssSyncSendOutcome>>
 > = {
   pss_activities: PSS_ACTIVITIES_SYNC_SENDER,
   pss_schedules: PSS_SCHEDULES_SYNC_SENDER,
+  pss_day_smiley: PSS_DAY_SMILEY_SYNC_SENDER,
 };
 
 export const pssSyncDispatcher: PssSyncSender = async (item) => {

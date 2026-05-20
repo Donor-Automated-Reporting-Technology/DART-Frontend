@@ -126,6 +126,7 @@ export interface ActivityDetailSummary {
   boys: number;
   with_disability: number;
   new_this_period: number;
+  target_breakdown?: TargetBreakdown;
 }
 
 export interface AttendanceOverview {
@@ -159,6 +160,13 @@ export interface ActivitySession {
   present: number;
   absent: number;
   total: number;
+  /** "pss" rows carry the optional fields below; "cfs" legacy rows leave them undefined. */
+  source?: 'pss' | 'cfs';
+  facilitator_id?: string | null;
+  facilitator_name?: string | null;
+  time_period?: 'morning' | 'afternoon' | null;
+  age_group?: string | null;
+  status?: 'in_progress' | 'completed' | null;
 }
 
 export interface ActivityDetailResponse {
@@ -213,6 +221,8 @@ export interface ActivitySummary {
 export interface LocationSummary {
   id: string;
   name: string;
+  sector?: string;
+  geographic_area?: string;
   total_children: number;
   children_count?: number;
   centre_count?: number;
@@ -221,13 +231,31 @@ export interface LocationSummary {
   with_disability: number;
 }
 
+/**
+ * Recent session row on the facilitator dashboard. Sourced from pss_sessions
+ * (not the deprecated cfs_sessions / attendance_records). The legacy CFS
+ * attendance fields (present_count / total_count) are retained as optional
+ * for the org-admin dashboard table which still aggregates CFS attendance.
+ */
 export interface RecentSession {
   id: string;
-  activity_name: string;
-  location_name: string;
   session_date: string;
-  present_count: number;
-  total_count: number;
+  location_name: string;
+  source?: 'pss' | 'cfs' | string;  // 'pss' = clickable PSS session, 'cfs' = legacy
+
+  // PSS shape (facilitator dashboard)
+  schedule_name?: string;
+  facilitator_name?: string;
+  time_period?: 'morning' | 'afternoon' | string;
+  age_group?: string;
+  status?: 'in_progress' | 'completed' | string;
+  activities_completed?: number;
+  activities_total?: number;
+
+  // Legacy CFS shape (org-admin dashboard)
+  activity_name?: string;
+  present_count?: number;
+  total_count?: number;
 }
 
 // ─── Reports ──────────────────────────────────────────────────────────────────

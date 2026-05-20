@@ -28,7 +28,7 @@
             v-for="(b, idx) in beneficiaries"
             :key="b.id"
             class="ben-row"
-            :class="{ 'ben-row--even': idx % 2 === 1 }"
+            :class="{ 'ben-row--even': idx % 2 === 1, 'ben-row--unenrolled': !isEnrolled(b) }"
           >
             <!-- Avatar -->
             <td class="cell-avatar">
@@ -50,7 +50,10 @@
             <td class="cell-text">{{ formatGender(b.sex) }}</td>
 
             <!-- Location -->
-            <td class="cell-text cell-location">{{ b.cfs_location?.name ?? '—' }}</td>
+            <td class="cell-text cell-location">
+              <span v-if="isEnrolled(b)">{{ b.cfs_location?.name ?? '—' }}</span>
+              <span v-else class="enrollment-tag">Not enrolled</span>
+            </td>
 
             <!-- Disability -->
             <td class="cell-text cell-disability">
@@ -75,7 +78,7 @@
         <p class="empty-sub">Try adjusting your search or filters</p>
       </div>
 
-      <div v-for="b in beneficiaries" :key="'m'+b.id" class="ben-card">
+      <div v-for="b in beneficiaries" :key="'m'+b.id" class="ben-card" :class="{ 'ben-card--unenrolled': !isEnrolled(b) }">
         <div class="card-content">
           <div class="card-left">
             <div class="avatar avatar--card" :style="{ background: avatarColor(b) }">
@@ -90,7 +93,8 @@
               <span v-if="b.disability_status && b.disability_status !== 'none'" class="meta-tag meta-tag--disability">{{ b.disability_status }}</span>
             </div>
             <div class="card-sub-row">
-              <span v-if="b.cfs_location?.name" class="card-location">{{ b.cfs_location.name }}</span>
+              <span v-if="isEnrolled(b) && b.cfs_location?.name" class="card-location">{{ b.cfs_location.name }}</span>
+              <span v-else class="enrollment-tag">Not enrolled</span>
               <span v-if="b.guardian_name" class="card-guardian">{{ b.guardian_name }}</span>
             </div>
           </div>
@@ -130,6 +134,10 @@ function formatDate(iso: string): string {
 function formatDateShort(iso: string): string {
   if (!iso) return '—'
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+}
+
+function isEnrolled(b: Beneficiary): boolean {
+  return b.is_enrolled ?? Boolean(b.cfs_location?.id)
 }
 
 function avatarInitials(b: Beneficiary): string {
@@ -197,6 +205,7 @@ function avatarColor(b: Beneficiary): string {
 .ben-row { transition: background 0.12s ease; }
 .ben-row--even { background: var(--hover-bg-subtle); }
 .ben-row:hover { background: var(--primary-dim); }
+.ben-row--unenrolled { opacity: 0.78; }
 
 .ben-table td {
   padding: 12px 16px;
@@ -296,6 +305,18 @@ function avatarColor(b: Beneficiary): string {
 
 .text-muted { color: var(--text-muted); }
 
+.enrollment-tag {
+  display: inline-block;
+  max-width: 100%;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--text-muted) 12%, transparent);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 /* ═══ Disability ═══ */
 .cell-disability {
   max-width: 130px;
@@ -361,6 +382,8 @@ function avatarColor(b: Beneficiary): string {
   overflow: hidden;
   transition: border-color 0.15s;
 }
+
+.ben-card--unenrolled { opacity: 0.82; }
 
 .card-content {
   display: flex;
