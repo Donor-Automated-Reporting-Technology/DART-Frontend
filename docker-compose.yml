@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        API_BASE_URL: "http://ec2-16-16-207-103.eu-north-1.compute.amazonaws.com/api"
+        API_BASE_URL: "http://129.121.85.106:8090/api"
     ports:
       - "3000:3000"
     environment:
