@@ -496,7 +496,12 @@ async function handleEditSave() {
   creating.value = true
   error.value = null
   try {
-    await staffApi.unassign({ user_id: editTarget.value.id })
+    // Only unassign first when the staff member currently has an assignment.
+    // Unassigning a user with no active assignment 400s with NO_ASSIGNMENT,
+    // which would abort the whole save before any assignment runs.
+    if (editOriginalLocations.value.length > 0) {
+      await staffApi.unassign({ user_id: editTarget.value.id })
+    }
     for (const locId of editLocations.value) {
       await staffApi.assign({
         user_id: editTarget.value.id,
