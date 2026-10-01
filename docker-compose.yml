@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        API_BASE_URL: "http://129.121.85.106:8090/api"
+        API_BASE_URL: "http://129.121.140.176:8090/api"
     ports:
       - "3000:3000"
     environment:
