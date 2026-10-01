@@ -12,6 +12,16 @@
         </NuxtLink>
       </div>
 
+      <!-- Sub-navigation -->
+      <div class="sub-nav">
+        <span class="sub-nav-item sub-nav-item--active">
+          <AppIcon name="settings" :size="13" /> Project settings
+        </span>
+        <NuxtLink :to="`/settings/projects/${projectId}/logframe`" class="sub-nav-item">
+          <AppIcon name="target" :size="13" /> M&E Logframe
+        </NuxtLink>
+      </div>
+
       <!-- Loading -->
       <div v-if="loading && !project" class="state state--loading">
         <div class="pulse-dot" /><div class="pulse-dot" /><div class="pulse-dot" />
@@ -419,12 +429,42 @@ onMounted(fetchProject)
   margin-bottom: 24px;
 }
 .page-title { font-size: 1.35rem; font-weight: 750; margin: 0 0 2px; }
-.page-subtitle { font-size: 0.8rem; color: var(--text-muted); margin: 0; }
+.page-subtitle { font-size: 0.8rem; color: var(--text-muted); margin: 0; }.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
 
-.btn-back {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 0.8rem; color: var(--text-muted); text-decoration: none;
-  padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 8px;
+.sub-nav {
+  display: flex;
+  gap: 4px;
+  margin: 18px 0 4px;
+  border-bottom: 1px solid var(--border-color);
+}
+.sub-nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.sub-nav-item:hover {
+  color: var(--text-primary);
+}
+.sub-nav-item--active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }
 
 .section-label {
