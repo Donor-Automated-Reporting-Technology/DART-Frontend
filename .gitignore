@@ -18,6 +18,9 @@ logs
 .fleet
 .idea
 
+# One-off layout migration script (already applied — not part of the app)
+replace_app_layout.py
+
 # Local env files
 .env
 .env.*
