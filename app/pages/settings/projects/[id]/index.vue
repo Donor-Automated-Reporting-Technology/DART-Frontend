@@ -180,12 +180,12 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { frameworkApi } from '../../../services/frameworkApi'
+import { frameworkApi } from '../../../../services/frameworkApi'
 // cfsApi import removed — grant targets deprecated in favour of project targets
-import { ApiError } from '../../../services/api'
-import { useAuthStore } from '../../../stores/auth'
-import type { Framework, FrameworkActivity, FrameworkType } from '../../../interfaces/framework'
-import ActivityTargetRow from '../../../components/settings/ActivityTargetRow.vue'
+import { ApiError } from '../../../../services/api'
+import { useAuthStore } from '../../../../stores/auth'
+import type { Framework, FrameworkActivity, FrameworkType } from '../../../../interfaces/framework'
+import ActivityTargetRow from '../../../../components/settings/ActivityTargetRow.vue'
 
 definePageMeta({
   layout: false,
