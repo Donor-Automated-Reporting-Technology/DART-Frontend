@@ -13,9 +13,6 @@
           <button class="btn-secondary" @click="showImport = true" :disabled="!templates.length">
             <AppIcon name="download" :size="14" /> Import donor template
           </button>
-          <NuxtLink :to="`/settings/projects/${projectId}/impact`" class="btn-back">
-            <AppIcon name="bar-chart" :size="14" /> Impact
-          </NuxtLink>
           <NuxtLink :to="`/settings/projects/${projectId}`" class="btn-back">
             <AppIcon name="arrow-left" :size="14" /> Project settings
           </NuxtLink>
@@ -126,6 +123,35 @@
             </form>
           </div>
 
+          <!-- ═══ Impacts ═══ -->
+          <div class="section-label">Impacts</div>
+          <p class="section-hint">Open an impact to write its indicator, set numerical targets and toggle the activities that feed it.</p>
+
+          <div v-if="impacts.length" class="impact-list">
+            <NuxtLink
+              v-for="imp in impacts"
+              :key="imp.id"
+              :to="`/settings/projects/${projectId}/impacts/${imp.id}`"
+              class="impact-row"
+            >
+              <span class="impact-icon"><AppIcon name="target" :size="16" /></span>
+              <span class="impact-body">
+                <span class="impact-title">{{ imp.title }}</span>
+                <span class="impact-meta">{{ indicatorCountByLevel(imp.id) }} indicator{{ indicatorCountByLevel(imp.id) === 1 ? '' : 's' }}</span>
+              </span>
+              <AppIcon name="chevron-right" :size="15" class="impact-arrow" />
+            </NuxtLink>
+          </div>
+          <div v-else class="empty-inline">
+            No impacts yet — add one to start building the theory of change.
+          </div>
+
+          <div class="actions tree-actions" v-if="canManage">
+            <button class="btn-secondary" @click="openImpactModal">
+              <AppIcon name="plus" :size="14" /> Add impact
+            </button>
+          </div>
+
           <!-- Hierarchy tree -->
           <div class="section-label">Hierarchy</div>
           <p class="section-hint">Goal → outcome → result → activity. Each level can carry indicators.</p>
@@ -222,6 +248,28 @@
           <div v-if="treeError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ treeError }}</div>
         </template>
       </template>
+
+      <!-- ═══ Add impact modal ═══ -->
+      <div v-if="impactModal.open" class="modal-overlay" @click.self="impactModal.open = false">
+        <div class="modal">
+          <div class="modal-head">
+            <h3>Add impact</h3>
+            <button class="icon-btn" @click="impactModal.open = false"><AppIcon name="x" :size="15" /></button>
+          </div>
+          <p class="modal-hint">An impact is a top-level statement of change (e.g. “Children feel safer and more resilient”).</p>
+          <form class="modal-form" @submit.prevent="saveImpact">
+            <div class="field">
+              <label class="field-label" for="imp-title">Impact statement *</label>
+              <textarea id="imp-title" v-model="impactForm.title" rows="2" class="field-input" placeholder="e.g. Children in supported communities feel safer and more resilient"></textarea>
+            </div>
+            <div v-if="impactError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ impactError }}</div>
+            <div class="actions">
+              <button type="button" class="btn-ghost" @click="impactModal.open = false">Cancel</button>
+              <button type="submit" class="btn-primary" :disabled="impactSaving"><span v-if="impactSaving" class="btn-spinner" /> Add impact</button>
+            </div>
+          </form>
+        </div>
+      </div>
 
       <!-- ═══ Import modal ═══ -->
       <div v-if="showImport" class="modal-overlay" @click.self="showImport = false">
@@ -470,6 +518,42 @@ const breadcrumbs = computed(() => [
 
 const levelCount = computed(() => levels.value.length)
 const indicatorCount = computed(() => indicators.value.length)
+
+/** Top-level impact tiers — the entry points into the impact detail pages. */
+const impacts = computed(() => levels.value.filter((l) => l.level_type === 'impact'))
+function indicatorCountByLevel(levelId: string): number {
+  return indicators.value.filter((i) => i.level_id === levelId).length
+}
+
+const impactModal = reactive({ open: false })
+const impactForm = reactive({ title: '' })
+const impactSaving = ref(false)
+const impactError = ref('')
+
+function openImpactModal() {
+  impactError.value = ''
+  impactForm.title = ''
+  impactModal.open = true
+}
+
+async function saveImpact() {
+  impactError.value = ''
+  if (!impactForm.title.trim()) { impactError.value = 'Impact statement is required'; return }
+  impactSaving.value = true
+  try {
+    await logframeApi.createLevel(projectId, {
+      level_type: 'impact',
+      title: impactForm.title.trim(),
+      parent_id: null,
+    })
+    impactModal.open = false
+    await fetchAll()
+  } catch (e: any) {
+    impactError.value = e instanceof ApiError ? e.message : (e?.message ?? 'Failed to add impact')
+  } finally {
+    impactSaving.value = false
+  }
+}
 
 /** Flatten the level tree into a depth-annotated list (sorted by sort_order). */
 const flatLevels = computed(() => {
@@ -1078,6 +1162,27 @@ onMounted(() => {
 .icon-btn--danger:hover { background: var(--error-bg); color: var(--error); }
 .level-empty { margin-top: 8px; font-size: 0.76rem; color: var(--text-muted); font-style: italic; }
 .tree-actions { justify-content: flex-start; }
+
+/* Impacts list */
+.impact-list { display: flex; flex-direction: column; gap: 8px; }
+.impact-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; text-decoration: none; color: inherit;
+  background: var(--bg-panel); border: 1px solid var(--border-color);
+  border-left: 3px solid #a78bfa; border-radius: 10px;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.impact-row:hover { border-color: var(--accent); }
+.impact-row:active { transform: scale(0.995); }
+.impact-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  background: color-mix(in srgb, #a78bfa 14%, transparent); color: #a78bfa;
+}
+.impact-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.impact-title { font-size: 0.9rem; font-weight: 600; }
+.impact-meta { font-size: 0.74rem; color: var(--text-muted); }
+.impact-arrow { color: var(--text-muted); flex-shrink: 0; }
 
 /* Indicators */
 .indicator-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
