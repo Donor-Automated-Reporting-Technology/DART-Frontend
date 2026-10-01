@@ -47,8 +47,10 @@ export interface Framework {
 export interface CreateFrameworkRequest {
   framework_type: FrameworkType
   project_name: string
-  partner_name: string
-  reporting_to: string
+  // A project's M&E logframe (and its donor/partner metadata) is attached later,
+  // so these are optional at creation time.
+  partner_name?: string
+  reporting_to?: string
   period_start: string
   period_end: string
 }

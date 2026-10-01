@@ -11,7 +11,7 @@
       <div class="page-header">
         <div>
           <h1 class="page-title">New Project</h1>
-          <p class="page-subtitle">Pick a framework — it cannot be changed later.</p>
+          <p class="page-subtitle">Create a project — you can attach its M&E logframe and activities later.</p>
         </div>
         <NuxtLink to="/settings/projects" class="btn-back">
           <AppIcon name="arrow-left" :size="14" /> Back
@@ -22,30 +22,8 @@
         <div class="section-card">
           <div class="form-grid">
             <div class="field">
-              <label class="field-label" for="np-type">Framework type *</label>
-              <select id="np-type" v-model="form.framework_type" class="field-input">
-                <option value="child_protection">Child Protection</option>
-                <option value="education">Education</option>
-                <option value="health">Health</option>
-                <option value="wash">WASH</option>
-                <option value="livelihoods">Livelihoods</option>
-              </select>
-              <span class="field-hint">Locked once the project is created.</span>
-            </div>
-
-            <div class="field">
               <label class="field-label" for="np-name">Project name *</label>
               <input id="np-name" v-model="form.project_name" type="text" class="field-input" placeholder="e.g. DRA SSJR 2024-2026" />
-            </div>
-
-            <div class="field">
-              <label class="field-label" for="np-partner">Partner name</label>
-              <input id="np-partner" v-model="form.partner_name" type="text" class="field-input" placeholder="e.g. SSWOCO" />
-            </div>
-
-            <div class="field">
-              <label class="field-label" for="np-reporting">Reporting to</label>
-              <input id="np-reporting" v-model="form.reporting_to" type="text" class="field-input" placeholder="e.g. War Child Holland" />
             </div>
 
             <div class="field">
@@ -79,7 +57,13 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { frameworkApi } from '../../../services/frameworkApi'
 import { ApiError } from '../../../services/api'
-import type { FrameworkType } from '../../../interfaces/framework'
+
+/**
+ * A project is created without an M&E framework; the backend still requires a
+ * framework_type, so a sensible default is sent and the logframe is attached
+ * later from Settings → M&E.
+ */
+const DEFAULT_FRAMEWORK_TYPE = 'child_protection'
 
 definePageMeta({
   layout: false,
@@ -90,10 +74,7 @@ definePageMeta({
 const router = useRouter()
 
 const form = reactive({
-  framework_type: 'child_protection' as FrameworkType,
   project_name: '',
-  partner_name: '',
-  reporting_to: '',
   period_start: '',
   period_end: '',
 })
@@ -110,10 +91,8 @@ async function submit() {
   saving.value = true
   try {
     const created: any = await frameworkApi.createFramework({
-      framework_type: form.framework_type,
+      framework_type: DEFAULT_FRAMEWORK_TYPE,
       project_name: form.project_name.trim(),
-      partner_name: form.partner_name.trim(),
-      reporting_to: form.reporting_to.trim(),
       period_start: form.period_start,
       period_end: form.period_end,
     })
