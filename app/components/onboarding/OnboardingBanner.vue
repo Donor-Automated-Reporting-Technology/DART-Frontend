@@ -2,14 +2,15 @@
   <!--
     OnboardingBanner.vue
     ─────────────────────────────────────────────────────────────────────────────
-    Framework-based 3-step onboarding flow.
+    Onboarding flow.
 
     Steps:
       1. Organisation — "Set your org name and country"
-      2. Framework    — "Choose your framework and project details"
-      3. Activities   — "Enable at least one activity"
 
-    Post-completion: shows "Get Started" checklist (Locations, Staff, Register).
+    Project creation, activities and M&E (logframe + impact) live under
+    Settings → Projects, not in onboarding.
+
+    Post-completion: shows "Get Started" checklist (Project, Locations, Staff, Register).
   -->
   <Transition name="banner-fade">
     <div
@@ -29,6 +30,9 @@
           <span class="complete-title">DART is ready — your organisation is set up!</span>
           <div class="checklist">
             <p class="checklist-title">Get started:</p>
+            <NuxtLink to="/settings/projects" class="checklist-item" @click="showCompletion = false">
+              <AppIcon name="layers" :size="13" /> Set up your project & M&E logframe
+            </NuxtLink>
             <NuxtLink to="/settings/locations" class="checklist-item" @click="showCompletion = false">
               <AppIcon name="map-pin" :size="13" /> Add your locations and CFS centres
             </NuxtLink>
@@ -56,14 +60,14 @@
               role="progressbar"
               :aria-valuenow="store.completedCount"
               aria-valuemin="0"
-              aria-valuemax="3"
+              :aria-valuemax="store.steps.length"
             />
           </div>
 
           <span class="bar-label">
             <span class="bar-count">{{ store.completedCount }}</span>
             &thinsp;of&thinsp;
-            <span class="bar-count">3</span>
+            <span class="bar-count">{{ store.steps.length }}</span>
             steps complete
           </span>
         </div>
@@ -155,14 +159,6 @@
                   v-if="step.step === 1"
                   @complete="handleStepComplete(1)"
                 />
-                <Step2Framework
-                  v-else-if="step.step === 2"
-                  @complete="handleStepComplete(2)"
-                />
-                <Step3ActivityConfirm
-                  v-else-if="step.step === 3"
-                  @complete="handleStepComplete(3)"
-                />
               </div>
             </Transition>
 
@@ -180,8 +176,6 @@ import { ref, watch, onMounted } from 'vue'
 import { useOnboarding }     from '../../composables/useOnboarding'
 import AppIcon               from '../interfaces/AppIcon.vue'
 import Step1OrgProfile       from './steps/Step1OrgProfile.vue'
-import Step2Framework        from './steps/Step2Framework.vue'
-import Step3ActivityConfirm  from './steps/Step3ActivityConfirm.vue'
 import type { OnboardingStep } from '../../interfaces/onboarding'
 
 const {

@@ -13,6 +13,9 @@
           <button class="btn-secondary" @click="showImport = true" :disabled="!templates.length">
             <AppIcon name="download" :size="14" /> Import donor template
           </button>
+          <NuxtLink :to="`/settings/projects/${projectId}/impact`" class="btn-back">
+            <AppIcon name="bar-chart" :size="14" /> Impact
+          </NuxtLink>
           <NuxtLink :to="`/settings/projects/${projectId}`" class="btn-back">
             <AppIcon name="arrow-left" :size="14" /> Project settings
           </NuxtLink>
@@ -114,6 +117,7 @@
                 <label class="field-label" for="lfem-donor">Donor framework</label>
                 <input id="lfem-donor" v-model="metaForm.donor_framework" type="text" class="field-input" />
               </div>
+              <CustomFieldsEditor v-model="metaForm.custom_fields" label="Custom fields" hint="Add your own logframe-level fields." />
               <div v-if="metaError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ metaError }}</div>
               <div class="actions">
                 <button type="button" class="btn-ghost" @click="editingMeta = false">Cancel</button>
@@ -254,6 +258,7 @@
               <label class="field-label" for="lfm-type">Level type *</label>
               <select id="lfm-type" v-model="levelForm.level_type" class="field-input" :disabled="!!levelModal.editing">
                 <option value="goal">Goal</option>
+                <option value="impact">Impact</option>
                 <option value="outcome">Outcome</option>
                 <option value="result">Result</option>
                 <option value="activity">Activity</option>
@@ -273,6 +278,7 @@
               </select>
               <span class="field-hint">Parents must sit above the chosen level type in the hierarchy.</span>
             </div>
+            <CustomFieldsEditor v-model="levelForm.custom_fields" label="Custom fields" hint="Add your own level fields." />
             <div v-if="levelError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ levelError }}</div>
             <div class="actions">
               <button type="button" class="btn-ghost" @click="levelModal.open = false">Cancel</button>
@@ -359,6 +365,7 @@
                 </label>
               </div>
             </div>
+            <CustomFieldsEditor v-model="indicatorForm.custom_fields" label="Custom fields" hint="Add your own indicator fields (e.g. yearly targets, responsible party)." />
             <div class="field">
               <span class="field-label">External references</span>
               <div v-for="(link, i) in indicatorForm.external_links" :key="i" class="link-row">
@@ -424,6 +431,7 @@ import type {
   LogframeTemplateInfo,
   LogframeDisaggregation,
   LogframeLink,
+  CustomFields,
 } from '../../../../interfaces/logframe'
 
 definePageMeta({
@@ -495,7 +503,7 @@ const indicatorsByLevel = computed(() => {
 })
 
 /** Hierarchy order for parent validation. */
-const LEVEL_RANK: Record<LogframeLevelType, number> = { goal: 0, outcome: 1, result: 2, activity: 3 }
+const LEVEL_RANK: Record<LogframeLevelType, number> = { goal: 0, impact: 1, outcome: 2, result: 3, activity: 4 }
 
 /** Valid parents for the level type currently chosen in the level modal. */
 const validParents = computed(() => {
@@ -570,7 +578,7 @@ async function fetchTemplates() {
 
 // ─── Metadata ───
 
-const createForm = reactive({ name: '', description: '', donor_framework: '' })
+const createForm = reactive({ name: '', description: '', donor_framework: '', custom_fields: {} as CustomFields })
 const creating = ref(false)
 const createError = ref('')
 
@@ -583,6 +591,7 @@ async function createLogframe() {
       name: createForm.name.trim(),
       description: createForm.description.trim() || null,
       donor_framework: createForm.donor_framework.trim() || null,
+      custom_fields: createForm.custom_fields,
     })
     await fetchAll()
   } catch (e: any) {
@@ -593,7 +602,7 @@ async function createLogframe() {
 }
 
 const editingMeta = ref(false)
-const metaForm = reactive({ name: '', description: '', donor_framework: '' })
+const metaForm = reactive({ name: '', description: '', donor_framework: '', custom_fields: {} as CustomFields })
 const metaSaving = ref(false)
 const metaError = ref('')
 
@@ -602,6 +611,7 @@ function startEditMeta() {
   metaForm.name = logframe.value.name
   metaForm.description = logframe.value.description ?? ''
   metaForm.donor_framework = logframe.value.donor_framework ?? ''
+  metaForm.custom_fields = { ...(logframe.value.custom_fields ?? {}) }
   editingMeta.value = true
 }
 
@@ -614,6 +624,7 @@ async function saveMeta() {
       name: metaForm.name.trim(),
       description: metaForm.description.trim() || null,
       donor_framework: metaForm.donor_framework.trim() || null,
+      custom_fields: metaForm.custom_fields,
     })
     editingMeta.value = false
     await fetchAll()
@@ -650,7 +661,7 @@ async function importTemplate(t: LogframeTemplateInfo) {
 // ─── Levels ───
 
 const levelModal = reactive({ open: false, editing: false, id: '' })
-const levelForm = reactive({ level_type: 'goal' as LogframeLevelType, title: '', parent_id: null as string | null })
+const levelForm = reactive({ level_type: 'goal' as LogframeLevelType, title: '', parent_id: null as string | null, custom_fields: {} as CustomFields })
 const levelSaving = ref(false)
 const levelError = ref('')
 
@@ -663,17 +674,19 @@ function openLevelModal(parent: LogframeLevel | null, editing: LogframeLevel | n
     levelForm.level_type = editing.level_type
     levelForm.title = editing.title
     levelForm.parent_id = editing.parent_id ?? null
+    levelForm.custom_fields = { ...(editing.custom_fields ?? {}) }
   } else {
     levelModal.open = true
     levelModal.editing = false
     levelModal.id = ''
     // Default child type: one step below the parent's type
-    const CHILD_TYPES: LogframeLevelType[] = ['goal', 'outcome', 'result', 'activity']
+    const CHILD_TYPES: LogframeLevelType[] = ['goal', 'impact', 'outcome', 'result', 'activity']
     levelForm.level_type = parent
       ? (CHILD_TYPES[(LEVEL_RANK[parent.level_type] ?? 0) + 1] ?? 'activity')
       : 'goal'
     levelForm.title = ''
     levelForm.parent_id = parent?.id ?? null
+    levelForm.custom_fields = {}
   }
 }
 
@@ -687,12 +700,14 @@ async function saveLevel() {
         level_type: levelForm.level_type,
         title: levelForm.title.trim(),
         parent_id: levelForm.parent_id,
+        custom_fields: levelForm.custom_fields,
       })
     } else {
       await logframeApi.createLevel(projectId, {
         level_type: levelForm.level_type,
         title: levelForm.title.trim(),
         parent_id: levelForm.parent_id,
+        custom_fields: levelForm.custom_fields,
       })
     }
     levelModal.open = false
@@ -745,6 +760,7 @@ const indicatorForm = reactive({
   disaggregation: [] as LogframeDisaggregation[],
   data_source: '',
   external_links: [] as LogframeLink[],
+  custom_fields: {} as CustomFields,
 })
 const indicatorSaving = ref(false)
 const indicatorError = ref('')
@@ -765,6 +781,7 @@ function resetIndicatorForm() {
   indicatorForm.disaggregation = []
   indicatorForm.data_source = ''
   indicatorForm.external_links = []
+  indicatorForm.custom_fields = {}
 }
 
 function openIndicatorModal(level: LogframeLevel, editing: LogframeIndicator | null = null) {
@@ -789,6 +806,7 @@ function openIndicatorModal(level: LogframeLevel, editing: LogframeIndicator | n
     indicatorForm.disaggregation = [...(editing.disaggregation ?? [])]
     indicatorForm.data_source = editing.data_source ?? ''
     indicatorForm.external_links = (editing.external_links ?? []).map((l) => ({ label: l.label, url: l.url }))
+    indicatorForm.custom_fields = { ...(editing.custom_fields ?? {}) }
   } else {
     indicatorModal.open = true
     indicatorModal.editing = false
@@ -818,6 +836,7 @@ async function saveIndicator() {
       disaggregation: indicatorForm.disaggregation,
       data_source: indicatorForm.data_source.trim() || null,
       external_links: indicatorForm.external_links.filter((l) => l.label.trim() && l.url.trim()),
+      custom_fields: indicatorForm.custom_fields,
     }
     if (indicatorModal.editing) {
       await logframeApi.updateIndicator(projectId, indicatorModal.id, payload)
@@ -1033,6 +1052,7 @@ onMounted(() => {
   border-left: 3px solid var(--border-color);
 }
 .level-card--goal { border-left-color: #818cf8; }
+.level-card--impact { border-left-color: #a78bfa; }
 .level-card--outcome { border-left-color: #38bdf8; }
 .level-card--result { border-left-color: #34d399; }
 .level-card--activity { border-left-color: #fbbf24; }
@@ -1043,6 +1063,7 @@ onMounted(() => {
   background: var(--bg-surface); border: 1px solid var(--border-color); color: var(--text-muted);
 }
 .level-card--goal .level-badge { color: #818cf8; }
+.level-card--impact .level-badge { color: #a78bfa; }
 .level-card--outcome .level-badge { color: #38bdf8; }
 .level-card--result .level-badge { color: #34d399; }
 .level-card--activity .level-badge { color: #fbbf24; }

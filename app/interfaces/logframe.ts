@@ -3,13 +3,18 @@
  *
  * Types for the M&E logframe system attached to a project (framework).
  * Mirrors the backend DTOs: GET/PUT /api/v1/frameworks/:id/logframe
+ *
+ * Structure: project → logframe → impact → indicator → { numeric targets, activities }
  */
 
 /** Hierarchy level types in the logframe tree. */
-export type LogframeLevelType = 'goal' | 'outcome' | 'result' | 'activity'
+export type LogframeLevelType = 'goal' | 'impact' | 'outcome' | 'result' | 'activity'
 
 /** Disaggregation dimensions allowed on an indicator. */
 export type LogframeDisaggregation = 'age_group' | 'gender' | 'disability' | 'other'
+
+/** Free-form custom fields — arbitrary user-defined key/value pairs (JSONB). */
+export type CustomFields = Record<string, unknown>
 
 /** External reference link attached to an indicator. */
 export interface LogframeLink {
@@ -27,12 +32,13 @@ export interface Logframe {
   donor_framework?: string | null
   status: string
   version: number
+  custom_fields: CustomFields
   created_by?: string | null
   created_at: string
   updated_at: string
 }
 
-/** One node in the logframe hierarchy (goal → outcome → result → activity). */
+/** One node in the logframe hierarchy (goal/impact → outcome → result → activity). */
 export interface LogframeLevel {
   id: string
   logframe_id: string
@@ -40,6 +46,7 @@ export interface LogframeLevel {
   level_type: LogframeLevelType
   sort_order: number
   title: string
+  custom_fields: CustomFields
   created_at: string
   updated_at: string
 }
@@ -63,6 +70,7 @@ export interface LogframeIndicator {
   disaggregation: LogframeDisaggregation[]
   data_source?: string | null
   external_links: LogframeLink[]
+  custom_fields: CustomFields
   sort_order: number
   created_at: string
   updated_at: string
@@ -86,12 +94,53 @@ export interface LogframeTemplateInfo {
   indicator_count: number
 }
 
+// --- Impact view (GET .../logframe/impact) ---
+
+/** A framework activity linked to an indicator, with its live actual count. */
+export interface LogframeImpactActivity {
+  id: string
+  activity_code: string
+  activity_name: string
+  pattern_type: string
+  is_active: boolean
+  target_count: number
+  target_unit: string
+  actual_count: number
+  percentage: number
+}
+
+/** An indicator rendered on the impact page: numeric target + rolled-up progress. */
+export interface LogframeImpactIndicator extends LogframeIndicator {
+  actual_value: number
+  percentage: number
+  linked_activities: LogframeImpactActivity[]
+}
+
+/** Headline numbers of the impact view. */
+export interface LogframeImpactSummary {
+  impacts: number
+  outcomes: number
+  results: number
+  indicators: number
+  indicators_with_targets: number
+  total_target_value: number
+}
+
+/** Full impact view of a project's logframe. */
+export interface LogframeImpactData {
+  logframe: Logframe | null
+  levels: LogframeLevel[]
+  indicators: LogframeImpactIndicator[]
+  summary: LogframeImpactSummary
+}
+
 // --- Requests ---
 
 export interface LogframeUpsertRequest {
   name: string
   description?: string | null
   donor_framework?: string | null
+  custom_fields?: CustomFields
 }
 
 export interface LogframeLevelRequest {
@@ -99,6 +148,7 @@ export interface LogframeLevelRequest {
   parent_id?: string | null
   title: string
   sort_order?: number | null
+  custom_fields?: CustomFields
 }
 
 export interface LogframeIndicatorRequest {
@@ -118,6 +168,7 @@ export interface LogframeIndicatorRequest {
   data_source?: string | null
   external_links?: LogframeLink[]
   sort_order?: number | null
+  custom_fields?: CustomFields
 }
 
 export interface LogframeImportRequest {

@@ -3,6 +3,7 @@ import { ApiError } from './api'
 import type {
   Logframe,
   LogframeData,
+  LogframeImpactData,
   LogframeTemplateInfo,
   LogframeUpsertRequest,
   LogframeLevel,
@@ -48,6 +49,19 @@ export const logframeApi = {
   async getLogframe(frameworkId: string, token?: string): Promise<LogframeData> {
     return request<LogframeData>(
       `${BASE_URL}/frameworks/${frameworkId}/logframe`,
+      { method: 'GET' },
+      token,
+    )
+  },
+
+  /**
+   * Impact view of the project's logframe: hierarchy levels, every indicator
+   * with its numeric target, the activities linked to each indicator (with
+   * live actual counts) and a headline summary.
+   */
+  async getImpact(frameworkId: string, token?: string): Promise<LogframeImpactData> {
+    return request<LogframeImpactData>(
+      `${BASE_URL}/frameworks/${frameworkId}/logframe/impact`,
       { method: 'GET' },
       token,
     )

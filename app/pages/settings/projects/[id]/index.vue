@@ -20,6 +20,9 @@
         <NuxtLink :to="`/settings/projects/${projectId}/logframe`" class="sub-nav-item">
           <AppIcon name="target" :size="13" /> M&E Logframe
         </NuxtLink>
+        <NuxtLink :to="`/settings/projects/${projectId}/impact`" class="sub-nav-item">
+          <AppIcon name="bar-chart" :size="13" /> Impact
+        </NuxtLink>
       </div>
 
       <!-- Loading -->

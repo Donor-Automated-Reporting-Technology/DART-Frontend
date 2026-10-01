@@ -1,12 +1,13 @@
 /**
  * stores/onboarding.ts
  *
- * Pinia store for the framework-based 3-step onboarding flow.
+ * Pinia store for the onboarding flow.
  *
  * Steps:
  *   1. Organisation profile (name + country + locations)
- *   2. Framework setup (type + project details)
- *   3. Activity confirmation (enable at least 1 activity)
+ *
+ * Project creation, activity selection and the M&E logframe/impact views are
+ * project-level configuration under Settings → Projects (not onboarding).
  *
  * Actions:
  *   fetchStatus()   — syncs state from the server
@@ -21,15 +22,13 @@ import type { OnboardingStep, OrgProfileData } from '../interfaces/onboarding'
 import { fetchOnboardingStatus } from '../services/onboardingApi'
 import { useAuthStore } from './auth'
 
-// ─── Step labels (display order matches step numbers 1–3) ────────────────────
+// ─── Step labels (display order matches step numbers) ────────────────────────
 
 const STEP_LABELS: string[] = [
   'Set your org name and country',
-  'Choose your framework and project details',
-  'Enable at least one activity',
 ]
 
-const TOTAL_STEPS = 3
+const TOTAL_STEPS = 1
 
 /** Returns a fresh default steps array — all incomplete, none active */
 const buildDefaultSteps = (): OnboardingStep[] =>
@@ -49,7 +48,7 @@ export const useOnboardingStore = defineStore('onboarding', () => {
   /** The three step entries — completion and active-panel state live here */
   const steps = ref<OnboardingStep[]>(buildDefaultSteps())
 
-  /** True once all three steps are complete — hides the banner permanently */
+  /** True once all steps are complete — hides the banner permanently */
   const onboarding_complete = ref(false)
 
   /** True while a server request is in flight */
@@ -63,7 +62,7 @@ export const useOnboardingStore = defineStore('onboarding', () => {
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
-  /** Number of steps that have been marked complete (0–3) */
+  /** Number of steps that have been marked complete */
   const completedCount = computed<number>(
     () => steps.value.filter((s) => s.complete).length,
   )
