@@ -39,30 +39,8 @@
           <div class="section-card">
             <div class="form-grid">
               <div class="field">
-                <label class="field-label" for="pe-type">Framework type</label>
-                <select id="pe-type" v-model="form.framework_type" class="field-input" disabled>
-                  <option value="child_protection">Child Protection</option>
-                  <option value="education">Education</option>
-                  <option value="health">Health</option>
-                  <option value="wash">WASH</option>
-                  <option value="livelihoods">Livelihoods</option>
-                </select>
-                <span class="field-hint">Framework type is locked once configured.</span>
-              </div>
-
-              <div class="field">
                 <label class="field-label" for="pe-name">Project name *</label>
                 <input id="pe-name" v-model="form.project_name" type="text" class="field-input" />
-              </div>
-
-              <div class="field">
-                <label class="field-label" for="pe-partner">Partner name</label>
-                <input id="pe-partner" v-model="form.partner_name" type="text" class="field-input" />
-              </div>
-
-              <div class="field">
-                <label class="field-label" for="pe-reporting">Reporting to</label>
-                <input id="pe-reporting" v-model="form.reporting_to" type="text" class="field-input" />
               </div>
 
               <div class="field">
