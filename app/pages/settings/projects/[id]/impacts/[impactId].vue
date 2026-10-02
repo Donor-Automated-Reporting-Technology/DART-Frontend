@@ -143,6 +143,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import AppIcon from '../../../../../components/interfaces/AppIcon.vue'
 import TargetFieldsEditor from '../../../../../components/settings/TargetFieldsEditor.vue'
 import CustomFieldsEditor from '../../../../../components/settings/CustomFieldsEditor.vue'
 import { frameworkApi } from '../../../../../services/frameworkApi'
