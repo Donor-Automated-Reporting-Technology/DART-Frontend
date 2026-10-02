@@ -169,8 +169,6 @@ async function saveProject() {
 
 
 
-// Grant targets — DEPRECATED (replaced by project-level targets above)
-
 onMounted(() => {
   fetchProject()
 })
@@ -272,15 +270,6 @@ onMounted(() => {
 .toast-enter-from, .toast-leave-to { opacity: 0; }
 
 .activities-section { margin-top: 12px; }
-.activities-list { display: flex; flex-direction: column; gap: 8px; }
-
-.target-summary {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 0 14px; margin-bottom: 10px;
-  border-bottom: 1px solid var(--border-color);
-}
-.target-total-label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
-.target-total-value { font-size: 1.2rem; font-weight: 750; color: var(--primary); }
 
 .empty-inline {
   padding: 14px; font-size: 0.82rem; color: var(--text-muted);
