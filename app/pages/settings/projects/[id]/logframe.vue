@@ -413,7 +413,8 @@
                 </label>
               </div>
             </div>
-            <CustomFieldsEditor v-model="indicatorForm.custom_fields" label="Custom fields" hint="Add your own indicator fields (e.g. yearly targets, responsible party)." />
+            <TargetFieldsEditor v-model="indicatorForm.target_fields" label="Target fields" hint="Add as many fields as you need — e.g. Girls, Boys, Persons with disability — each with its own value type and unit." />
+            <CustomFieldsEditor v-model="indicatorForm.custom_fields" label="Other custom fields" hint="Any extra key/value data not covered above." />
             <div class="field">
               <span class="field-label">External references</span>
               <div v-for="(link, i) in indicatorForm.external_links" :key="i" class="link-row">
@@ -466,11 +467,14 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import CustomFieldsEditor from '../../../../components/settings/CustomFieldsEditor.vue'
+import TargetFieldsEditor from '../../../../components/settings/TargetFieldsEditor.vue'
 import { frameworkApi } from '../../../../services/frameworkApi'
 import { logframeApi } from '../../../../services/logframeApi'
 import { ApiError } from '../../../../services/api'
 import { useAuthStore } from '../../../../stores/auth'
 import type { Framework } from '../../../../interfaces/framework'
+import { TARGET_FIELDS_KEY } from '../../../../interfaces/logframe'
 import type {
   Logframe,
   LogframeLevel,
@@ -480,6 +484,7 @@ import type {
   LogframeDisaggregation,
   LogframeLink,
   CustomFields,
+  LogframeTargetField,
 } from '../../../../interfaces/logframe'
 
 definePageMeta({
@@ -844,6 +849,7 @@ const indicatorForm = reactive({
   disaggregation: [] as LogframeDisaggregation[],
   data_source: '',
   external_links: [] as LogframeLink[],
+  target_fields: [] as LogframeTargetField[],
   custom_fields: {} as CustomFields,
 })
 const indicatorSaving = ref(false)
@@ -865,6 +871,7 @@ function resetIndicatorForm() {
   indicatorForm.disaggregation = []
   indicatorForm.data_source = ''
   indicatorForm.external_links = []
+  indicatorForm.target_fields = []
   indicatorForm.custom_fields = {}
 }
 
@@ -890,7 +897,12 @@ function openIndicatorModal(level: LogframeLevel, editing: LogframeIndicator | n
     indicatorForm.disaggregation = [...(editing.disaggregation ?? [])]
     indicatorForm.data_source = editing.data_source ?? ''
     indicatorForm.external_links = (editing.external_links ?? []).map((l) => ({ label: l.label, url: l.url }))
-    indicatorForm.custom_fields = { ...(editing.custom_fields ?? {}) }
+    // Target fields ride inside custom_fields; split them out for editing.
+    const custom = { ...(editing.custom_fields ?? {}) }
+    const stored = custom[TARGET_FIELDS_KEY]
+    indicatorForm.target_fields = Array.isArray(stored) ? (stored as LogframeTargetField[]) : []
+    delete custom[TARGET_FIELDS_KEY]
+    indicatorForm.custom_fields = custom
   } else {
     indicatorModal.open = true
     indicatorModal.editing = false
@@ -920,7 +932,12 @@ async function saveIndicator() {
       disaggregation: indicatorForm.disaggregation,
       data_source: indicatorForm.data_source.trim() || null,
       external_links: indicatorForm.external_links.filter((l) => l.label.trim() && l.url.trim()),
-      custom_fields: indicatorForm.custom_fields,
+      custom_fields: {
+        ...indicatorForm.custom_fields,
+        ...(indicatorForm.target_fields.some((f) => f.label.trim())
+          ? { [TARGET_FIELDS_KEY]: indicatorForm.target_fields.filter((f) => f.label.trim()) }
+          : {}),
+      },
     }
     if (indicatorModal.editing) {
       await logframeApi.updateIndicator(projectId, indicatorModal.id, payload)
