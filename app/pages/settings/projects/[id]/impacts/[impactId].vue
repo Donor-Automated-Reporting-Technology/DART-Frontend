@@ -223,13 +223,17 @@ const activities = ref<any[]>([])
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 
-const breadcrumbs = computed(() => [
-  { title: 'Settings', href: '/settings' },
-  { title: 'Projects', href: '/settings/projects' },
-  { title: project.value?.project_name ?? 'Project', href: `/settings/projects/${projectId}` },
-  { title: 'Logframe', href: `/settings/projects/${projectId}/logframe` },
-  { title: impact.value?.title ?? 'Impact', href: `/settings/projects/${projectId}/impacts/${impactId}`, current: true },
-])
+const breadcrumbs = computed(() => {
+  let impactTitle = impact.value?.title ?? 'Impact'
+  if (impactTitle.length > 30) impactTitle = impactTitle.substring(0, 30) + '…'
+  return [
+    { title: 'Settings', href: '/settings' },
+    { title: 'Projects', href: '/settings/projects' },
+    { title: project.value?.project_name ?? 'Project', href: `/settings/projects/${projectId}` },
+    { title: 'Logframe', href: `/settings/projects/${projectId}/logframe` },
+    { title: impactTitle, href: `/settings/projects/${projectId}/impacts/${impactId}`, current: true },
+  ]
+})
 
 const hasIndicator = computed(() => !!indicator.value)
 const linkedIds = computed(() => new Set(indicator.value?.activity_ids ?? []))
