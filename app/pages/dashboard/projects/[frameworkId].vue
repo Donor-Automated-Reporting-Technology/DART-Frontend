@@ -102,69 +102,30 @@
           </div>
         </div>
 
-        <!-- Girls: actual / target -->
-        <div class="bento-item metric-card metric-card--reach metric-card--girls-accent">
+        <!-- Dynamic reach cards: one per disaggregation value declared by the project's logframe -->
+        <div
+          v-for="metric in disaggregationMetrics"
+          :key="metric.dimension + ':' + metric.key"
+          class="bento-item metric-card metric-card--reach"
+          :class="accentCardClass(metric.key)"
+        >
           <div class="metric-card-head">
-            <span class="metric-label">Girls</span>
-            <span class="metric-pct-pill">{{ girlsPct }}%</span>
+            <span class="metric-label">{{ metric.label }}</span>
+            <span class="metric-pct-pill">{{ metric.percentage }}%</span>
           </div>
           <div class="metric-target-row">
             <div class="metric-target-block">
-              <span class="target-number target-number--girls">{{ summary.girls }}</span>
+              <span class="target-number" :class="accentNumberClass(metric.key)">{{ metric.actual }}</span>
               <span class="target-caption">Enrolled</span>
             </div>
             <span class="target-slash">/</span>
             <div class="metric-target-block">
-              <span class="target-number target-number--muted">{{ summary.target_breakdown.girls }}</span>
+              <span class="target-number target-number--muted">{{ metric.target }}</span>
               <span class="target-caption">Target</span>
             </div>
           </div>
-          <div class="metric-bar metric-bar--girls">
-            <div class="metric-bar-fill metric-bar-fill--girls" :style="{ width: Math.min(girlsPct, 100) + '%' }"></div>
-          </div>
-        </div>
-
-        <!-- Boys: actual / target -->
-        <div class="bento-item metric-card metric-card--reach metric-card--boys-accent">
-          <div class="metric-card-head">
-            <span class="metric-label">Boys</span>
-            <span class="metric-pct-pill">{{ boysPct }}%</span>
-          </div>
-          <div class="metric-target-row">
-            <div class="metric-target-block">
-              <span class="target-number target-number--boys">{{ summary.boys }}</span>
-              <span class="target-caption">Enrolled</span>
-            </div>
-            <span class="target-slash">/</span>
-            <div class="metric-target-block">
-              <span class="target-number target-number--muted">{{ summary.target_breakdown.boys }}</span>
-              <span class="target-caption">Target</span>
-            </div>
-          </div>
-          <div class="metric-bar metric-bar--boys">
-            <div class="metric-bar-fill metric-bar-fill--boys" :style="{ width: Math.min(boysPct, 100) + '%' }"></div>
-          </div>
-        </div>
-
-        <!-- Disability: actual / target -->
-        <div class="bento-item metric-card metric-card--reach metric-card--disability-accent">
-          <div class="metric-card-head">
-            <span class="metric-label">With Disability</span>
-            <span class="metric-pct-pill">{{ disabilityPct }}%</span>
-          </div>
-          <div class="metric-target-row">
-            <div class="metric-target-block">
-              <span class="target-number target-number--disability">{{ summary.with_disability }}</span>
-              <span class="target-caption">Enrolled</span>
-            </div>
-            <span class="target-slash">/</span>
-            <div class="metric-target-block">
-              <span class="target-number target-number--muted">{{ disabilityTarget }}</span>
-              <span class="target-caption">Target</span>
-            </div>
-          </div>
-          <div class="metric-bar metric-bar--disability">
-            <div class="metric-bar-fill metric-bar-fill--disability" :style="{ width: Math.min(disabilityPct, 100) + '%' }"></div>
+          <div class="metric-bar">
+            <div class="metric-bar-fill" :class="accentFillClass(metric.key)" :style="{ width: Math.min(metric.percentage, 100) + '%' }"></div>
           </div>
         </div>
       </div>
@@ -191,7 +152,7 @@
             v-for="a in sortedActivities"
             :key="a.id"
             class="activity-card"
-            @click="navigateToActivity(a.id)"
+            @click="navigateToActivity(a)"
           >
             <!-- Top: name + arrow -->
             <div class="activity-card-top">
@@ -250,6 +211,7 @@
 import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProjectDetail } from '../../../composables/useProjectDetail'
+import { activityDashboardRoute } from '../../../utils/activityConfig'
 import DashboardBreadcrumb from '../../../components/dashboard/DashboardBreadcrumb.vue'
 import AppIcon from '../../../components/interfaces/AppIcon.vue'
 
@@ -262,6 +224,7 @@ const {
   error,
   project,
   summary,
+  disaggregations,
   activities,
   hasData,
   sortedActivities,
@@ -278,24 +241,45 @@ const breadcrumbs = computed(() => [
   { title: project.value.project_name || 'Project', href: route.fullPath, current: true },
 ])
 
-const disabilityTarget = computed(() =>
-  summary.value.target_breakdown.girls_with_disability + summary.value.target_breakdown.boys_with_disability,
+// Flatten the project's dynamic target structure into one card per value
+// (e.g. gender → female/male, disability → with/without disability).
+const disaggregationMetrics = computed(() =>
+  disaggregations.value.flatMap(group =>
+    group.values.map(value => ({
+      ...value,
+      dimension: group.dimension,
+    })),
+  ),
 )
 
-const girlsPct = computed(() => {
-  const t = summary.value.target_breakdown.girls
-  return t ? Math.min(Math.round((summary.value.girls / t) * 100), 100) : 0
-})
+// Accent styling is keyed off the well-known values so the familiar
+// girls/boys/disability colours still apply; unknown values stay neutral.
+function accentCardClass(key: string): string {
+  switch (key) {
+    case 'female': return 'metric-card--girls-accent'
+    case 'male': return 'metric-card--boys-accent'
+    case 'with_disability': return 'metric-card--disability-accent'
+    default: return ''
+  }
+}
 
-const boysPct = computed(() => {
-  const t = summary.value.target_breakdown.boys
-  return t ? Math.min(Math.round((summary.value.boys / t) * 100), 100) : 0
-})
+function accentNumberClass(key: string): string {
+  switch (key) {
+    case 'female': return 'target-number--girls'
+    case 'male': return 'target-number--boys'
+    case 'with_disability': return 'target-number--disability'
+    default: return ''
+  }
+}
 
-const disabilityPct = computed(() => {
-  const t = disabilityTarget.value
-  return t ? Math.min(Math.round((summary.value.with_disability / t) * 100), 100) : 0
-})
+function accentFillClass(key: string): string {
+  switch (key) {
+    case 'female': return 'metric-bar-fill--girls'
+    case 'male': return 'metric-bar-fill--boys'
+    case 'with_disability': return 'metric-bar-fill--disability'
+    default: return ''
+  }
+}
 
 function pctColor(pct: number): string {
   if (pct >= 80) return 'clr-green'
@@ -303,8 +287,9 @@ function pctColor(pct: number): string {
   return 'clr-red'
 }
 
-function navigateToActivity(id: string) {
-  router.push(`/dashboard/activities/${id}`)
+/** Open the activity dashboard for the module that owns the activity. */
+function navigateToActivity(activity: { id: string; module?: string | null }) {
+  router.push(activityDashboardRoute(activity.module, activity.id))
 }
 
 onMounted(() => fetchProjectDetail(frameworkId))
@@ -632,6 +617,9 @@ onMounted(() => fetchProjectDetail(frameworkId))
 .metric-bar-fill {
   height: 100%;
   border-radius: 3px;
+  /* Default for disaggregation values with no specific accent key */
+  background: var(--text-muted, #AEAEB2);
+  opacity: 0.5;
   transition: width 0.5s ease;
 }
 .metric-bar-fill--girls { background: var(--data-teal); opacity: 0.7; }

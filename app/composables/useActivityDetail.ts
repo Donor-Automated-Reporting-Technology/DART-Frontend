@@ -41,6 +41,9 @@ export const useActivityDetail = () => {
   const isLoading = ref(true)
   const error = ref<string | null>(null)
   const patternType = ref('')
+  // Resolved platform module (e.g. "pss") whose data structure this response
+  // follows. Drives which sections the activity dashboard renders.
+  const module = ref('')
 
   const activity = ref<ActivityInfo>({
     id: '',
@@ -107,6 +110,7 @@ export const useActivityDetail = () => {
     try {
       const data = await apiFetch<ActivityDetailResponse>(`/dashboard/activities/${frameworkActivityId}`)
       patternType.value = data.pattern_type ?? ''
+      module.value = (data.module ?? data.activity?.module ?? '').toLowerCase()
       activity.value = data.activity
       summary.value = data.summary
       attendance.value = data.attendance
@@ -124,6 +128,7 @@ export const useActivityDetail = () => {
     isLoading,
     error,
     patternType,
+    module,
     activity,
     summary,
     attendance,

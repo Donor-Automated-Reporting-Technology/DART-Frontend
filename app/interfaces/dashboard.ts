@@ -14,14 +14,41 @@ export interface TargetBreakdown {
   boys_with_disability: number;
 }
 
+/**
+ * One value cell of a disaggregation dimension, e.g. the "Girls / Women"
+ * row of the gender dimension.
+ */
+export interface TargetMetric {
+  key: string;
+  label: string;
+  target: number;
+  actual: number;
+  percentage: number;
+}
+
+/**
+ * One dimension of a project's target structure, as declared by the project's
+ * logframe (gender, disability, age_group, other). The dashboard renders
+ * whatever dimensions/values the project actually targets rather than a fixed
+ * girls/boys/disability layout.
+ */
+export interface TargetDisaggregation {
+  dimension: string;
+  label: string;
+  target: number;
+  actual: number;
+  percentage: number;
+  values: TargetMetric[];
+}
+
 // ─── Level 1: Org Overview — GET /api/v1/dashboard ────────────────────────────
 
+// Targets are deliberately absent from the org summary: they are driven per
+// project from that project's logframe, so there is no organisation-wide target.
 export interface OrgSummary {
   total_projects: number;
   total_active_locations: number;
   total_unique_beneficiaries: number;
-  overall_target: number;
-  target_breakdown: TargetBreakdown;
 }
 
 export interface DashboardProject {
@@ -86,7 +113,9 @@ export interface ProjectSummary {
   active_locations: number;
   total_locations: number;
   total_service_points: number;
-  target_breakdown: TargetBreakdown;
+  /** Dimension-agnostic project totals for the overall progress ring. */
+  total_target: number;
+  total_actual: number;
 }
 
 export interface ProjectActivity {
@@ -94,6 +123,8 @@ export interface ProjectActivity {
   name: string;
   code: string;
   pattern_type: string;
+  /** Platform module owning the activity (e.g. "pss"); drives which activity dashboard opens. */
+  module?: string | null;
   target_count: number;
   target_unit: string;
   target_breakdown: TargetBreakdown;
@@ -105,6 +136,8 @@ export interface ProjectActivity {
 export interface ProjectDetailResponse {
   project: ProjectInfo;
   summary: ProjectSummary;
+  /** Dynamic target/actual structure derived from the project's logframe. */
+  disaggregations: TargetDisaggregation[];
   activities: ProjectActivity[];
 }
 
@@ -116,6 +149,8 @@ export interface ActivityInfo {
   code: string;
   target_count: number;
   target_unit: string;
+  /** Resolved platform module (e.g. "pss") whose data structure this response follows. */
+  module?: string;
 }
 
 export interface ActivityDetailSummary {
@@ -171,6 +206,8 @@ export interface ActivitySession {
 
 export interface ActivityDetailResponse {
   pattern_type: string;
+  /** Resolved platform module (e.g. "pss"); empty for activities with no module yet. */
+  module?: string;
   activity: ActivityInfo;
   summary: ActivityDetailSummary;
   attendance: AttendanceOverview;

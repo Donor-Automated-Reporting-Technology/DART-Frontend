@@ -11,6 +11,7 @@ import type {
   ProjectInfo,
   ProjectSummary,
   ProjectActivity,
+  TargetDisaggregation,
   ProjectDetailResponse,
 } from '../interfaces/dashboard'
 
@@ -56,8 +57,12 @@ export const useProjectDetail = () => {
     active_locations: 0,
     total_locations: 0,
     total_service_points: 0,
-    target_breakdown: { girls: 0, boys: 0, girls_with_disability: 0, boys_with_disability: 0 },
+    total_target: 0,
+    total_actual: 0,
   })
+
+  // Dynamic target/actual structure derived from the project's logframe.
+  const disaggregations = ref<TargetDisaggregation[]>([])
 
   const activities = ref<ProjectActivity[]>([])
 
@@ -73,10 +78,9 @@ export const useProjectDetail = () => {
   const activeCount = computed(() => activities.value.filter(a => a.is_active).length)
 
   const overallProgress = computed(() => {
-    const tb = summary.value.target_breakdown
-    const totalTarget = tb.girls + tb.boys
+    const totalTarget = summary.value.total_target
     if (!totalTarget) return 0
-    return Math.min(Math.round((summary.value.unique_beneficiaries / totalTarget) * 100), 100)
+    return Math.min(Math.round(((summary.value.total_actual || summary.value.unique_beneficiaries) / totalTarget) * 100), 100)
   })
 
   // ── Formatters ─────────────────────────────────────────────────────────────
@@ -102,6 +106,7 @@ export const useProjectDetail = () => {
       const data = await apiFetch<ProjectDetailResponse>(`/dashboard/projects/${frameworkId}`)
       project.value = data.project
       summary.value = data.summary
+      disaggregations.value = data.disaggregations ?? []
       activities.value = data.activities ?? []
     } catch (e: any) {
       error.value = e?.message ?? 'Failed to load project detail'
@@ -115,6 +120,7 @@ export const useProjectDetail = () => {
     error,
     project,
     summary,
+    disaggregations,
     activities,
     hasData,
     sortedActivities,

@@ -31,6 +31,7 @@
             <div class="activity-header-chips">
               <span class="chip">{{ activity.code }}</span>
               <span class="chip">{{ formatPattern(patternType) }}</span>
+              <span v-if="module" class="chip">{{ module.toUpperCase() }} module</span>
               <span class="chip">Target: {{ activity.target_count }} {{ activity.target_unit }}</span>
             </div>
           </div>
@@ -317,7 +318,6 @@
 import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useActivityDetail } from '../../../composables/useActivityDetail'
-import { isPssActivityCode } from '../../../utils/activityConfig'
 import DashboardBreadcrumb from '../../../components/dashboard/DashboardBreadcrumb.vue'
 import AppIcon from '../../../components/interfaces/AppIcon.vue'
 
@@ -329,6 +329,7 @@ const {
   isLoading,
   error,
   patternType,
+  module,
   activity,
   summary,
   attendance,
@@ -352,8 +353,11 @@ function isPssSession(s: any): boolean {
     (s.time_period !== undefined && s.time_period !== null)
 }
 
+// The activity's platform module decides the data structure: PSS activities
+// always render the PSS session columns. Fall back to sniffing the rows for
+// sources that predate the module tag.
 const hasPssRows = computed(() => {
-  if (isPssActivityCode(activity.value.code)) return true
+  if (module.value === 'pss') return true
   return sortedSessions.value.some(isPssSession)
 })
 

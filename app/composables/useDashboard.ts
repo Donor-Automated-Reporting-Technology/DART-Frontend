@@ -50,8 +50,6 @@ export const useDashboard = () => {
     total_projects: 0,
     total_active_locations: 0,
     total_unique_beneficiaries: 0,
-    overall_target: 0,
-    target_breakdown: { girls: 0, boys: 0, girls_with_disability: 0, boys_with_disability: 0 },
   })
 
   const projects = ref<DashboardProject[]>([])

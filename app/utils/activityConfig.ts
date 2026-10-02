@@ -143,6 +143,29 @@ export const FUTURE_ACTIVITIES: Record<string, ActivityConfigEntry> = {
   },
 }
 
+/**
+ * Maps a platform module to the dashboard route that renders its activity
+ * view. The module-aware activity dashboard is the default; future modules can
+ * point at a bespoke dashboard by adding an entry here (e.g.
+ * `pss: '/dashboard/activities/pss'`). This is what makes clicking an activity
+ * on the project dashboard open the view for the module that owns it.
+ */
+export const ACTIVITY_MODULE_DASHBOARD_BASE: Record<string, string> = {
+  pss: '/dashboard/activities',
+}
+
+/**
+ * Resolves the dashboard route for an activity from its platform module.
+ * Falls back to the generic activity dashboard when the module is unknown.
+ */
+export function activityDashboardRoute(
+  module: string | null | undefined,
+  frameworkActivityId: string,
+): string {
+  const base = ACTIVITY_MODULE_DASHBOARD_BASE[(module || '').toLowerCase()] ?? '/dashboard/activities'
+  return `${base}/${frameworkActivityId}`
+}
+
 /** Get the config for an activity code, or undefined if unknown */
 export function getActivityConfig(code: string): ActivityConfigEntry | undefined {
   return ACTIVITY_CONFIG[code]

@@ -238,20 +238,21 @@
                 <span class="metric-big">{{ orgSummary.total_unique_beneficiaries }}</span>
                 <span class="metric-label">Total Unique Beneficiaries</span>
               </div>
+              <!-- Reach split (targets are per project now, so show actuals) -->
               <div class="metric-splits-modern">
                 <div class="split-card split-card--girls">
                   <div class="split-card-dot"></div>
-                  <span class="split-card-value">{{ orgSummary.target_breakdown.girls }}</span>
-                  <span class="split-card-label">Girls Target</span>
+                  <span class="split-card-value">{{ beneficiaryReach.girls_women.actual }}</span>
+                  <span class="split-card-label">Girls &amp; Women</span>
                 </div>
                 <div class="split-card split-card--boys">
                   <div class="split-card-dot split-card-dot--alt"></div>
-                  <span class="split-card-value">{{ orgSummary.target_breakdown.boys }}</span>
-                  <span class="split-card-label">Boys Target</span>
+                  <span class="split-card-value">{{ beneficiaryReach.boys_men.actual }}</span>
+                  <span class="split-card-label">Boys &amp; Men</span>
                 </div>
                 <div class="split-card split-card--disability">
                   <div class="split-card-dot split-card-dot--muted"></div>
-                  <span class="split-card-value">{{ orgSummary.target_breakdown.girls_with_disability + orgSummary.target_breakdown.boys_with_disability }}</span>
+                  <span class="split-card-value">{{ beneficiaryReach.with_disability.actual }}</span>
                   <span class="split-card-label">With Disability</span>
                 </div>
               </div>
@@ -450,7 +451,7 @@
                 </svg>
                 <span class="ring-label">{{ overallPct }}%</span>
               </div>
-              <span class="overall-sub">{{ orgSummary.total_unique_beneficiaries }} of {{ orgSummary.overall_target }} target beneficiaries</span>
+              <span class="overall-sub">{{ beneficiaryReach.total.actual }} of {{ beneficiaryReach.total.target }} target beneficiaries</span>
             </div>
           </div>
 
@@ -518,13 +519,7 @@ const reachMetrics = computed(() => {
   ]
 })
 
-const overallPct = computed(() => {
-  if (!orgSummary.value.overall_target) return 0
-  return Math.min(
-    Math.round((orgSummary.value.total_unique_beneficiaries / orgSummary.value.overall_target) * 100),
-    100,
-  )
-})
+const overallPct = computed(() => Math.min(beneficiaryReach.value.total.percentage, 100))
 
 function formatType(type: string): string {
   return type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
