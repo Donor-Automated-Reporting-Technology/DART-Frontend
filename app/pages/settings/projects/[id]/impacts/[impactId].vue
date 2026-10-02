@@ -82,10 +82,16 @@
             </div>
           </div>
 
+          <TargetFieldsEditor
+            v-model="form.target_fields"
+            label="Target fields"
+            hint="Add as many fields as you need — e.g. Girls, Boys, Persons with disability — each with its own value type and unit."
+          />
+
           <CustomFieldsEditor
             v-model="form.custom_fields"
-            label="Custom fields"
-            hint="Add any extra input field (e.g. target year 2, target year 3, responsible party)."
+            label="Other custom fields"
+            hint="Any extra key/value data not covered above."
           />
 
           <div v-if="saveError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ saveError }}</div>
@@ -142,11 +148,13 @@ import { logframeApi } from '../../../../../services/logframeApi'
 import { ApiError } from '../../../../../services/api'
 import { useAuthStore } from '../../../../../stores/auth'
 import type { Framework } from '../../../../../interfaces/framework'
-import type {
-  CustomFields,
-  LogframeIndicator,
-  LogframeIndicatorRequest,
-  LogframeLevel,
+import {
+  TARGET_FIELDS_KEY,
+  type CustomFields,
+  type LogframeIndicator,
+  type LogframeIndicatorRequest,
+  type LogframeLevel,
+  type LogframeTargetField,
 } from '../../../../../interfaces/logframe'
 
 definePageMeta({
@@ -202,6 +210,7 @@ const form = reactive({
   target_year: null as number | null,
   baseline_value: null as number | null,
   baseline_year: null as number | null,
+  target_fields: [] as LogframeTargetField[],
   custom_fields: {} as CustomFields,
 })
 
@@ -219,7 +228,19 @@ function seedForm() {
   form.target_year = ind?.target_year ?? null
   form.baseline_value = ind?.baseline_value ?? null
   form.baseline_year = ind?.baseline_year ?? null
-  form.custom_fields = { ...(ind?.custom_fields ?? {}) }
+
+  // Target fields are persisted inside custom_fields under a reserved key but
+  // edited separately, so split them out when seeding the form.
+  const custom = { ...(ind?.custom_fields ?? {}) }
+  const stored = custom[TARGET_FIELDS_KEY]
+  form.target_fields = Array.isArray(stored) ? (stored as LogframeTargetField[]) : []
+  delete custom[TARGET_FIELDS_KEY]
+  form.custom_fields = custom
+}
+
+/** Target fields with a name, merged back into custom_fields on save. */
+function cleanTargetFields(): LogframeTargetField[] {
+  return form.target_fields.filter((f) => f.label.trim() !== '')
 }
 
 async function fetchAll() {
@@ -246,6 +267,7 @@ async function fetchAll() {
 
 function buildPayload(): LogframeIndicatorRequest {
   const ind = indicator.value
+  const targetFields = cleanTargetFields()
   return {
     level_id: impactId,
     code: form.code.trim() || null,
@@ -263,7 +285,10 @@ function buildPayload(): LogframeIndicatorRequest {
     data_source: ind?.data_source ?? null,
     external_links: ind?.external_links ?? [],
     sort_order: ind?.sort_order ?? 0,
-    custom_fields: form.custom_fields,
+    custom_fields: {
+      ...form.custom_fields,
+      ...(targetFields.length ? { [TARGET_FIELDS_KEY]: targetFields } : {}),
+    },
   }
 }
 

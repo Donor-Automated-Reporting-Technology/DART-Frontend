@@ -16,6 +16,26 @@ export type LogframeDisaggregation = 'age_group' | 'gender' | 'disability' | 'ot
 /** Free-form custom fields — arbitrary user-defined key/value pairs (JSONB). */
 export type CustomFields = Record<string, unknown>
 
+/** Value kind a user-defined target field holds. */
+export type TargetFieldType = 'number' | 'decimal' | 'percent' | 'text' | 'date' | 'boolean'
+
+/**
+ * A user-defined field under an indicator's target (e.g. Girls, Boys).
+ * Stored inside the indicator's `custom_fields` under the `target_fields` key.
+ */
+export interface LogframeTargetField {
+  /** Field name shown to the user, e.g. "Girls". */
+  label: string
+  /** Value kind, driving the input rendered for the field. */
+  type: TargetFieldType
+  value: string | number | boolean | null
+  /** Optional unit, e.g. persons, %. */
+  unit?: string
+}
+
+/** Key used inside `custom_fields` to persist the target field list. */
+export const TARGET_FIELDS_KEY = 'target_fields'
+
 /** External reference link attached to an indicator. */
 export interface LogframeLink {
   label: string
