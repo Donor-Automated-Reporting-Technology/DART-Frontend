@@ -152,100 +152,7 @@
             </button>
           </div>
 
-          <!-- Hierarchy tree -->
-          <div class="section-label">Hierarchy</div>
-          <p class="section-hint">Goal → outcome → result → activity. Each level can carry indicators.</p>
 
-          <div v-if="!flatLevels.length" class="empty-inline">
-            No hierarchy levels yet — add a goal to start building the theory of change.
-          </div>
-
-          <div v-for="node in flatLevels" :key="node.level.id" class="level-node" :style="{ marginLeft: `${node.depth * 28}px` }">
-            <div class="level-card" :class="`level-card--${node.level.level_type}`">
-              <div class="level-head">
-                <span class="level-badge">{{ node.level.level_type }}</span>
-                <span class="level-title">{{ node.level.title }}</span>
-                <div class="level-actions" v-if="canManage">
-                  <button class="icon-btn" title="Add indicator" @click="openIndicatorModal(node.level)">
-                    <AppIcon name="plus" :size="13" />
-                  </button>
-                  <button class="icon-btn" title="Add child level" @click="openLevelModal(node.level)">
-                    <AppIcon name="user-plus" :size="13" />
-                  </button>
-                  <button class="icon-btn" title="Edit level" @click="openLevelModal(null, node.level)">
-                    <AppIcon name="pencil" :size="13" />
-                  </button>
-                  <button class="icon-btn icon-btn--danger" title="Delete level" @click="requestDeleteLevel(node.level)">
-                    <AppIcon name="trash" :size="13" />
-                  </button>
-                </div>
-              </div>
-
-              <!-- Indicators on this level -->
-              <div v-if="indicatorsByLevel.get(node.level.id)?.length" class="indicator-list">
-                <div v-for="ind in indicatorsByLevel.get(node.level.id)" :key="ind.id" class="indicator-card">
-                  <div class="indicator-head">
-                    <span v-if="ind.code" class="indicator-code">{{ ind.code }}</span>
-                    <span class="indicator-title">{{ ind.indicator }}</span>
-                    <div class="level-actions" v-if="canManage">
-                      <button class="icon-btn" title="Link activity" @click="openLinkModal(ind)">
-                        <AppIcon name="tag" :size="13" />
-                      </button>
-                      <button class="icon-btn" title="Edit indicator" @click="openIndicatorModal(node.level, ind)">
-                        <AppIcon name="pencil" :size="13" />
-                      </button>
-                      <button class="icon-btn icon-btn--danger" title="Delete indicator" @click="requestDeleteIndicator(ind)">
-                        <AppIcon name="trash" :size="13" />
-                      </button>
-                    </div>
-                  </div>
-                  <p v-if="ind.definition" class="indicator-def">{{ ind.definition }}</p>
-                  <div class="indicator-meta">
-                    <span v-if="ind.unit" class="tag">{{ ind.unit }}</span>
-                    <span v-if="ind.baseline_value !== null && ind.baseline_value !== undefined" class="tag tag--baseline">
-                      baseline {{ ind.baseline_value }}{{ ind.baseline_year ? ` (${ind.baseline_year})` : '' }}
-                    </span>
-                    <span v-if="ind.target_value !== null && ind.target_value !== undefined" class="tag tag--target">
-                      target {{ ind.target_value }}{{ ind.target_year ? ` (${ind.target_year})` : '' }}
-                    </span>
-                    <span v-for="d in ind.disaggregation" :key="d" class="tag tag--disagg">{{ disaggregationLabel(d) }}</span>
-                  </div>
-                  <div v-if="ind.means_of_verification" class="indicator-mov">
-                    <strong>Means of verification:</strong> {{ ind.means_of_verification }}
-                  </div>
-                  <div v-if="ind.assumptions" class="indicator-mov">
-                    <strong>Assumptions:</strong> {{ ind.assumptions }}
-                  </div>
-                  <div v-if="ind.data_source" class="indicator-mov">
-                    <strong>Data source:</strong> {{ ind.data_source }}
-                  </div>
-                  <!-- Linked activities -->
-                  <div v-if="ind.activity_ids.length" class="linked-activities">
-                    <span class="linked-label"><AppIcon name="activity" :size="12" /> Activities:</span>
-                    <span v-for="actId in ind.activity_ids" :key="actId" class="linked-chip">
-                      {{ activityName(actId) }}
-                      <button v-if="canManage" class="chip-x" title="Unlink activity" @click="unlinkActivity(ind, actId)"><AppIcon name="x" :size="10" /></button>
-                    </span>
-                  </div>
-                  <div v-if="ind.external_links.length" class="linked-activities">
-                    <span class="linked-label"><AppIcon name="file-text" :size="12" /> References:</span>
-                    <a v-for="(l, i) in ind.external_links" :key="i" :href="l.url" target="_blank" rel="noopener" class="linked-chip linked-chip--link">
-                      {{ l.label }}
-                    </a>
-                  </div>
-                </div>
-              </div>
-              <div v-else class="level-empty">No indicators on this level.</div>
-            </div>
-          </div>
-
-          <div class="actions tree-actions" v-if="canManage">
-            <button class="btn-secondary" @click="openLevelModal(null)">
-              <AppIcon name="plus" :size="14" /> Add goal
-            </button>
-          </div>
-
-          <div v-if="treeError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ treeError }}</div>
         </template>
       </template>
 
@@ -294,47 +201,7 @@
         </div>
       </div>
 
-      <!-- ═══ Level create/edit modal ═══ -->
-      <div v-if="levelModal.open" class="modal-overlay" @click.self="levelModal.open = false">
-        <div class="modal">
-          <div class="modal-head">
-            <h3>{{ levelModal.editing ? 'Edit level' : 'Add level' }}</h3>
-            <button class="icon-btn" @click="levelModal.open = false"><AppIcon name="x" :size="15" /></button>
-          </div>
-          <form class="modal-form" @submit.prevent="saveLevel">
-            <div class="field">
-              <label class="field-label" for="lfm-type">Level type *</label>
-              <select id="lfm-type" v-model="levelForm.level_type" class="field-input" :disabled="!!levelModal.editing">
-                <option value="goal">Goal</option>
-                <option value="impact">Impact</option>
-                <option value="outcome">Outcome</option>
-                <option value="result">Result</option>
-                <option value="activity">Activity</option>
-              </select>
-            </div>
-            <div class="field">
-              <label class="field-label" for="lfm-title">Title *</label>
-              <input id="lfm-title" v-model="levelForm.title" type="text" class="field-input" placeholder="e.g. Children in supported CFS show improved wellbeing" />
-            </div>
-            <div class="field">
-              <label class="field-label" for="lfm-parent">Parent level</label>
-              <select id="lfm-parent" v-model="levelForm.parent_id" class="field-input">
-                <option :value="null">— none (top level) —</option>
-                <option v-for="p in validParents" :key="p.id" :value="p.id">
-                  {{ p.level_type }}: {{ p.title }}
-                </option>
-              </select>
-              <span class="field-hint">Parents must sit above the chosen level type in the hierarchy.</span>
-            </div>
-            <CustomFieldsEditor v-model="levelForm.custom_fields" label="Custom fields" hint="Add your own level fields." />
-            <div v-if="levelError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ levelError }}</div>
-            <div class="actions">
-              <button type="button" class="btn-ghost" @click="levelModal.open = false">Cancel</button>
-              <button type="submit" class="btn-primary" :disabled="levelSaving"><span v-if="levelSaving" class="btn-spinner" /> {{ levelModal.editing ? 'Save' : 'Add level' }}</button>
-            </div>
-          </form>
-        </div>
-      </div>
+
 
       <!-- ═══ Indicator create/edit modal ═══ -->
       <div v-if="indicatorModal.open" class="modal-overlay" @click.self="indicatorModal.open = false">
@@ -347,7 +214,7 @@
             <div class="field">
               <label class="field-label" for="lfi-level">Level *</label>
               <select id="lfi-level" v-model="indicatorForm.level_id" class="field-input" :disabled="!!indicatorModal.editing">
-                <option v-for="l in flatLevels.map((n) => n.level)" :key="l.id" :value="l.id">
+                <option v-for="l in impacts" :key="l.id" :value="l.id">
                   {{ l.level_type }}: {{ l.title }}
                 </option>
               </select>
@@ -512,8 +379,6 @@ const frameworkActivities = ref<any[]>([])
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 const templatesLoading = ref(false)
-/** Errors from tree-level actions that happen outside modals (e.g. delete 409s). */
-const treeError = ref('')
 
 const breadcrumbs = computed(() => [
   { title: 'Settings', href: '/settings' },
@@ -560,48 +425,6 @@ async function saveImpact() {
     impactSaving.value = false
   }
 }
-
-/** Flatten the level tree into a depth-annotated list (sorted by sort_order). */
-const flatLevels = computed(() => {
-  const byParent = new Map<string | null, LogframeLevel[]>()
-  for (const l of levels.value) {
-    const key = l.parent_id ?? null
-    if (!byParent.has(key)) byParent.set(key, [])
-    byParent.get(key)!.push(l)
-  }
-  const out: { level: LogframeLevel; depth: number; hasChildren: boolean }[] = []
-  const walk = (parentId: string | null, depth: number) => {
-    const children = (byParent.get(parentId) ?? []).slice().sort((a, b) => a.sort_order - b.sort_order)
-    for (const l of children) {
-      out.push({ level: l, depth, hasChildren: (byParent.get(l.id) ?? []).length > 0 })
-      walk(l.id, depth + 1)
-    }
-  }
-  walk(null, 0)
-  return out
-})
-
-/** Indicators grouped by their level ID, sorted by sort_order. */
-const indicatorsByLevel = computed(() => {
-  const map = new Map<string, LogframeIndicator[]>()
-  for (const ind of indicators.value) {
-    if (!map.has(ind.level_id)) map.set(ind.level_id, [])
-    map.get(ind.level_id)!.push(ind)
-  }
-  for (const list of map.values()) list.sort((a, b) => a.sort_order - b.sort_order)
-  return map
-})
-
-/** Hierarchy order for parent validation. */
-const LEVEL_RANK: Record<LogframeLevelType, number> = { goal: 0, impact: 1, outcome: 2, result: 3, activity: 4 }
-
-/** Valid parents for the level type currently chosen in the level modal. */
-const validParents = computed(() => {
-  const maxRank = LEVEL_RANK[levelForm.level_type] ?? 0
-  return levels.value
-    .filter((l) => (LEVEL_RANK[l.level_type] ?? -1) < maxRank)
-    .sort((a, b) => (LEVEL_RANK[a.level_type] ?? 0) - (LEVEL_RANK[b.level_type] ?? 0) || a.sort_order - b.sort_order)
-})
 
 /** Activity ID → display name. */
 const activityNames = computed(() => {
@@ -748,88 +571,7 @@ async function importTemplate(t: LogframeTemplateInfo) {
   }
 }
 
-// ─── Levels ───
-
-const levelModal = reactive({ open: false, editing: false, id: '' })
-const levelForm = reactive({ level_type: 'goal' as LogframeLevelType, title: '', parent_id: null as string | null, custom_fields: {} as CustomFields })
-const levelSaving = ref(false)
-const levelError = ref('')
-
-function openLevelModal(parent: LogframeLevel | null, editing: LogframeLevel | null = null) {
-  levelError.value = ''
-  if (editing) {
-    levelModal.open = true
-    levelModal.editing = true
-    levelModal.id = editing.id
-    levelForm.level_type = editing.level_type
-    levelForm.title = editing.title
-    levelForm.parent_id = editing.parent_id ?? null
-    levelForm.custom_fields = { ...(editing.custom_fields ?? {}) }
-  } else {
-    levelModal.open = true
-    levelModal.editing = false
-    levelModal.id = ''
-    // Default child type: one step below the parent's type
-    const CHILD_TYPES: LogframeLevelType[] = ['goal', 'impact', 'outcome', 'result', 'activity']
-    levelForm.level_type = parent
-      ? (CHILD_TYPES[(LEVEL_RANK[parent.level_type] ?? 0) + 1] ?? 'activity')
-      : 'goal'
-    levelForm.title = ''
-    levelForm.parent_id = parent?.id ?? null
-    levelForm.custom_fields = {}
-  }
-}
-
-async function saveLevel() {
-  levelError.value = ''
-  if (!levelForm.title.trim()) { levelError.value = 'Level title is required'; return }
-  levelSaving.value = true
-  try {
-    if (levelModal.editing) {
-      await logframeApi.updateLevel(projectId, levelModal.id, {
-        level_type: levelForm.level_type,
-        title: levelForm.title.trim(),
-        parent_id: levelForm.parent_id,
-        custom_fields: levelForm.custom_fields,
-      })
-    } else {
-      await logframeApi.createLevel(projectId, {
-        level_type: levelForm.level_type,
-        title: levelForm.title.trim(),
-        parent_id: levelForm.parent_id,
-        custom_fields: levelForm.custom_fields,
-      })
-    }
-    levelModal.open = false
-    await fetchAll()
-  } catch (e: any) {
-    levelError.value = e instanceof ApiError ? e.message : (e?.message ?? 'Failed to save level')
-  } finally {
-    levelSaving.value = false
-  }
-}
-
-/** Level pending a two-step delete confirmation. */
-const confirmLevelId = ref<string | null>(null)
-
-function requestDeleteLevel(level: LogframeLevel) {
-  if (confirmLevelId.value === level.id) {
-    deleteLevel(level)
-  } else {
-    confirmLevelId.value = level.id
-    setTimeout(() => { if (confirmLevelId.value === level.id) confirmLevelId.value = null }, 3000)
-  }
-}
-
-async function deleteLevel(level: LogframeLevel) {
-  confirmLevelId.value = null
-  try {
-    await logframeApi.deleteLevel(projectId, level.id)
-    await fetchAll()
-  } catch (e: any) {
-    treeError.value = e instanceof ApiError ? e.message : (e?.message ?? 'Failed to delete level')
-  }
-}
+// ─── Levels (managed via impact detail pages only) ───
 
 // ─── Indicators ───
 
@@ -971,7 +713,7 @@ async function deleteIndicator(ind: LogframeIndicator) {
     await logframeApi.deleteIndicator(projectId, ind.id)
     await fetchAll()
   } catch (e: any) {
-    treeError.value = e instanceof ApiError ? e.message : (e?.message ?? 'Failed to delete indicator')
+    loadError.value = e instanceof ApiError ? e.message : (e?.message ?? 'Failed to delete indicator')
   }
 }
 
@@ -1021,7 +763,7 @@ async function unlinkActivity(ind: LogframeIndicator, activityId: string) {
     await logframeApi.unlinkActivity(projectId, ind.id, activityId)
     await fetchAll()
   } catch (e: any) {
-    treeError.value = e instanceof ApiError ? e.message : (e?.message ?? 'Failed to unlink activity')
+    loadError.value = e instanceof ApiError ? e.message : (e?.message ?? 'Failed to unlink activity')
   }
 }
 
