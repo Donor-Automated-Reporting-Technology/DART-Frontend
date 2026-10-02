@@ -67,6 +67,7 @@
             </button>
           </div>
 
+        </form>
       </template>
     </div>
   </NuxtLayout>
