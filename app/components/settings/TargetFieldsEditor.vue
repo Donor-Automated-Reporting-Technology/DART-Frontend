@@ -91,12 +91,16 @@ const fieldTypes: Array<{ value: TargetFieldType; label: string }> = [
   { value: 'boolean', label: 'Yes / No' },
 ]
 
-/** A row keeps its value as a string while editing; it is parsed on emit. */
+/**
+ * A row keeps its value as a string while editing; it is parsed on emit.
+ * Note: `v-model` on an `<input type="number">` casts the bound value to a
+ * JS number, so `value` can arrive as either a string or a number.
+ */
 interface Row {
   uid: number
   label: string
   type: TargetFieldType
-  value: string
+  value: string | number
   unit: string
 }
 
@@ -119,9 +123,14 @@ function toRows(list: LogframeTargetField[] | null | undefined): Row[] {
   }))
 }
 
-/** Parse an edited string back into a number/boolean/string based on the field type. */
+/** Normalise a raw row value to a string (number inputs store JS numbers). */
+function valueText(value: string | number | boolean | null | undefined): string {
+  return value === null || value === undefined ? '' : String(value)
+}
+
+/** Parse an edited value back into a number/boolean/string based on the field type. */
 function parseValue(row: Row): string | number | boolean | null {
-  const raw = row.value.trim()
+  const raw = valueText(row.value).trim()
   if (row.type === 'boolean') return raw === 'true'
   if (raw === '') return null
   if (isNumeric(row.type)) {
@@ -161,9 +170,10 @@ function emitValue() {
 
 /** Reset the value when switching to a type the old value cannot represent. */
 function onTypeChange(row: Row) {
-  if (row.type === 'boolean' && row.value !== 'true' && row.value !== 'false') {
+  const current = valueText(row.value)
+  if (row.type === 'boolean' && current !== 'true' && current !== 'false') {
     row.value = 'true'
-  } else if (!isNumeric(row.type) && row.type !== 'date' && isNumericValue(row.value)) {
+  } else if (!isNumeric(row.type) && row.type !== 'date' && isNumericValue(current)) {
     row.value = ''
   }
   emitValue()
