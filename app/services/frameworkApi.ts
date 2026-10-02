@@ -6,6 +6,7 @@ import type {
   CreateFrameworkRequest,
   UpdateFrameworkRequest,
   ToggleActivityRequest,
+  AddFrameworkActivityRequest,
   SetTargetRequest,
   SetProjectTargetRequest,
   FrameworkListResponse,
@@ -65,6 +66,23 @@ export const frameworkApi = {
     return request<FrameworkActivitiesResponse>(
       `${BASE_URL}/frameworks/${frameworkId}/activities`,
       { method: 'GET' },
+      token,
+    )
+  },
+
+  /**
+   * Add a hand-entered activity to a project (framework) — typically one that
+   * lives in a logframe kept outside the platform. The activity belongs to the
+   * project and its logframe.
+   */
+  async addActivity(
+    frameworkId: string,
+    payload: AddFrameworkActivityRequest,
+    token?: string,
+  ): Promise<{ activity: FrameworkActivity }> {
+    return request<{ activity: FrameworkActivity }>(
+      `${BASE_URL}/frameworks/${frameworkId}/activities`,
+      { method: 'POST', body: JSON.stringify(payload) },
       token,
     )
   },

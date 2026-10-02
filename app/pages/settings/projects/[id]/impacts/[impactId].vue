@@ -106,17 +106,59 @@
         </div>
 
         <!-- ═══ Activities ═══ -->
-        <div class="section-label">Activities</div>
-        <p class="section-hint">Toggle activities on or off. An activity that is on feeds this indicator.</p>
+        <div class="section-head">
+          <div>
+            <div class="section-label">Activities</div>
+            <p class="section-hint">Activities belong to this project's logframe. Add the ones from your own logframe, then switch on the ones that feed this indicator.</p>
+          </div>
+          <button v-if="canManage && !showAddActivity" class="btn-secondary" @click="openAddActivity">
+            <AppIcon name="plus" :size="14" /> Add activity
+          </button>
+        </div>
 
-        <div v-if="!hasIndicator" class="empty-inline">Save the indicator first to enable activities.</div>
-        <div v-else-if="!activities.length" class="empty-inline">No activities found for this project.</div>
+        <!-- Add a hand-entered activity (from an external logframe) -->
+        <div v-if="showAddActivity" class="section-card add-activity">
+          <div class="form-grid">
+            <div class="field">
+              <label class="field-label" for="aa-name">Activity name *</label>
+              <input id="aa-name" v-model="addForm.name" type="text" class="field-input" placeholder="e.g. Community sensitisation sessions" />
+            </div>
+            <div class="field">
+              <label class="field-label" for="aa-code">Code</label>
+              <input id="aa-code" v-model="addForm.code" type="text" class="field-input" placeholder="e.g. COMM_SENS" />
+            </div>
+            <div class="field">
+              <label class="field-label" for="aa-module">Module *</label>
+              <select id="aa-module" v-model="addForm.module" class="field-input">
+                <option value="pss">PSS — Psychosocial Support</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label" for="aa-desc">Description</label>
+            <textarea id="aa-desc" v-model="addForm.description" rows="2" class="field-input" placeholder="Optional"></textarea>
+          </div>
+          <div v-if="addError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ addError }}</div>
+          <div class="actions">
+            <button type="button" class="btn-ghost" @click="showAddActivity = false">Cancel</button>
+            <button type="button" class="btn-primary" :disabled="addSaving" @click="saveActivity">
+              <span v-if="addSaving" class="btn-spinner" /> {{ addSaving ? 'Adding…' : 'Add activity' }}
+            </button>
+          </div>
+        </div>
 
-        <div v-else class="activity-list" :class="{ 'activity-list--disabled': !hasIndicator }">
+        <div v-if="!activities.length" class="empty-inline">
+          No activities yet — use “Add activity” to enter the ones from your logframe.
+        </div>
+
+        <p v-if="activities.length && !hasIndicator" class="section-hint">Save the indicator to switch activities on.</p>
+
+        <div v-if="activities.length" class="activity-list" :class="{ 'activity-list--disabled': !hasIndicator }">
           <div v-for="a in activities" :key="a.id" class="activity-row">
             <span class="activity-info">
               <span class="activity-name">{{ activityName(a) }}</span>
               <span class="activity-code">{{ activityCode(a) }}</span>
+              <span v-if="a.is_custom" class="activity-custom">{{ (a.module || 'custom').toUpperCase() }}</span>
               <span v-if="a.is_active" class="activity-live">project: on</span>
               <span v-else class="activity-off">project: off</span>
             </span>
@@ -343,6 +385,60 @@ async function toggleActivity(activityId: string, on: boolean) {
   }
 }
 
+// ─── Add activity (hand-entered, from an external logframe) ───
+
+const showAddActivity = ref(false)
+const addSaving = ref(false)
+const addError = ref('')
+const addForm = reactive({
+  name: '',
+  code: '',
+  description: '',
+  module: 'pss',
+})
+
+function openAddActivity() {
+  addError.value = ''
+  addForm.name = ''
+  addForm.code = ''
+  addForm.description = ''
+  addForm.module = 'pss'
+  showAddActivity.value = true
+}
+
+async function saveActivity() {
+  addError.value = ''
+  if (!addForm.name.trim()) {
+    addError.value = 'Activity name is required'
+    return
+  }
+  addSaving.value = true
+  try {
+    const created = await frameworkApi.addActivity(projectId, {
+      name: addForm.name.trim(),
+      code: addForm.code.trim() || null,
+      description: addForm.description.trim() || null,
+      module: addForm.module,
+    })
+    // Refresh the project activity list.
+    const res = await frameworkApi.getActivities(projectId).catch(() => null)
+    activities.value = (res as any)?.activities ?? []
+    // Link the new activity to the indicator we're editing, so it becomes part
+    // of the logframe straight away (and can be switched off again).
+    const newId = (created as any)?.activity?.id
+    if (newId && indicator.value) {
+      await logframeApi.linkActivity(projectId, indicator.value.id, { framework_activity_id: newId })
+      const refreshed = await logframeApi.getLogframe(projectId)
+      indicator.value = (refreshed.indicators ?? []).find((i) => i.level_id === impactId) ?? indicator.value
+    }
+    showAddActivity.value = false
+  } catch (e: any) {
+    addError.value = e instanceof ApiError ? e.message : (e?.message ?? 'Failed to add activity')
+  } finally {
+    addSaving.value = false
+  }
+}
+
 onMounted(fetchAll)
 </script>
 
@@ -392,6 +488,33 @@ onMounted(fetchAll)
 }
 .actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 14px; }
 .save-ok { display: inline-flex; align-items: center; gap: 5px; font-size: 0.78rem; color: var(--success); }
+
+.section-head {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
+  margin-top: 24px; flex-wrap: wrap;
+}
+.section-head .section-label { margin: 0 0 6px; }
+.section-head .section-hint { margin: 0; max-width: 620px; }
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 12px; font-size: 0.8rem; font-weight: 600;
+  background: var(--bg-surface); color: var(--text-primary);
+  border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer;
+}
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 12px; font-size: 0.8rem; font-weight: 600;
+  background: transparent; color: var(--text-muted);
+  border: 1px solid transparent; border-radius: 8px; cursor: pointer;
+}
+.btn-ghost:hover { color: var(--text-primary); }
+.add-activity { margin-bottom: 12px; border-left: 3px solid var(--accent); }
+.activity-custom {
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.03em;
+  color: var(--accent); background: var(--bg-surface);
+  border: 1px solid var(--border-color); border-radius: 5px; padding: 1px 6px;
+}
 
 /* Indicator card */
 .indicator-card { border-left: 3px solid #a78bfa; }

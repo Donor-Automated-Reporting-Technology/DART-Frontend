@@ -75,6 +75,23 @@ export interface FrameworkActivity {
   created_at: string
   updated_at: string
   template?: ActivityTemplate
+  /** Platform module that owns a hand-entered activity (currently only 'pss'). */
+  module?: string | null
+  /** True when the activity was entered by hand rather than from a template. */
+  is_custom?: boolean
+  /** Display name/code (populated from the template or the custom fields). */
+  activity_name?: string
+  activity_code?: string
+  description?: string | null
+  pattern_type?: string
+}
+
+/** Adds a hand-entered activity (e.g. from an external logframe) to a project. */
+export interface AddFrameworkActivityRequest {
+  name: string
+  code?: string | null
+  description?: string | null
+  module: string
 }
 
 export interface ToggleActivityRequest {
