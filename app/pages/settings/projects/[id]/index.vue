@@ -5,7 +5,7 @@
       <div class="page-header">
         <div>
           <h1 class="page-title">{{ project?.project_name || 'Project' }}</h1>
-          <p class="page-subtitle">Configure project details and toggle activities.</p>
+          <p class="page-subtitle">Configure project details.</p>
         </div>
         <NuxtLink to="/settings/projects" class="btn-back">
           <AppIcon name="arrow-left" :size="14" /> All projects
@@ -57,99 +57,6 @@
 
           <div v-if="fwError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ fwError }}</div>
 
-          <div class="actions">
-            <button type="submit" class="btn-primary" :disabled="fwSaving">
-              <span v-if="fwSaving" class="btn-spinner" />
-              {{ fwSaving ? 'Saving…' : 'Save details' }}
-            </button>
-          </div>
-
-          <Transition name="toast">
-            <div v-if="fwSuccess" class="toast-success">Project updated</div>
-          </Transition>
-        </form>
-
-        <!-- ─── Project Target ─── -->
-        <div class="activities-section">
-          <div class="section-label">Project Target</div>
-          <p class="section-hint">Overall beneficiary target for this project, broken down by gender and disability.</p>
-          <div class="section-card">
-            <div class="target-summary">
-              <span class="target-total-label">Total target</span>
-              <span class="target-total-value">{{ targetForm.target_girls + targetForm.target_boys }}</span>
-            </div>
-            <div class="form-grid">
-              <div class="field">
-                <label class="field-label" for="pt-girls">Girls *</label>
-                <input id="pt-girls" v-model.number="targetForm.target_girls" type="number" min="0" class="field-input" />
-              </div>
-              <div class="field">
-                <label class="field-label" for="pt-boys">Boys *</label>
-                <input id="pt-boys" v-model.number="targetForm.target_boys" type="number" min="0" class="field-input" />
-              </div>
-              <div class="field">
-                <label class="field-label" for="pt-girls-d">Girls with disability</label>
-                <input id="pt-girls-d" v-model.number="targetForm.target_girls_disability" type="number" min="0" class="field-input" />
-              </div>
-              <div class="field">
-                <label class="field-label" for="pt-boys-d">Boys with disability</label>
-                <input id="pt-boys-d" v-model.number="targetForm.target_boys_disability" type="number" min="0" class="field-input" />
-              </div>
-            </div>
-          </div>
-
-          <div v-if="ptError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ ptError }}</div>
-
-          <div class="actions">
-            <Transition name="toast">
-              <span v-if="ptSuccess" class="save-feedback save-feedback--ok"><AppIcon name="check-circle" :size="14" /> Saved</span>
-            </Transition>
-            <button class="btn-primary" :disabled="ptSaving" @click="saveProjectTarget">
-              <span v-if="ptSaving" class="btn-spinner" />
-              {{ ptSaving ? 'Saving…' : 'Save project target' }}
-            </button>
-          </div>
-        </div>
-
-        <!-- ─── Activities ─── -->
-        <div class="activities-section">
-          <div class="section-label">Activities</div>
-          <p class="section-hint">Toggle activities on or off and set their targets.</p>
-
-          <div v-if="!activities.length" class="empty-inline">No activities found for this framework type.</div>
-
-          <div class="activities-list">
-            <ActivityTargetRow
-              v-for="fa in activities"
-              :key="fa.id"
-              :name="fa.template?.name ?? 'Activity'"
-              :description="fa.template?.description"
-              :model-active="fa.is_active"
-              :target-count="fa.target_count"
-              :target-unit="fa.target_unit || 'children'"
-              :target-girls="(fa as any).target_girls ?? 0"
-              :target-boys="(fa as any).target_boys ?? 0"
-              :target-girls-disability="(fa as any).target_girls_disability ?? 0"
-              :target-boys-disability="(fa as any).target_boys_disability ?? 0"
-              @update:model-active="handleToggle(fa.id, $event)"
-              @update:target-count="handleTargetCount(fa.id, $event, fa.target_unit || 'children')"
-              @update:target-unit="handleTargetUnit(fa.id, fa.target_count, $event)"
-              @update:breakdown="handleBreakdown(fa.id, $event)"
-            />
-          </div>
-
-          <div v-if="atError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ atError }}</div>
-
-          <div class="actions">
-            <Transition name="toast">
-              <span v-if="atSuccess" class="save-feedback save-feedback--ok"><AppIcon name="check-circle" :size="14" /> Saved</span>
-            </Transition>
-            <button class="btn-primary" :disabled="atSaving || !activities.length" @click="saveActivityTargets">
-              <span v-if="atSaving" class="btn-spinner" />
-              {{ atSaving ? 'Saving…' : 'Save activity targets' }}
-            </button>
-          </div>
-        </div>
       </template>
     </div>
   </NuxtLayout>
@@ -162,8 +69,10 @@ import { frameworkApi } from '../../../../services/frameworkApi'
 // cfsApi import removed — grant targets deprecated in favour of project targets
 import { ApiError } from '../../../../services/api'
 import { useAuthStore } from '../../../../stores/auth'
+
+// Activity toggling / targets removed — moved to M&E logframe (impacts)
 import type { Framework, FrameworkActivity, FrameworkType } from '../../../../interfaces/framework'
-import ActivityTargetRow from '../../../../components/settings/ActivityTargetRow.vue'
+
 
 definePageMeta({
   layout: false,
@@ -176,7 +85,6 @@ const projectId = route.params.id as string
 const authStore = useAuthStore()
 
 const project = ref<Framework | null>(null)
-const activities = ref<FrameworkActivity[]>([])
 const loading = ref(false)
 const loadError = ref<string | null>(null)
 
@@ -207,11 +115,6 @@ function seedForm() {
   form.reporting_to = project.value.reporting_to ?? ''
   form.period_start = project.value.period_start?.slice(0, 10) ?? ''
   form.period_end = project.value.period_end?.slice(0, 10) ?? ''
-  // Hydrate project target
-  targetForm.target_girls = project.value.target_girls ?? 0
-  targetForm.target_boys = project.value.target_boys ?? 0
-  targetForm.target_girls_disability = project.value.target_girls_disability ?? 0
-  targetForm.target_boys_disability = project.value.target_boys_disability ?? 0
 }
 
 async function fetchProject() {
@@ -222,8 +125,6 @@ async function fetchProject() {
     project.value = (res.frameworks ?? []).find((f) => f.id === projectId) ?? null
     if (!project.value) { loadError.value = 'Project not found'; return }
     seedForm()
-    await fetchActivities()
-    // Grant targets deprecated — project-level targets used instead
   } catch (e: any) {
     loadError.value = e?.message ?? 'Failed to load project'
   } finally {
@@ -231,38 +132,11 @@ async function fetchProject() {
   }
 }
 
-async function fetchActivities() {
-  if (!project.value) return
-  const res = await frameworkApi.getActivities(project.value.id)
-  const raw = (res as any).activities ?? []
-  activities.value = raw.map((item: any) => ({
-    id: item.id,
-    framework_id: project.value!.id,
-    activity_template_id: item.activity_template_id ?? '',
-    is_active: item.is_active ?? false,
-    target_count: item.target_count ?? 0,
-    target_unit: item.target_unit ?? 'children',
-    target_girls: item.target_girls ?? 0,
-    target_boys: item.target_boys ?? 0,
-    target_girls_disability: item.target_girls_disability ?? 0,
-    target_boys_disability: item.target_boys_disability ?? 0,
-    custom_config: item.custom_config ?? item.default_config ?? null,
-    created_at: item.created_at ?? '',
-    updated_at: item.updated_at ?? '',
-    template: item.template ?? {
-      id: item.activity_template_id ?? '',
-      framework_type: project.value!.framework_type,
-      name: item.activity_name ?? item.name ?? 'Activity',
-      code: item.activity_code ?? item.code ?? '',
-      description: item.description ?? '',
-      pattern_type: item.pattern_type ?? 'daily_attendance',
-      default_config: item.default_config ?? null,
-      created_at: item.created_at ?? '',
-    },
-  }))
-}
+
 
 async function saveProject() {
+  // Activities and activity targets live in the M&E logframe (impacts)
+  // and are intentionally not touched from project settings.
   fwError.value = ''
   fwSuccess.value = false
   if (!form.project_name.trim()) { fwError.value = 'Project name is required'; return }
@@ -291,112 +165,15 @@ async function saveProject() {
 // Activity toggling / targets
 
 // Project-level target
-const targetForm = reactive({
-  target_girls: 0,
-  target_boys: 0,
-  target_girls_disability: 0,
-  target_boys_disability: 0,
-})
-const ptSaving = ref(false)
-const ptError = ref('')
-const ptSuccess = ref(false)
 
-async function saveProjectTarget() {
-  ptError.value = ''
-  ptSuccess.value = false
 
-  if (targetForm.target_girls + targetForm.target_boys === 0) {
-    ptError.value = 'Total target (girls + boys) must be greater than zero'
-    return
-  }
-  if (targetForm.target_girls_disability > targetForm.target_girls) {
-    ptError.value = 'Girls with disability cannot exceed total girls'
-    return
-  }
-  if (targetForm.target_boys_disability > targetForm.target_boys) {
-    ptError.value = 'Boys with disability cannot exceed total boys'
-    return
-  }
 
-  ptSaving.value = true
-  try {
-    await frameworkApi.setProjectTarget(projectId, {
-      target_girls: targetForm.target_girls,
-      target_boys: targetForm.target_boys,
-      target_girls_disability: targetForm.target_girls_disability,
-      target_boys_disability: targetForm.target_boys_disability,
-    })
-    await fetchProject()
-    ptSuccess.value = true
-    setTimeout(() => { ptSuccess.value = false }, 3000)
-  } catch (e: any) {
-    ptError.value = e instanceof ApiError ? e.message : (e?.message ?? 'Save failed')
-  } finally {
-    ptSaving.value = false
-  }
-}
-
-async function handleToggle(activityId: string, isActive: boolean) {
-  await frameworkApi.toggleActivity(projectId, activityId, { is_active: isActive })
-  await fetchActivities()
-  authStore.setFrameworkActivities(activities.value)
-}
-
-function handleTargetCount(activityId: string, count: number, _unit: string) {
-  const fa = activities.value.find((a) => a.id === activityId) as any
-  if (fa) fa.target_count = count
-}
-
-function handleTargetUnit(activityId: string, _count: number, unit: string) {
-  const fa = activities.value.find((a) => a.id === activityId) as any
-  if (fa) fa.target_unit = unit
-}
-
-function handleBreakdown(activityId: string, breakdown: { target_girls: number; target_boys: number; target_girls_disability: number; target_boys_disability: number }) {
-  const fa = activities.value.find((a) => a.id === activityId) as any
-  if (fa) {
-    fa.target_girls = breakdown.target_girls
-    fa.target_boys = breakdown.target_boys
-    fa.target_girls_disability = breakdown.target_girls_disability
-    fa.target_boys_disability = breakdown.target_boys_disability
-    fa.target_count = breakdown.target_girls + breakdown.target_boys
-  }
-}
-
-// Activity batch save
-const atSaving = ref(false)
-const atError = ref('')
-const atSuccess = ref(false)
-
-async function saveActivityTargets() {
-  atError.value = ''
-  atSuccess.value = false
-  atSaving.value = true
-  try {
-    const active = activities.value.filter((fa) => fa.is_active)
-    for (const fa of active) {
-      await frameworkApi.setTarget(projectId, fa.id, {
-        target_count: fa.target_count,
-        target_unit: fa.target_unit || 'children',
-        target_girls: (fa as any).target_girls ?? 0,
-        target_boys: (fa as any).target_boys ?? 0,
-        target_girls_disability: (fa as any).target_girls_disability ?? 0,
-        target_boys_disability: (fa as any).target_boys_disability ?? 0,
-      })
-    }
-    await fetchActivities()
-    atSuccess.value = true
-    setTimeout(() => { atSuccess.value = false }, 3000)
-  } catch (e: any) {
-    atError.value = e instanceof ApiError ? e.message : (e?.message ?? 'Save failed')
-  } finally {
-    atSaving.value = false
-  }
-}
 
 // Grant targets — DEPRECATED (replaced by project-level targets above)
 
-onMounted(fetchProject)
+onMounted(() => {
+  fetchProject()
+})
 </script>
 
 <style scoped>
