@@ -11,7 +11,7 @@
       <div class="page-header">
         <div>
           <h1 class="page-title">New Project</h1>
-          <p class="page-subtitle">Create a project — you can attach its M&E logframe and activities later.</p>
+          <p class="page-subtitle">Create a project — you can attach its M&E logframe later from the M&E section.</p>
         </div>
         <NuxtLink to="/settings/projects" class="btn-back">
           <AppIcon name="arrow-left" :size="14" /> Back

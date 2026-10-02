@@ -12,7 +12,7 @@
         <div class="header-row">
           <div>
             <h1 class="page-title">Projects</h1>
-            <p class="page-subtitle">Each project has its own framework and activities.</p>
+            <p class="page-subtitle">Each project has its own M&E logframe. Activities and targets are managed in M&E.</p>
           </div>
           <NuxtLink to="/settings/projects/new" class="btn-primary">
             <AppIcon name="plus" :size="14" />
@@ -36,7 +36,7 @@
       <div v-else-if="!projects.length" class="empty-state">
         <div class="empty-icon"><AppIcon name="layers" :size="28" /></div>
         <h3 class="empty-title">No projects yet</h3>
-        <p class="empty-desc">Create your first project to start configuring activities.</p>
+        <p class="empty-desc">Create your first project to start setting up its M&E logframe.</p>
         <NuxtLink to="/settings/projects/new" class="btn-primary">
           <AppIcon name="plus" :size="14" />
           Create Project

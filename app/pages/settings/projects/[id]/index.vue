@@ -5,7 +5,7 @@
       <div class="page-header">
         <div>
           <h1 class="page-title">{{ project?.project_name || 'Project' }}</h1>
-          <p class="page-subtitle">Configure project details.</p>
+          <p class="page-subtitle">Edit project name and duration. Activities and targets are managed in M&E.</p>
         </div>
         <NuxtLink to="/settings/projects" class="btn-back">
           <AppIcon name="arrow-left" :size="14" /> All projects
@@ -57,6 +57,16 @@
 
           <div v-if="fwError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ fwError }}</div>
 
+          <div class="actions">
+            <Transition name="toast">
+              <span v-if="fwSuccess" class="toast-success">✓ Saved</span>
+            </Transition>
+            <button type="submit" class="btn-primary" :disabled="fwSaving">
+              <span v-if="fwSaving" class="btn-spinner" />
+              {{ fwSaving ? 'Saving…' : 'Save changes' }}
+            </button>
+          </div>
+
       </template>
     </div>
   </NuxtLayout>
@@ -66,12 +76,8 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { frameworkApi } from '../../../../services/frameworkApi'
-// cfsApi import removed — grant targets deprecated in favour of project targets
 import { ApiError } from '../../../../services/api'
-import { useAuthStore } from '../../../../stores/auth'
-
-// Activity toggling / targets removed — moved to M&E logframe (impacts)
-import type { Framework, FrameworkActivity, FrameworkType } from '../../../../interfaces/framework'
+import type { Framework } from '../../../../interfaces/framework'
 
 
 definePageMeta({
@@ -82,7 +88,6 @@ definePageMeta({
 
 const route = useRoute()
 const projectId = route.params.id as string
-const authStore = useAuthStore()
 
 const project = ref<Framework | null>(null)
 const loading = ref(false)
@@ -95,10 +100,7 @@ const breadcrumbs = computed(() => [
 ])
 
 const form = reactive({
-  framework_type: 'child_protection' as FrameworkType,
   project_name: '',
-  partner_name: '',
-  reporting_to: '',
   period_start: '',
   period_end: '',
 })
@@ -109,10 +111,7 @@ const fwSuccess = ref(false)
 
 function seedForm() {
   if (!project.value) return
-  form.framework_type = project.value.framework_type
   form.project_name = project.value.project_name ?? ''
-  form.partner_name = project.value.partner_name ?? ''
-  form.reporting_to = project.value.reporting_to ?? ''
   form.period_start = project.value.period_start?.slice(0, 10) ?? ''
   form.period_end = project.value.period_end?.slice(0, 10) ?? ''
 }
@@ -147,8 +146,6 @@ async function saveProject() {
   try {
     await frameworkApi.updateFramework(projectId, {
       project_name: form.project_name.trim(),
-      partner_name: form.partner_name.trim(),
-      reporting_to: form.reporting_to.trim(),
       period_start: form.period_start,
       period_end: form.period_end,
     })
@@ -161,13 +158,6 @@ async function saveProject() {
     fwSaving.value = false
   }
 }
-
-// Activity toggling / targets
-
-// Project-level target
-
-
-
 
 onMounted(() => {
   fetchProject()
@@ -268,13 +258,6 @@ onMounted(() => {
 }
 .toast-enter-active, .toast-leave-active { transition: opacity 0.2s; }
 .toast-enter-from, .toast-leave-to { opacity: 0; }
-
-.activities-section { margin-top: 12px; }
-
-.empty-inline {
-  padding: 14px; font-size: 0.82rem; color: var(--text-muted);
-  background: var(--bg-surface); border-radius: 8px;
-}
 
 .state { padding: 40px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-muted); }
 .state--error { color: var(--error); }
