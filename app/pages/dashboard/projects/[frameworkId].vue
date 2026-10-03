@@ -119,34 +119,7 @@
           </NuxtLink>
         </template>
 
-        <!-- Disaggregation cards (Gender, Disability, Custom Targets) -->
-        <template v-if="disaggregationMetrics.length">
-          <div
-            v-for="metric in disaggregationMetrics"
-            :key="metric.dimension + ':' + metric.key"
-            class="bento-item metric-card metric-card--reach"
-            :class="accentCardClass(metric.key)"
-          >
-            <div class="metric-card-head">
-              <span class="metric-label">{{ metric.label }}</span>
-              <span class="metric-pct-pill">{{ metric.percentage }}%</span>
-            </div>
-            <div class="metric-target-row">
-              <div class="metric-target-block">
-                <span class="target-number" :class="accentNumberClass(metric.key)">{{ metric.actual }}</span>
-                <span class="target-caption">Enrolled</span>
-              </div>
-              <span class="target-slash">/</span>
-              <div class="metric-target-block">
-                <span class="target-number target-number--muted">{{ metric.target }}</span>
-                <span class="target-caption">Target</span>
-              </div>
-            </div>
-            <div class="metric-bar">
-              <div class="metric-bar-fill" :class="accentFillClass(metric.key)" :style="{ width: Math.min(metric.percentage, 100) + '%' }"></div>
-            </div>
-          </div>
-        </template>
+
       </div>
 
       <!-- ═══ Unlinked Activities section (Fallback) ═══ -->
@@ -256,18 +229,7 @@ const breadcrumbs = computed(() => [
   { title: project.value.project_name || 'Project', href: route.fullPath, current: true },
 ])
 
-// Flatten the project's dynamic target structure into one card per value
-// (e.g. gender → female/male, disability → with/without disability).
-const disaggregationMetrics = computed(() =>
-  disaggregations.value.flatMap(group =>
-    group.values
-      .filter(value => value.target != null && value.target > 0)
-      .map(value => ({
-        ...value,
-        dimension: group.dimension,
-      }))
-  ),
-)
+
 
 const unlinkedActivities = computed(() => {
   // Get all activity IDs that are linked to ANY indicator in the logframe
