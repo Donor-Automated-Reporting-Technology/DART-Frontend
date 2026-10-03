@@ -133,6 +133,12 @@ export interface ProjectActivity {
   is_active: boolean;
 }
 
+export interface ProjectLogframeLevel {
+  id: string;
+  title: string;
+  level_type: string;
+}
+
 /**
  * One indicator of the project's M&E logframe, with its numerical target and
  * the actual rolled up from the activities linked to it. This is the project's
@@ -140,6 +146,7 @@ export interface ProjectActivity {
  */
 export interface ProjectLogframeIndicator {
   id: string;
+  level_id: string;
   code?: string;
   indicator: string;
   unit?: string;
@@ -159,6 +166,7 @@ export interface ProjectLogframeSummary {
   status: string;
   indicator_count: number;
   indicators_with_targets: number;
+  levels: ProjectLogframeLevel[];
   indicators: ProjectLogframeIndicator[];
 }
 

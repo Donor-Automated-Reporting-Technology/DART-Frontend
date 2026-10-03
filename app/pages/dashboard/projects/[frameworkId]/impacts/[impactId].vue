@@ -73,97 +73,99 @@
       </div>
 
       <!-- ═══ Summary bento grid ═══ -->
-      <div class="bento-grid">
-
-        <!-- Hero: unique beneficiaries -->
+      <!-- ═══ Impact Hero ═══ -->
+      <div v-if="impact" class="bento-grid">
         <div class="bento-item bento-hero metric-card hero-modern">
           <div class="hero-top">
-            <span class="hero-badge">BENEFICIARIES</span>
+            <span class="hero-badge">IMPACT</span>
           </div>
-          <div class="metric-primary">
-            <span class="metric-big">{{ summary.unique_beneficiaries }}</span>
-            <span class="metric-label">Unique Beneficiaries</span>
+          <div class="metric-primary" style="margin-bottom: 12px;">
+            <span class="metric-big" style="font-size: 24px; line-height: 1.2;">{{ impact.title }}</span>
           </div>
-          <div class="hero-compact-row">
-            <div class="hero-compact-item">
-              <span class="hero-compact-value">{{ summary.total_locations }}</span>
-              <span class="hero-compact-label">Locations</span>
-            </div>
-            <div class="hero-compact-divider"></div>
-            <div class="hero-compact-item">
-              <span class="hero-compact-value">{{ activeCount }}</span>
-              <span class="hero-compact-label">Activities</span>
-            </div>
-            <div class="hero-compact-divider"></div>
-            <div class="hero-compact-item">
-              <span class="hero-compact-value">{{ summary.total_service_points }}</span>
-              <span class="hero-compact-label">Service Points</span>
-            </div>
+          <div v-if="impact.description" class="hero-compact-row" style="margin-top: 0;">
+            <p style="color: var(--text-muted); font-size: 14px; margin: 0;">{{ impact.description }}</p>
           </div>
         </div>
+      </div>
+      
+      <div class="bento-grid" style="margin-top: var(--space-xl);">
 
-        <!-- Impacts (Logframe Levels) -->
-        <template v-if="logframe?.levels?.length">
-          <NuxtLink
-            v-for="level in logframe.levels"
-            :key="level.id"
-            :to="`/dashboard/projects/${route.params.frameworkId}/impacts/${level.id}`"
-            class="bento-item metric-card metric-card--reach impact-card"
-          >
-            <div class="metric-card-head">
-              <span class="metric-label metric-label--clamp" :title="level.title">{{ level.title }}</span>
-            </div>
-            <div class="metric-target-row">
-              <span class="metric-sublabel">{{ level.level_type }}</span>
-            </div>
-          </NuxtLink>
-        </template>
-
-        <!-- Disaggregation cards (Gender, Disability, Custom Targets) -->
-        <template v-if="disaggregationMetrics.length">
+        <!-- Target cards (Logframe Indicators) -->
+        <template v-if="hasLogframeTargets">
           <div
-            v-for="metric in disaggregationMetrics"
-            :key="metric.dimension + ':' + metric.key"
+            v-for="ind in logframeTargets"
+            :key="ind.id"
             class="bento-item metric-card metric-card--reach"
-            :class="accentCardClass(metric.key)"
           >
             <div class="metric-card-head">
-              <span class="metric-label">{{ metric.label }}</span>
-              <span class="metric-pct-pill">{{ metric.percentage }}%</span>
+              <span class="metric-label metric-label--clamp" :title="ind.indicator">{{ ind.indicator }}</span>
+              <span class="metric-pct-pill">{{ ind.percentage }}%</span>
             </div>
             <div class="metric-target-row">
               <div class="metric-target-block">
-                <span class="target-number" :class="accentNumberClass(metric.key)">{{ metric.actual }}</span>
-                <span class="target-caption">Enrolled</span>
+                <span class="target-number">{{ ind.actual_value }}</span>
+                <span class="target-caption">Actual</span>
               </div>
               <span class="target-slash">/</span>
               <div class="metric-target-block">
-                <span class="target-number target-number--muted">{{ metric.target }}</span>
+                <span class="target-number target-number--muted">{{ formatTarget(ind.target_value) }}</span>
                 <span class="target-caption">Target</span>
               </div>
             </div>
             <div class="metric-bar">
-              <div class="metric-bar-fill" :class="accentFillClass(metric.key)" :style="{ width: Math.min(metric.percentage, 100) + '%' }"></div>
+              <div class="metric-bar-fill" :style="{ width: Math.min(ind.percentage, 100) + '%' }"></div>
             </div>
+            <span class="metric-sublabel" :title="ind.level_title">{{ ind.level_title }}</span>
           </div>
         </template>
+
+        <!-- Custom target fields (from indicator custom_fields) -->
+        <template v-if="customTargetMetrics.length">
+          <div
+            v-for="metric in customTargetMetrics"
+            :key="metric.id"
+            class="bento-item metric-card metric-card--reach"
+            :class="accentCardClass('custom')"
+          >
+            <div class="metric-card-head">
+              <span class="metric-label metric-label--clamp" :title="metric.label">{{ metric.label }}</span>
+            </div>
+            <div class="metric-target-row">
+              <div class="metric-target-block">
+                <span class="target-number target-number--muted" style="margin-left: 0;">{{ formatTarget(Number(metric.target)) }}</span>
+                <span class="target-caption">Target {{ metric.unit ? '(' + metric.unit + ')' : '' }}</span>
+              </div>
+            </div>
+            <!-- Custom targets only store a target, no actual is tracked yet -->
+            <div class="metric-bar">
+              <div class="metric-bar-fill metric-bar-fill--muted" style="width: 0%"></div>
+            </div>
+            <span class="metric-sublabel" :title="metric.indicatorName">{{ metric.indicatorName }}</span>
+          </div>
+        </template>
+
       </div>
 
-      <!-- ═══ Unlinked Activities section (Fallback) ═══ -->
-      <div v-if="unlinkedActivities.length > 0" class="activities-section">
+      <!-- ═══ Activities section ═══ -->
+      <div class="activities-section">
         <div class="section-header">
           <div class="section-header-left">
-            <h3 class="section-title">Other Activities</h3>
-            <span class="section-count">{{ unlinkedActivities.length }}</span>
+            <h3 class="section-title">Active Activities</h3>
+            <span class="section-count">{{ sortedActivities.length }}</span>
           </div>
           <span class="section-hint">
             <AppIcon name="mouse-pointer" :size="12" />
             Click to explore
           </span>
         </div>
-        <div class="activity-grid">
+
+        <div v-if="impactActivities.length === 0" class="section-empty">
+          No active activities linked to this impact.
+        </div>
+
+        <div v-else class="activity-grid">
           <div
-            v-for="a in unlinkedActivities"
+            v-for="a in impactActivities"
             :key="a.id"
             class="activity-card"
             @click="navigateToActivity(a)"
@@ -224,10 +226,11 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useProjectDetail } from '../../../composables/useProjectDetail'
-import { activityDashboardRoute } from '../../../utils/activityConfig'
-import DashboardBreadcrumb from '../../../components/dashboard/DashboardBreadcrumb.vue'
-import AppIcon from '../../../components/interfaces/AppIcon.vue'
+import { useProjectDetail } from '../../../../composables/useProjectDetail'
+import { activityDashboardRoute } from '../../../../utils/activityConfig'
+import DashboardBreadcrumb from '../../../../components/dashboard/DashboardBreadcrumb.vue'
+import AppIcon from '../../../../components/interfaces/AppIcon.vue'
+import type { ProjectLogframeIndicator } from '../../../../interfaces/dashboard'
 
 const route = useRoute()
 const router = useRouter()
@@ -251,35 +254,75 @@ const {
   fetchProjectDetail,
 } = useProjectDetail()
 
+const impactId = computed(() => route.params.impactId as string)
+
+const impact = computed(() => 
+  logframe.value?.levels?.find((l: any) => l.id === impactId.value)
+)
+
 const breadcrumbs = computed(() => [
   { title: 'Organisation', href: '/dashboard' },
-  { title: project.value.project_name || 'Project', href: route.fullPath, current: true },
+  { title: project.value.project_name || 'Project', href: `/dashboard/projects/${frameworkId}` },
+  { title: impact.value?.title || 'Impact', href: route.fullPath, current: true },
 ])
 
-// Flatten the project's dynamic target structure into one card per value
-// (e.g. gender → female/male, disability → with/without disability).
-const disaggregationMetrics = computed(() =>
-  disaggregations.value.flatMap(group =>
-    group.values
-      .filter(value => value.target != null && value.target > 0)
-      .map(value => ({
-        ...value,
-        dimension: group.dimension,
-      }))
+// The impact's logframe indicators
+const logframeTargets = computed(() =>
+  (logframe.value?.indicators ?? []).filter(
+    (ind: ProjectLogframeIndicator) => ind.level_id === impactId.value && ind.target_value != null && ind.target_value > 0,
   ),
 )
 
-const unlinkedActivities = computed(() => {
-  // Get all activity IDs that are linked to ANY indicator in the logframe
+const impactActivities = computed(() => {
   const linkedIds = new Set<string>()
-  for (const ind of logframe.value?.indicators || []) {
+  // Only look at indicators for this impact
+  const indicators = (logframe.value?.indicators ?? []).filter(
+    (ind: ProjectLogframeIndicator) => ind.level_id === impactId.value
+  )
+  for (const ind of indicators) {
     for (const id of ind.linked_activity_ids || []) {
       linkedIds.add(id)
     }
   }
-  
-  // Return activities that are NOT in the linked set
-  return sortedActivities.value.filter(act => !linkedIds.has(act.id))
+  return sortedActivities.value.filter((act: any) => linkedIds.has(act.id))
+})
+
+
+const hasLogframeTargets = computed(() => logframeTargets.value.length > 0)
+
+interface CustomTargetMetric {
+  id: string
+  label: string
+  target: number | string
+  unit?: string
+  indicatorId: string
+  indicatorName: string
+}
+
+const customTargetMetrics = computed(() => {
+  const metrics: CustomTargetMetric[] = []
+  const indicators = (logframe.value?.indicators ?? []).filter(
+    (ind: ProjectLogframeIndicator) => ind.level_id === impactId.value
+  )
+  for (const ind of indicators) {
+    const fields = ind.custom_fields?.['target_fields']
+    if (Array.isArray(fields)) {
+      for (let i = 0; i < fields.length; i++) {
+        const field = fields[i]
+        if (field.label && field.value != null && field.value !== '') {
+          metrics.push({
+            id: `${ind.id}-${i}`,
+            label: field.label,
+            target: field.value,
+            unit: field.unit,
+            indicatorId: ind.id,
+            indicatorName: ind.indicator
+          })
+        }
+      }
+    }
+  }
+  return metrics
 })
 
 function formatTarget(value: number | undefined | null): string {
