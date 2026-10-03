@@ -102,11 +102,7 @@
           </div>
         </div>
 
-        <!-- Target cards. The project's target structure comes from its M&E
-             logframe, which differs from project to project — one card per
-             targeted indicator, showing the indicator's target and the actual
-             rolled up from its linked activities. Projects without a targeted
-             logframe fall back to the generic disaggregation cards. -->
+        <!-- Target cards (Logframe Indicators) -->
         <template v-if="hasLogframeTargets">
           <div
             v-for="ind in logframeTargets"
@@ -135,7 +131,8 @@
           </div>
         </template>
 
-        <template v-else>
+        <!-- Disaggregation cards (Gender, Disability, Custom Targets) -->
+        <template v-if="disaggregationMetrics.length">
           <div
             v-for="metric in disaggregationMetrics"
             :key="metric.dimension + ':' + metric.key"
