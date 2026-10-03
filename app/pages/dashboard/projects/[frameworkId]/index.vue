@@ -197,10 +197,10 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useProjectDetail } from '../../../composables/useProjectDetail'
-import { activityDashboardRoute } from '../../../utils/activityConfig'
-import DashboardBreadcrumb from '../../../components/dashboard/DashboardBreadcrumb.vue'
-import AppIcon from '../../../components/interfaces/AppIcon.vue'
+import { useProjectDetail } from '~/composables/useProjectDetail'
+import { activityDashboardRoute } from '~/utils/activityConfig'
+import DashboardBreadcrumb from '~/components/dashboard/DashboardBreadcrumb.vue'
+import AppIcon from '~/components/interfaces/AppIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
