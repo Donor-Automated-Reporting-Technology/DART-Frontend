@@ -277,10 +277,12 @@ const breadcrumbs = computed(() => [
 // (e.g. gender → female/male, disability → with/without disability).
 const disaggregationMetrics = computed(() =>
   disaggregations.value.flatMap(group =>
-    group.values.map(value => ({
-      ...value,
-      dimension: group.dimension,
-    })),
+    group.values
+      .filter(value => value.target != null && value.target > 0)
+      .map(value => ({
+        ...value,
+        dimension: group.dimension,
+      }))
   ),
 )
 
