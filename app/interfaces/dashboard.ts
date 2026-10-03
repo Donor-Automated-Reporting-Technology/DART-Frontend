@@ -133,12 +133,46 @@ export interface ProjectActivity {
   is_active: boolean;
 }
 
+/**
+ * One indicator of the project's M&E logframe, with its numerical target and
+ * the actual rolled up from the activities linked to it. This is the project's
+ * authoritative target structure and differs from project to project.
+ */
+export interface ProjectLogframeIndicator {
+  id: string;
+  code?: string;
+  indicator: string;
+  unit?: string;
+  level_title: string;
+  level_type: string;
+  baseline_value?: number;
+  target_value?: number;
+  actual_value: number;
+  percentage: number;
+  linked_activity_ids: string[];
+}
+
+export interface ProjectLogframeSummary {
+  id: string;
+  name: string;
+  status: string;
+  indicator_count: number;
+  indicators_with_targets: number;
+  indicators: ProjectLogframeIndicator[];
+}
+
 export interface ProjectDetailResponse {
   project: ProjectInfo;
   summary: ProjectSummary;
   /** Dynamic target/actual structure derived from the project's logframe. */
   disaggregations: TargetDisaggregation[];
   activities: ProjectActivity[];
+  /**
+   * The project's M&E logframe. When its indicators carry targets, this is the
+   * target structure the dashboard renders (it differs per project); the
+   * disaggregations above are only a fallback for projects without one.
+   */
+  logframe?: ProjectLogframeSummary | null;
 }
 
 // ─── Level 3: Activity Detail — GET /api/v1/dashboard/activities/:id ──────────

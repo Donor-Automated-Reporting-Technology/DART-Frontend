@@ -258,32 +258,6 @@
               </div>
             </div>
 
-            <!-- Beneficiary Reach progress cards -->
-            <div
-              v-for="metric in reachMetrics"
-              :key="metric.code"
-              class="bento-item metric-card metric-card--activity"
-            >
-              <div class="metric-card-head">
-                <span class="metric-label">{{ metric.name }}</span>
-                <span class="metric-pct-pill">{{ metric.percentage }}%</span>
-              </div>
-              <div class="metric-target-row">
-                <div class="metric-target-block">
-                  <span class="target-number">{{ metric.actual }}</span>
-                  <span class="target-caption">Actual</span>
-                </div>
-                <span class="target-slash">/</span>
-                <div class="metric-target-block">
-                  <span class="target-number target-number--muted">{{ metric.target }}</span>
-                  <span class="target-caption">Target</span>
-                </div>
-              </div>
-              <div class="metric-bar">
-                <div class="metric-bar-fill" :style="{ width: Math.min(metric.percentage, 100) + '%' }"></div>
-              </div>
-            </div>
-
             <!-- Summary cards -->
             <div v-if="hasOrgSummary" class="bento-item metric-card metric-card--compact">
               <span class="compact-value">{{ orgSummary.total_projects }}</span>
@@ -395,63 +369,33 @@
               <div class="insight-row-item">
                 <div class="insight-row-top">
                   <span class="insight-value">{{ beneficiaryReach.girls_women.actual }}</span>
-                  <span class="insight-pct">{{ beneficiaryReach.girls_women.percentage }}%</span>
+                  <span class="insight-pct">{{ sharePct(beneficiaryReach.girls_women.actual) }}%</span>
                 </div>
                 <span class="insight-label">Girls &amp; Women</span>
                 <div class="insight-bar">
-                  <div class="insight-bar-fill" :style="{ width: Math.min(beneficiaryReach.girls_women.percentage, 100) + '%' }"></div>
+                  <div class="insight-bar-fill" :style="{ width: sharePct(beneficiaryReach.girls_women.actual) + '%' }"></div>
                 </div>
               </div>
               <div class="insight-row-item">
                 <div class="insight-row-top">
                   <span class="insight-value">{{ beneficiaryReach.boys_men.actual }}</span>
-                  <span class="insight-pct">{{ beneficiaryReach.boys_men.percentage }}%</span>
+                  <span class="insight-pct">{{ sharePct(beneficiaryReach.boys_men.actual) }}%</span>
                 </div>
                 <span class="insight-label">Boys &amp; Men</span>
                 <div class="insight-bar">
-                  <div class="insight-bar-fill insight-bar-fill--alt" :style="{ width: Math.min(beneficiaryReach.boys_men.percentage, 100) + '%' }"></div>
+                  <div class="insight-bar-fill insight-bar-fill--alt" :style="{ width: sharePct(beneficiaryReach.boys_men.actual) + '%' }"></div>
                 </div>
               </div>
               <div class="insight-row-item">
                 <div class="insight-row-top">
                   <span class="insight-value">{{ beneficiaryReach.with_disability.actual }}</span>
-                  <span class="insight-pct">{{ beneficiaryReach.with_disability.percentage }}%</span>
+                  <span class="insight-pct">{{ sharePct(beneficiaryReach.with_disability.actual) }}%</span>
                 </div>
                 <span class="insight-label">With Disability</span>
                 <div class="insight-bar">
-                  <div class="insight-bar-fill insight-bar-fill--warn" :style="{ width: Math.min(beneficiaryReach.with_disability.percentage, 100) + '%' }"></div>
+                  <div class="insight-bar-fill insight-bar-fill--warn" :style="{ width: sharePct(beneficiaryReach.with_disability.actual) + '%' }"></div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <!-- Overall Target Progress -->
-          <div class="insight-card insight-card--highlight">
-            <h4 class="insight-title">Overall Progress</h4>
-            <div class="overall-block">
-              <div class="overall-ring">
-                <svg viewBox="0 0 36 36" class="ring-svg">
-                  <path
-                    class="ring-bg"
-                    d="M18 2.0845
-                       a 15.9155 15.9155 0 0 1 0 31.831
-                       a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke-width="3"
-                  />
-                  <path
-                    class="ring-fill"
-                    d="M18 2.0845
-                       a 15.9155 15.9155 0 0 1 0 31.831
-                       a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke-width="3"
-                    :stroke-dasharray="overallPct + ', 100'"
-                  />
-                </svg>
-                <span class="ring-label">{{ overallPct }}%</span>
-              </div>
-              <span class="overall-sub">{{ beneficiaryReach.total.actual }} of {{ beneficiaryReach.total.target }} target beneficiaries</span>
             </div>
           </div>
 
@@ -509,17 +453,13 @@ const totalActivities = computed(() =>
   sortedProjects.value.reduce((sum, p) => sum + (p.active_activities || 0), 0),
 )
 
-const reachMetrics = computed(() => {
-  const r = beneficiaryReach.value
-  return [
-    { code: 'total', name: 'Total Reach', ...r.total },
-    { code: 'girls', name: 'Girls & Women', ...r.girls_women },
-    { code: 'boys', name: 'Boys & Men', ...r.boys_men },
-    { code: 'disability', name: 'With Disability', ...r.with_disability },
-  ]
-})
-
-const overallPct = computed(() => Math.min(beneficiaryReach.value.total.percentage, 100))
+// Organisation-wide targets are deliberately not shown here: targets are
+// defined per project by that project's logframe. Shares below are of the
+// organisation's total registered beneficiaries, not of any target.
+function sharePct(actual: number): number {
+  const total = beneficiaryReach.value.total.actual || orgSummary.value.total_unique_beneficiaries
+  return total ? Math.round((actual / total) * 100) : 0
+}
 
 function formatType(type: string): string {
   return type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())

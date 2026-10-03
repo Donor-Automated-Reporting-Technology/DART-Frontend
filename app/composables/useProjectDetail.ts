@@ -12,6 +12,7 @@ import type {
   ProjectSummary,
   ProjectActivity,
   TargetDisaggregation,
+  ProjectLogframeSummary,
   ProjectDetailResponse,
 } from '../interfaces/dashboard'
 
@@ -64,6 +65,10 @@ export const useProjectDetail = () => {
   // Dynamic target/actual structure derived from the project's logframe.
   const disaggregations = ref<TargetDisaggregation[]>([])
 
+  // The project's M&E logframe. When present with targeted indicators it is the
+  // authoritative target structure the dashboard renders.
+  const logframe = ref<ProjectLogframeSummary | null>(null)
+
   const activities = ref<ProjectActivity[]>([])
 
   // ── Derived ────────────────────────────────────────────────────────────────
@@ -107,6 +112,7 @@ export const useProjectDetail = () => {
       project.value = data.project
       summary.value = data.summary
       disaggregations.value = data.disaggregations ?? []
+      logframe.value = data.logframe ?? null
       activities.value = data.activities ?? []
     } catch (e: any) {
       error.value = e?.message ?? 'Failed to load project detail'
@@ -121,6 +127,7 @@ export const useProjectDetail = () => {
     project,
     summary,
     disaggregations,
+    logframe,
     activities,
     hasData,
     sortedActivities,

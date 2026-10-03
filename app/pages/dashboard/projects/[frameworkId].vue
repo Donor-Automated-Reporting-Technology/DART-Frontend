@@ -102,32 +102,66 @@
           </div>
         </div>
 
-        <!-- Dynamic reach cards: one per disaggregation value declared by the project's logframe -->
-        <div
-          v-for="metric in disaggregationMetrics"
-          :key="metric.dimension + ':' + metric.key"
-          class="bento-item metric-card metric-card--reach"
-          :class="accentCardClass(metric.key)"
-        >
-          <div class="metric-card-head">
-            <span class="metric-label">{{ metric.label }}</span>
-            <span class="metric-pct-pill">{{ metric.percentage }}%</span>
-          </div>
-          <div class="metric-target-row">
-            <div class="metric-target-block">
-              <span class="target-number" :class="accentNumberClass(metric.key)">{{ metric.actual }}</span>
-              <span class="target-caption">Enrolled</span>
+        <!-- Target cards. The project's target structure comes from its M&E
+             logframe, which differs from project to project — one card per
+             targeted indicator, showing the indicator's target and the actual
+             rolled up from its linked activities. Projects without a targeted
+             logframe fall back to the generic disaggregation cards. -->
+        <template v-if="hasLogframeTargets">
+          <div
+            v-for="ind in logframeTargets"
+            :key="ind.id"
+            class="bento-item metric-card metric-card--reach"
+          >
+            <div class="metric-card-head">
+              <span class="metric-label metric-label--clamp" :title="ind.indicator">{{ ind.indicator }}</span>
+              <span class="metric-pct-pill">{{ ind.percentage }}%</span>
             </div>
-            <span class="target-slash">/</span>
-            <div class="metric-target-block">
-              <span class="target-number target-number--muted">{{ metric.target }}</span>
-              <span class="target-caption">Target</span>
+            <div class="metric-target-row">
+              <div class="metric-target-block">
+                <span class="target-number">{{ ind.actual_value }}</span>
+                <span class="target-caption">Actual</span>
+              </div>
+              <span class="target-slash">/</span>
+              <div class="metric-target-block">
+                <span class="target-number target-number--muted">{{ formatTarget(ind.target_value) }}</span>
+                <span class="target-caption">Target</span>
+              </div>
+            </div>
+            <div class="metric-bar">
+              <div class="metric-bar-fill" :style="{ width: Math.min(ind.percentage, 100) + '%' }"></div>
+            </div>
+            <span class="metric-sublabel" :title="ind.level_title">{{ ind.level_title }}</span>
+          </div>
+        </template>
+
+        <template v-else>
+          <div
+            v-for="metric in disaggregationMetrics"
+            :key="metric.dimension + ':' + metric.key"
+            class="bento-item metric-card metric-card--reach"
+            :class="accentCardClass(metric.key)"
+          >
+            <div class="metric-card-head">
+              <span class="metric-label">{{ metric.label }}</span>
+              <span class="metric-pct-pill">{{ metric.percentage }}%</span>
+            </div>
+            <div class="metric-target-row">
+              <div class="metric-target-block">
+                <span class="target-number" :class="accentNumberClass(metric.key)">{{ metric.actual }}</span>
+                <span class="target-caption">Enrolled</span>
+              </div>
+              <span class="target-slash">/</span>
+              <div class="metric-target-block">
+                <span class="target-number target-number--muted">{{ metric.target }}</span>
+                <span class="target-caption">Target</span>
+              </div>
+            </div>
+            <div class="metric-bar">
+              <div class="metric-bar-fill" :class="accentFillClass(metric.key)" :style="{ width: Math.min(metric.percentage, 100) + '%' }"></div>
             </div>
           </div>
-          <div class="metric-bar">
-            <div class="metric-bar-fill" :class="accentFillClass(metric.key)" :style="{ width: Math.min(metric.percentage, 100) + '%' }"></div>
-          </div>
-        </div>
+        </template>
       </div>
 
       <!-- ═══ Activities section ═══ -->
@@ -225,6 +259,7 @@ const {
   project,
   summary,
   disaggregations,
+  logframe,
   activities,
   hasData,
   sortedActivities,
@@ -251,6 +286,22 @@ const disaggregationMetrics = computed(() =>
     })),
   ),
 )
+
+// The project's logframe indicators that carry a numerical target are the
+// authoritative target structure for this project. Each project's logframe is
+// different, so the cards rendered here vary per project.
+const logframeTargets = computed(() =>
+  (logframe.value?.indicators ?? []).filter(
+    ind => ind.target_value != null && ind.target_value > 0,
+  ),
+)
+
+const hasLogframeTargets = computed(() => logframeTargets.value.length > 0)
+
+function formatTarget(value: number | undefined | null): string {
+  if (value == null) return '—'
+  return Number.isInteger(value) ? String(value) : value.toFixed(1)
+}
 
 // Accent styling is keyed off the well-known values so the familiar
 // girls/boys/disability colours still apply; unknown values stay neutral.
@@ -514,6 +565,21 @@ onMounted(() => fetchProjectDetail(frameworkId))
   font-size: 0.82rem;
   font-weight: 500;
   color: var(--text-secondary, #86868B);
+}
+/* Logframe indicator titles can be long — clamp to one line, full text on hover */
+.metric-label--clamp {
+  max-width: 24ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.metric-sublabel {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-muted, #AEAEB2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Hero compact row (locations / activities) */
