@@ -150,6 +150,7 @@ export interface ProjectLogframeIndicator {
   actual_value: number;
   percentage: number;
   linked_activity_ids: string[];
+  custom_fields?: Record<string, any>;
 }
 
 export interface ProjectLogframeSummary {

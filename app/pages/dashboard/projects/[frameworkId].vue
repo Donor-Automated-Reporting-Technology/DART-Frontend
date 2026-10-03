@@ -131,6 +131,31 @@
           </div>
         </template>
 
+        <!-- Custom target fields (from indicator custom_fields) -->
+        <template v-if="customTargetMetrics.length">
+          <div
+            v-for="metric in customTargetMetrics"
+            :key="metric.id"
+            class="bento-item metric-card metric-card--reach"
+            :class="accentCardClass('custom')"
+          >
+            <div class="metric-card-head">
+              <span class="metric-label metric-label--clamp" :title="metric.label">{{ metric.label }}</span>
+            </div>
+            <div class="metric-target-row">
+              <div class="metric-target-block">
+                <span class="target-number target-number--muted" style="margin-left: 0;">{{ formatTarget(Number(metric.target)) }}</span>
+                <span class="target-caption">Target {{ metric.unit ? '(' + metric.unit + ')' : '' }}</span>
+              </div>
+            </div>
+            <!-- Custom targets only store a target, no actual is tracked yet -->
+            <div class="metric-bar">
+              <div class="metric-bar-fill metric-bar-fill--muted" style="width: 0%"></div>
+            </div>
+            <span class="metric-sublabel" :title="metric.indicatorName">{{ metric.indicatorName }}</span>
+          </div>
+        </template>
+
         <!-- Disaggregation cards (Gender, Disability, Custom Targets) -->
         <template v-if="disaggregationMetrics.length">
           <div
@@ -296,6 +321,38 @@ const logframeTargets = computed(() =>
 )
 
 const hasLogframeTargets = computed(() => logframeTargets.value.length > 0)
+
+interface CustomTargetMetric {
+  id: string
+  label: string
+  target: number | string
+  unit?: string
+  indicatorId: string
+  indicatorName: string
+}
+
+const customTargetMetrics = computed(() => {
+  const metrics: CustomTargetMetric[] = []
+  for (const ind of (logframe.value?.indicators ?? [])) {
+    const fields = ind.custom_fields?.['target_fields']
+    if (Array.isArray(fields)) {
+      for (let i = 0; i < fields.length; i++) {
+        const field = fields[i]
+        if (field.label && field.value != null && field.value !== '') {
+          metrics.push({
+            id: `${ind.id}-${i}`,
+            label: field.label,
+            target: field.value,
+            unit: field.unit,
+            indicatorId: ind.id,
+            indicatorName: ind.indicator
+          })
+        }
+      }
+    }
+  }
+  return metrics
+})
 
 function formatTarget(value: number | undefined | null): string {
   if (value == null) return '—'
