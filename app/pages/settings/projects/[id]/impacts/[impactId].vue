@@ -23,161 +23,257 @@
 
       <template v-else-if="impact">
         <!-- ═══ Indicator card ═══ -->
-        <div class="section-label">Indicator</div>
-        <div class="section-card indicator-card">
-          <div class="indicator-head">
-            <span v-if="indicator?.code" class="indicator-code">{{ indicator.code }}</span>
-            <span v-else class="indicator-code indicator-code--muted">new</span>
-            <span class="indicator-status">
-              {{ hasIndicator ? 'Saved' : 'Not saved yet' }}
-            </span>
-          </div>
-
-          <div class="field">
-            <label class="field-label" for="im-ind">Indicator statement *</label>
-            <textarea
-              id="im-ind"
-              v-model="form.indicator"
-              rows="2"
-              class="field-input"
-              placeholder="e.g. % of targeted persons reporting an increased sense of safety & well-being"
-            ></textarea>
-          </div>
-
-          <div class="form-grid">
-            <div class="field">
-              <label class="field-label" for="im-code">Code</label>
-              <input id="im-code" v-model="form.code" type="text" class="field-input" placeholder="e.g. PRO-RO1" />
+        <section class="section-card">
+          <div class="card-head">
+            <div class="card-head-text">
+              <h2 class="card-title">Indicator</h2>
+              <span class="card-status" :class="{ 'card-status--saved': hasIndicator }">
+                {{ hasIndicator ? 'Saved' : 'Not saved yet' }}
+              </span>
             </div>
-            <div class="field">
-              <label class="field-label" for="im-def">Definition</label>
-              <input id="im-def" v-model="form.definition" type="text" class="field-input" placeholder="How to measure" />
-            </div>
-          </div>
-        </div>
-
-        <!-- ═══ Customisable targets ═══ -->
-        <div class="section-label">Customise targets</div>
-        <p class="section-hint">Add input fields for the target (and any extra fields you need), then save.</p>
-        <div class="section-card">
-          <div class="form-grid">
-            <div class="field">
-              <label class="field-label" for="im-tv">Target value</label>
-              <input id="im-tv" v-model.number="form.target_value" type="number" step="any" class="field-input" placeholder="e.g. 1200" />
-            </div>
-            <div class="field">
-              <label class="field-label" for="im-unit">Unit</label>
-              <input id="im-unit" v-model="form.unit" type="text" class="field-input" placeholder="e.g. persons, %" />
-            </div>
-            <div class="field">
-              <label class="field-label" for="im-ty">Target year</label>
-              <input id="im-ty" v-model.number="form.target_year" type="number" min="1900" max="2100" class="field-input" />
-            </div>
-            <div class="field">
-              <label class="field-label" for="im-bv">Baseline value</label>
-              <input id="im-bv" v-model.number="form.baseline_value" type="number" step="any" class="field-input" />
-            </div>
-            <div class="field">
-              <label class="field-label" for="im-by">Baseline year</label>
-              <input id="im-by" v-model.number="form.baseline_year" type="number" min="1900" max="2100" class="field-input" />
-            </div>
-          </div>
-
-          <TargetFieldsEditor
-            v-model="form.target_fields"
-            label="Target fields"
-            hint="Add as many fields as you need — e.g. Girls, Boys, Persons with disability — each with its own value type and unit."
-          />
-
-          <CustomFieldsEditor
-            v-model="form.custom_fields"
-            label="Other custom fields"
-            hint="Any extra key/value data not covered above."
-          />
-
-          <div v-if="saveError" class="api-err">{{ saveError }}</div>
-          <div class="actions">
-            <Transition name="fade">
-              <span v-if="saveSuccess" class="save-ok">Saved</span>
-            </Transition>
-            <button class="btn-primary" :disabled="saving" @click="saveIndicator">
-              <span v-if="saving" class="btn-spinner" /> {{ hasIndicator ? 'Save' : 'Create indicator' }}
+            <button v-if="canManage && hasIndicator && !editingIndicator" class="btn-edit" @click="startEdit('indicator')">
+              Edit
             </button>
           </div>
-        </div>
+
+          <!-- Edit mode -->
+          <template v-if="editingIndicator">
+            <div class="field">
+              <label class="field-label" for="im-ind">Indicator statement *</label>
+              <textarea
+                id="im-ind"
+                v-model="form.indicator"
+                rows="3"
+                class="field-input"
+                placeholder="e.g. % of targeted persons reporting an increased sense of safety & well-being"
+              ></textarea>
+            </div>
+
+            <div class="form-grid">
+              <div class="field">
+                <label class="field-label" for="im-code">Code</label>
+                <input id="im-code" v-model="form.code" type="text" class="field-input" placeholder="e.g. PRO-RO1" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="im-def">Definition</label>
+                <input id="im-def" v-model="form.definition" type="text" class="field-input" placeholder="How to measure" />
+              </div>
+            </div>
+
+            <div v-if="saveError && savingSection === 'indicator'" class="api-err">{{ saveError }}</div>
+            <div class="actions">
+              <button v-if="hasIndicator" type="button" class="btn-ghost" @click="cancelEdit('indicator')">Cancel</button>
+              <button class="btn-primary" :disabled="saving" @click="saveIndicator('indicator')">
+                <span v-if="saving && savingSection === 'indicator'" class="btn-spinner" />
+                {{ hasIndicator ? 'Save' : 'Create indicator' }}
+              </button>
+            </div>
+          </template>
+
+          <!-- View mode -->
+          <template v-else-if="hasIndicator">
+            <p class="view-statement">{{ form.indicator }}</p>
+            <dl class="view-grid">
+              <div class="view-item">
+                <dt>Code</dt>
+                <dd>{{ display(form.code) }}</dd>
+              </div>
+              <div class="view-item view-item--wide">
+                <dt>Definition</dt>
+                <dd>{{ display(form.definition) }}</dd>
+              </div>
+            </dl>
+          </template>
+
+          <p v-else class="view-empty">No indicator has been set for this impact yet.</p>
+        </section>
+
+        <!-- ═══ Targets card ═══ -->
+        <section class="section-card">
+          <div class="card-head">
+            <div class="card-head-text">
+              <h2 class="card-title">Targets</h2>
+              <p class="card-hint">Numerical targets for this indicator, plus any extra fields you need.</p>
+            </div>
+            <button v-if="canManage && hasIndicator && !editingTargets" class="btn-edit" @click="startEdit('targets')">
+              Edit
+            </button>
+          </div>
+
+          <!-- Edit mode -->
+          <template v-if="editingTargets">
+            <div class="form-grid">
+              <div class="field">
+                <label class="field-label" for="im-tv">Target value</label>
+                <input id="im-tv" v-model.number="form.target_value" type="number" step="any" class="field-input" placeholder="e.g. 1200" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="im-unit">Unit</label>
+                <input id="im-unit" v-model="form.unit" type="text" class="field-input" placeholder="e.g. persons, %" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="im-ty">Target year</label>
+                <input id="im-ty" v-model.number="form.target_year" type="number" min="1900" max="2100" class="field-input" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="im-bv">Baseline value</label>
+                <input id="im-bv" v-model.number="form.baseline_value" type="number" step="any" class="field-input" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="im-by">Baseline year</label>
+                <input id="im-by" v-model.number="form.baseline_year" type="number" min="1900" max="2100" class="field-input" />
+              </div>
+            </div>
+
+            <TargetFieldsEditor
+              v-model="form.target_fields"
+              label="Target fields"
+              hint="Add as many fields as you need — e.g. Girls, Boys, Persons with disability — each with its own value type and unit."
+            />
+
+            <CustomFieldsEditor
+              v-model="form.custom_fields"
+              label="Other custom fields"
+              hint="Any extra key/value data not covered above."
+            />
+
+            <div v-if="saveError && savingSection === 'targets'" class="api-err">{{ saveError }}</div>
+            <div class="actions">
+              <button v-if="hasIndicator" type="button" class="btn-ghost" @click="cancelEdit('targets')">Cancel</button>
+              <button class="btn-primary" :disabled="saving" @click="saveIndicator('targets')">
+                <span v-if="saving && savingSection === 'targets'" class="btn-spinner" />
+                {{ hasIndicator ? 'Save' : 'Create indicator' }}
+              </button>
+            </div>
+          </template>
+
+          <!-- View mode -->
+          <template v-else-if="hasIndicator">
+            <dl class="view-grid">
+              <div class="view-item">
+                <dt>Target value</dt>
+                <dd>{{ display(form.target_value) }}<span v-if="form.target_value != null && form.unit" class="view-unit"> {{ form.unit }}</span></dd>
+              </div>
+              <div class="view-item">
+                <dt>Target year</dt>
+                <dd>{{ display(form.target_year) }}</dd>
+              </div>
+              <div class="view-item">
+                <dt>Baseline value</dt>
+                <dd>{{ display(form.baseline_value) }}<span v-if="form.baseline_value != null && form.unit" class="view-unit"> {{ form.unit }}</span></dd>
+              </div>
+              <div class="view-item">
+                <dt>Baseline year</dt>
+                <dd>{{ display(form.baseline_year) }}</dd>
+              </div>
+            </dl>
+
+            <template v-if="savedTargetFields.length">
+              <h3 class="view-subtitle">Target fields</h3>
+              <dl class="view-grid">
+                <div v-for="(tf, i) in savedTargetFields" :key="i" class="view-item">
+                  <dt>{{ tf.label }}</dt>
+                  <dd>{{ displayTargetField(tf) }}<span v-if="tf.unit" class="view-unit"> {{ tf.unit }}</span></dd>
+                </div>
+              </dl>
+            </template>
+
+            <template v-if="savedCustomFields.length">
+              <h3 class="view-subtitle">Other custom fields</h3>
+              <dl class="view-grid">
+                <div v-for="[key, value] in savedCustomFields" :key="key" class="view-item">
+                  <dt>{{ key }}</dt>
+                  <dd>{{ display(value) }}</dd>
+                </div>
+              </dl>
+            </template>
+          </template>
+
+          <p v-else class="view-empty">Save the indicator first, then set its targets.</p>
+        </section>
+
+        <Transition name="fade">
+          <div v-if="saveSuccess" class="save-ok">Changes saved</div>
+        </Transition>
 
         <!-- ═══ Activities ═══ -->
-        <div class="section-head">
-          <div>
-            <div class="section-label">Activities</div>
-            <p class="section-hint">Activities belong to this project's logframe. Add the ones from your own logframe, then switch on the ones that feed this indicator.</p>
-          </div>
-          <button v-if="canManage && !showAddActivity" class="btn-secondary" @click="openAddActivity">
-            Add activity
-          </button>
-        </div>
-
-        <!-- Add a hand-entered activity (from an external logframe) -->
-        <div v-if="showAddActivity" class="section-card add-activity">
-          <div class="form-grid">
-            <div class="field">
-              <label class="field-label" for="aa-name">Activity name *</label>
-              <input id="aa-name" v-model="addForm.name" type="text" class="field-input" placeholder="e.g. Community sensitisation sessions" />
+        <section class="section-card">
+          <div class="card-head">
+            <div class="card-head-text">
+              <h2 class="card-title">Activities</h2>
+              <p class="card-hint">Activities belong to this project's logframe. Add the ones from your own logframe, then switch on the ones that feed this indicator.</p>
             </div>
-            <div class="field">
-              <label class="field-label" for="aa-code">Code</label>
-              <input id="aa-code" v-model="addForm.code" type="text" class="field-input" placeholder="e.g. COMM_SENS" />
-            </div>
-            <div class="field">
-              <label class="field-label" for="aa-module">Module *</label>
-              <select id="aa-module" v-model="addForm.module" class="field-input">
-                <option value="pss">PSS — Psychosocial Support</option>
-              </select>
-            </div>
-          </div>
-          <div class="field">
-            <label class="field-label" for="aa-desc">Description</label>
-            <textarea id="aa-desc" v-model="addForm.description" rows="2" class="field-input" placeholder="Optional"></textarea>
-          </div>
-          <div v-if="addError" class="api-err">{{ addError }}</div>
-          <div class="actions">
-            <button type="button" class="btn-ghost" @click="showAddActivity = false">Cancel</button>
-            <button type="button" class="btn-primary" :disabled="addSaving" @click="saveActivity">
-              <span v-if="addSaving" class="btn-spinner" /> {{ addSaving ? 'Adding…' : 'Add activity' }}
+            <button v-if="canManage && !showAddActivity" class="btn-add" @click="openAddActivity">
+              + Add activity
             </button>
           </div>
-        </div>
 
-        <div v-if="!activities.length" class="empty-inline">
-          No activities yet — use “Add activity” to enter the ones from your logframe.
-        </div>
-
-        <p v-if="activities.length && !hasIndicator" class="section-hint">Save the indicator to switch activities on.</p>
-
-        <div v-if="activities.length" class="activity-list" :class="{ 'activity-list--disabled': !hasIndicator }">
-          <div v-for="a in activities" :key="a.id" class="activity-row">
-            <span class="activity-info">
-              <span class="activity-name">{{ activityName(a) }}</span>
-              <span class="activity-code">{{ activityCode(a) }}</span>
-              <span v-if="a.is_custom" class="activity-custom">{{ (a.module || 'custom').toUpperCase() }}</span>
-              <span v-if="a.is_active" class="activity-live">project: on</span>
-              <span v-else class="activity-off">project: off</span>
-            </span>
-
-            <label class="switch" :class="{ 'switch--disabled': !hasIndicator }">
-              <input
-                type="checkbox"
-                class="switch-input"
-                :checked="isLinked(a.id)"
-                :disabled="!hasIndicator || toggling[a.id]"
-                @change="toggleActivity(a.id, ($event.target as HTMLInputElement).checked)"
-              />
-              <span class="switch-track"><span class="switch-thumb" /></span>
-            </label>
+          <!-- Add a hand-entered activity (from an external logframe) -->
+          <div v-if="showAddActivity" class="add-activity">
+            <h3 class="view-subtitle view-subtitle--first">New activity</h3>
+            <div class="form-grid">
+              <div class="field">
+                <label class="field-label" for="aa-name">Activity name *</label>
+                <input id="aa-name" v-model="addForm.name" type="text" class="field-input" placeholder="e.g. Community sensitisation sessions" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="aa-code">Code</label>
+                <input id="aa-code" v-model="addForm.code" type="text" class="field-input" placeholder="e.g. COMM_SENS" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="aa-module">Module *</label>
+                <select id="aa-module" v-model="addForm.module" class="field-input">
+                  <option value="pss">PSS — Psychosocial Support</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label" for="aa-desc">Description</label>
+              <textarea id="aa-desc" v-model="addForm.description" rows="2" class="field-input" placeholder="Optional"></textarea>
+            </div>
+            <div v-if="addError" class="api-err">{{ addError }}</div>
+            <div class="actions">
+              <button type="button" class="btn-ghost" @click="showAddActivity = false">Cancel</button>
+              <button type="button" class="btn-primary" :disabled="addSaving" @click="saveActivity">
+                <span v-if="addSaving" class="btn-spinner" /> {{ addSaving ? 'Adding…' : 'Add activity' }}
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div v-if="toggleError" class="api-err">{{ toggleError }}</div>
+          <p v-if="!activities.length" class="view-empty">
+            No activities yet — use “Add activity” to enter the ones from your logframe.
+          </p>
+
+          <p v-if="activities.length && !hasIndicator" class="card-hint card-hint--note">Save the indicator to switch activities on.</p>
+
+          <div v-if="activities.length" class="activity-list" :class="{ 'activity-list--disabled': !hasIndicator }">
+            <div v-for="a in activities" :key="a.id" class="activity-row">
+              <div class="activity-info">
+                <span class="activity-name">{{ activityName(a) }}</span>
+                <span class="activity-tags">
+                  <span v-if="activityCode(a)" class="activity-tag">{{ activityCode(a) }}</span>
+                  <span v-if="a.is_custom" class="activity-tag">{{ (a.module || 'custom').toUpperCase() }}</span>
+                  <span class="activity-tag" :class="a.is_active ? 'activity-tag--on' : ''">
+                    Project: {{ a.is_active ? 'on' : 'off' }}
+                  </span>
+                </span>
+              </div>
+
+              <label class="switch" :class="{ 'switch--disabled': !hasIndicator }" :title="isLinked(a.id) ? 'Feeds this indicator' : 'Not linked'">
+                <input
+                  type="checkbox"
+                  class="switch-input"
+                  :checked="isLinked(a.id)"
+                  :disabled="!hasIndicator || toggling[a.id]"
+                  @change="toggleActivity(a.id, ($event.target as HTMLInputElement).checked)"
+                />
+                <span class="switch-track"><span class="switch-thumb" /></span>
+              </label>
+            </div>
+          </div>
+
+          <div v-if="toggleError" class="api-err">{{ toggleError }}</div>
+        </section>
       </template>
     </div>
   </NuxtLayout>
@@ -267,11 +363,45 @@ const saving = ref(false)
 const saveError = ref('')
 const saveSuccess = ref(false)
 
+// Each card shows its saved values until "Edit" is pressed. Before the
+// indicator exists, the indicator card opens straight in edit mode.
+type Section = 'indicator' | 'targets'
+const editingIndicator = ref(false)
+const editingTargets = ref(false)
+const savingSection = ref<Section | null>(null)
+
+function startEdit(section: Section) {
+  saveError.value = ''
+  if (section === 'indicator') editingIndicator.value = true
+  else editingTargets.value = true
+}
+
+/** Drop unsaved changes in one card without touching the other. */
+function cancelEdit(section: Section) {
+  saveError.value = ''
+  if (section === 'indicator') {
+    seedIndicatorFields()
+    editingIndicator.value = false
+  } else {
+    seedTargetFields()
+    editingTargets.value = false
+  }
+}
+
 function seedForm() {
+  seedIndicatorFields()
+  seedTargetFields()
+}
+
+function seedIndicatorFields() {
   const ind = indicator.value
   form.code = ind?.code ?? ''
   form.indicator = ind?.indicator ?? ''
   form.definition = ind?.definition ?? ''
+}
+
+function seedTargetFields() {
+  const ind = indicator.value
   form.unit = ind?.unit ?? ''
   form.target_value = ind?.target_value ?? null
   form.target_year = ind?.target_year ?? null
@@ -282,10 +412,26 @@ function seedForm() {
   // edited separately, so split them out when seeding the form.
   const custom = { ...(ind?.custom_fields ?? {}) }
   const stored = custom[TARGET_FIELDS_KEY]
-  form.target_fields = Array.isArray(stored) ? (stored as LogframeTargetField[]) : []
+  form.target_fields = Array.isArray(stored) ? (stored as LogframeTargetField[]).map((f) => ({ ...f })) : []
   delete custom[TARGET_FIELDS_KEY]
   form.custom_fields = custom
 }
+
+// ─── Read-only display ───
+
+function display(value: unknown): string {
+  if (value == null || value === '') return '—'
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+  if (typeof value === 'object') return JSON.stringify(value)
+  return String(value)
+}
+
+function displayTargetField(f: LogframeTargetField): string {
+  return f.type === 'boolean' ? display(!!f.value) : display(f.value)
+}
+
+const savedTargetFields = computed(() => form.target_fields.filter((f) => f.label.trim() !== ''))
+const savedCustomFields = computed(() => Object.entries(form.custom_fields))
 
 /** Target fields with a name, merged back into custom_fields on save. */
 function cleanTargetFields(): LogframeTargetField[] {
@@ -307,6 +453,7 @@ async function fetchAll() {
     indicator.value = (data.indicators ?? []).find((i) => i.level_id === impactId) ?? null
     activities.value = (activitiesRes as any)?.activities ?? []
     seedForm()
+    editingIndicator.value = !indicator.value && canManage.value
   } catch (e: any) {
     loadError.value = e instanceof ApiError ? e.message : (e?.message ?? 'Failed to load impact')
   } finally {
@@ -341,11 +488,13 @@ function buildPayload(): LogframeIndicatorRequest {
   }
 }
 
-async function saveIndicator() {
+async function saveIndicator(section: Section) {
   saveError.value = ''
   saveSuccess.value = false
+  savingSection.value = section
   if (!form.indicator.trim()) { saveError.value = 'Indicator statement is required'; return }
   saving.value = true
+  const creating = !indicator.value
   try {
     const payload = buildPayload()
     if (indicator.value) {
@@ -356,6 +505,10 @@ async function saveIndicator() {
     const refreshed = await logframeApi.getLogframe(projectId)
     indicator.value = (refreshed.indicators ?? []).find((i) => i.level_id === impactId) ?? null
     seedForm()
+    // The whole indicator is saved at once, so both cards return to view mode.
+    // A freshly created indicator opens its targets straight away.
+    editingIndicator.value = false
+    editingTargets.value = creating && canManage.value
     saveSuccess.value = true
     setTimeout(() => { saveSuccess.value = false }, 3000)
   } catch (e: any) {
@@ -447,118 +600,157 @@ onMounted(fetchAll)
 </script>
 
 <style scoped>
-.impact-page { max-width: 860px; padding-bottom: 48px; }
+/* Page palette: brand teal instead of the light-green accent, and stronger
+   secondary text so small labels stay readable on grey backgrounds. These
+   cascade into the field editors rendered inside the page. */
+.impact-page {
+  --brand: #077163;
+  --brand-soft: rgba(7, 113, 99, 0.12);
+  --accent: var(--brand);
+  --success: var(--brand);
+  --brand-text: #4fbfae;
+  --ip-text-2: #c4c4cc;
+  --text-muted: var(--ip-text-2);
+  --text-secondary: var(--ip-text-2);
+  max-width: 860px; padding-bottom: 48px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+:global([data-theme="light"]) .impact-page { --ip-text-2: #4b5563; --brand-text: var(--brand); }
 
+/* Header */
 .page-header {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  flex-wrap: wrap; margin-bottom: 28px; padding: 20px 22px;
-  background: var(--bg-panel); border: 1px solid var(--border-color);
-  border-left: 3px solid #a78bfa; border-radius: 12px;
+  flex-wrap: wrap; padding: 22px 24px;
+  background: var(--bg-panel); border-radius: 12px;
 }
 .page-header-text { min-width: 0; flex: 1; }
 .page-eyebrow {
-  display: block; margin-bottom: 4px;
-  font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
-  color: #a78bfa;
+  display: block; margin-bottom: 6px;
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--brand-text);
 }
-.page-title { font-size: 1.35rem; font-weight: 750; line-height: 1.3; margin: 0 0 4px; color: var(--text-primary); }
-.page-subtitle { font-size: 0.85rem; color: var(--text-secondary); margin: 0; }
+.page-title { font-size: 1.35rem; font-weight: 750; line-height: 1.3; margin: 0 0 6px; color: var(--text-primary); overflow-wrap: anywhere; }
+.page-subtitle { font-size: 0.86rem; color: var(--ip-text-2); margin: 0; }
 
+/* Buttons */
 .btn-back {
   display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
   font-size: 0.82rem; font-weight: 600; color: var(--text-primary); text-decoration: none;
-  padding: 8px 14px; background: var(--bg-input);
-  border: 1px solid var(--border-color); border-radius: 8px;
-  transition: border-color 0.15s, color 0.15s;
+  padding: 9px 14px; background: var(--bg-input); border-radius: 8px;
+  transition: background 0.15s, color 0.15s;
 }
-.btn-back:hover { border-color: var(--accent); color: var(--accent); }
-.btn-primary {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 14px; font-size: 0.82rem; font-weight: 600;
-  background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer;
+.btn-back:hover { background: var(--brand-soft); color: var(--brand-text); }
+.btn-primary, .btn-add {
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  padding: 9px 16px; font-size: 0.84rem; font-weight: 600;
+  background: var(--brand); color: #fff; border: none; border-radius: 8px; cursor: pointer;
+  transition: filter 0.15s;
 }
+.btn-primary:hover:not(:disabled), .btn-add:hover { filter: brightness(1.12); }
 .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-edit {
+  flex-shrink: 0; padding: 7px 16px; font-size: 0.82rem; font-weight: 600;
+  background: var(--brand-soft); color: var(--text-primary);
+  border: none; border-radius: 8px; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-edit:hover { background: var(--brand); color: #fff; }
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 14px; font-size: 0.84rem; font-weight: 600;
+  background: transparent; color: var(--ip-text-2);
+  border: none; border-radius: 8px; cursor: pointer;
+}
+.btn-ghost:hover { color: var(--text-primary); background: var(--bg-input); }
 .btn-spinner {
   width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3);
   border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.section-label {
-  font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
-  color: var(--text-secondary); margin: 28px 0 6px; padding-left: 2px;
+/* Cards */
+.section-card { background: var(--bg-panel); border-radius: 12px; padding: 22px 24px; }
+.card-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  margin-bottom: 18px;
 }
-.section-hint { font-size: 0.8rem; color: var(--text-secondary); margin: -2px 0 10px; padding-left: 2px; }
-.section-card {
-  background: var(--bg-panel); border: 1px solid var(--border-color);
-  border-radius: 10px; padding: 18px;
+.card-head-text { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.card-title { font-size: 1rem; font-weight: 700; margin: 0; color: var(--text-primary); }
+.card-hint { font-size: 0.82rem; line-height: 1.5; color: var(--ip-text-2); margin: 0; max-width: 600px; }
+.card-hint--note { margin: 0 0 12px; }
+.card-status { font-size: 0.78rem; font-weight: 600; color: var(--ip-text-2); }
+.card-status--saved { color: var(--brand-text); }
+
+/* Read-only view */
+.view-statement {
+  margin: 0 0 18px; font-size: 0.98rem; font-weight: 600; line-height: 1.55;
+  color: var(--text-primary); white-space: pre-wrap; overflow-wrap: anywhere;
 }
-.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
-.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
-.field-label { font-size: 0.75rem; font-weight: 600; color: var(--text-primary); }
+.view-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px; margin: 0;
+}
+.view-item {
+  min-width: 0; padding: 12px 14px; background: var(--bg-input); border-radius: 8px;
+}
+.view-item--wide { grid-column: span 2; }
+.view-item dt {
+  font-size: 0.74rem; font-weight: 600; color: var(--ip-text-2);
+  margin-bottom: 4px; overflow-wrap: anywhere;
+}
+.view-item dd {
+  margin: 0; font-size: 0.92rem; font-weight: 600; line-height: 1.45;
+  color: var(--text-primary); white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.view-unit { font-weight: 500; color: var(--ip-text-2); }
+.view-subtitle {
+  font-size: 0.8rem; font-weight: 700; color: var(--text-primary);
+  margin: 20px 0 10px;
+}
+.view-subtitle--first { margin-top: 0; }
+.view-empty {
+  margin: 0; padding: 14px 16px; font-size: 0.84rem; color: var(--ip-text-2);
+  background: var(--bg-input); border-radius: 8px;
+}
+
+/* Form */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.field-label { font-size: 0.78rem; font-weight: 600; color: var(--text-primary); }
 .field-input {
-  width: 100%; padding: 8px 10px; font-size: 0.85rem;
-  background: var(--bg-input); border: 1px solid var(--border-color);
-  border-radius: 6px; color: var(--text-primary); font-family: inherit;
+  width: 100%; padding: 10px 12px; font-size: 0.88rem; line-height: 1.45;
+  background: var(--bg-input); border: 1px solid transparent;
+  border-radius: 8px; color: var(--text-primary); font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 14px; }
-.save-ok { display: inline-flex; align-items: center; gap: 5px; font-size: 0.78rem; color: var(--success); }
-
-.section-head {
-  display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
-  margin-top: 24px; flex-wrap: wrap;
+textarea.field-input { resize: vertical; }
+.field-input::placeholder { color: var(--ip-text-2); opacity: 0.75; }
+.field-input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+.actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+.save-ok {
+  align-self: flex-end; padding: 8px 14px; font-size: 0.82rem; font-weight: 600;
+  color: #fff; background: var(--brand); border-radius: 8px;
 }
-.section-head .section-label { margin: 0 0 6px; }
-.section-head .section-hint { margin: 0; max-width: 620px; }
-.btn-secondary {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 12px; font-size: 0.8rem; font-weight: 600;
-  background: var(--bg-surface); color: var(--text-primary);
-  border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer;
-}
-.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-.btn-ghost {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 12px; font-size: 0.8rem; font-weight: 600;
-  background: transparent; color: var(--text-secondary);
-  border: 1px solid transparent; border-radius: 8px; cursor: pointer;
-}
-.btn-ghost:hover { color: var(--text-primary); }
-.add-activity { margin-bottom: 12px; border-left: 3px solid var(--accent); }
-.activity-custom {
-  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.03em;
-  color: var(--accent); background: var(--bg-surface);
-  border: 1px solid var(--border-color); border-radius: 5px; padding: 1px 6px;
-}
-
-/* Indicator card */
-.indicator-card { border-left: 3px solid #a78bfa; }
-.indicator-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.indicator-code {
-  padding: 2px 8px; font-size: 0.72rem; font-weight: 700;
-  background: var(--bg-surface); border: 1px solid var(--border-color);
-  border-radius: 5px; color: var(--accent);
-}
-.indicator-code--muted { color: var(--text-secondary); }
-.indicator-status { font-size: 0.74rem; color: var(--text-secondary); }
 
 /* Activities */
-.activity-list { display: flex; flex-direction: column; gap: 8px; }
-.activity-list--disabled { opacity: 0.5; pointer-events: none; }
+.add-activity {
+  margin-bottom: 18px; padding: 18px; background: var(--bg-input); border-radius: 10px;
+}
+.add-activity .field-input { background: var(--bg-panel); }
+.activity-list { display: flex; flex-direction: column; gap: 10px; }
+.activity-list--disabled { opacity: 0.55; pointer-events: none; }
 .activity-row {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 12px 14px; background: var(--bg-panel);
-  border: 1px solid var(--border-color); border-radius: 10px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 14px 16px; background: var(--bg-input); border-radius: 10px;
 }
-.activity-info { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; }
-.activity-name { font-size: 0.85rem; font-weight: 600; }
-.activity-code {
-  font-size: 0.7rem; color: var(--text-secondary);
-  background: var(--bg-surface); border: 1px solid var(--border-color);
-  border-radius: 5px; padding: 1px 6px;
+.activity-info { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.activity-name { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); overflow-wrap: anywhere; }
+.activity-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.activity-tag {
+  font-size: 0.72rem; font-weight: 600; color: var(--ip-text-2);
+  background: var(--bg-panel); border-radius: 6px; padding: 2px 8px;
 }
-.activity-live { font-size: 0.7rem; color: var(--success); }
-.activity-off { font-size: 0.7rem; color: var(--text-secondary); }
+.activity-tag--on { color: #fff; background: var(--brand); }
 
 /* Switch */
 .switch { position: relative; flex-shrink: 0; cursor: pointer; }
@@ -566,10 +758,11 @@ onMounted(fetchAll)
 .switch-input { position: absolute; opacity: 0; width: 0; height: 0; }
 .switch-track {
   display: block; width: 40px; height: 22px;
-  background: var(--border-color); border-radius: 11px;
-  transition: background 0.2s; position: relative;
+  background: var(--ip-text-2); opacity: 0.55; border-radius: 11px;
+  transition: background 0.2s, opacity 0.2s; position: relative;
 }
-.switch-input:checked + .switch-track { background: var(--accent); }
+.switch-input:checked + .switch-track { background: var(--brand); opacity: 1; }
+.switch-input:focus-visible + .switch-track { box-shadow: 0 0 0 3px var(--brand-soft); }
 .switch-thumb {
   position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
   background: #fff; border-radius: 50%;
@@ -579,19 +772,22 @@ onMounted(fetchAll)
 .switch-input:checked + .switch-track .switch-thumb { transform: translateX(18px); }
 
 .api-err {
-  display: flex; align-items: center; gap: 6px; margin-top: 12px;
-  padding: 10px 12px; font-size: 0.82rem; color: var(--error);
-  background: var(--error-bg); border-radius: 6px;
+  margin-top: 12px; padding: 10px 12px; font-size: 0.84rem; color: var(--error);
+  background: var(--error-bg); border-radius: 8px;
 }
-.empty-inline { padding: 14px; font-size: 0.82rem; color: var(--text-secondary); background: var(--bg-surface); border-radius: 8px; }
 
-.state { padding: 40px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-secondary); }
+.state { padding: 40px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--ip-text-2); }
 .state--error { color: var(--error); }
-.pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); animation: pulse 1.4s infinite; }
+.pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ip-text-2); animation: pulse 1.4s infinite; }
 .pulse-dot:nth-child(2) { animation-delay: 0.2s; }
 .pulse-dot:nth-child(3) { animation-delay: 0.4s; }
 @keyframes pulse { 0%,80%,100% { opacity: 0.3; } 40% { opacity: 1; } }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+@media (max-width: 600px) {
+  .page-header, .section-card { padding: 18px 16px; }
+  .view-item--wide { grid-column: auto; }
+}
 </style>
