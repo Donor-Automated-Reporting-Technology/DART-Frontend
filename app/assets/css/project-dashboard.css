@@ -62,10 +62,6 @@
   padding: 28px 30px; border-radius: 16px;
   background: var(--d-card); box-shadow: var(--d-shadow);
 }
-.project-detail .project-hero::before {
-  content: ''; position: absolute; inset: 0 0 auto 0; height: 4px;
-  background: linear-gradient(90deg, var(--brand) 0%, #0fa58f 100%);
-}
 .project-detail .project-hero-info { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .project-detail .project-hero-name {
   margin: 0; font-size: 1.6rem; font-weight: 750; line-height: 1.25; letter-spacing: -0.02em;
@@ -141,11 +137,6 @@
 .project-detail .impact-card:hover::before { transform: scale(1.35); opacity: 1; }
 .project-detail .impact-card:focus-visible { outline: 2px solid var(--brand-text); outline-offset: 3px; }
 
-.project-detail .impact-watermark {
-  position: absolute; z-index: -1; left: 14px; bottom: -26px;
-  font-size: 6.5rem; font-weight: 800; line-height: 1; letter-spacing: -0.05em;
-  color: var(--brand-text); opacity: 0.06; pointer-events: none;
-}
 .project-detail .impact-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .project-detail .impact-index {
   padding: 4px 10px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;

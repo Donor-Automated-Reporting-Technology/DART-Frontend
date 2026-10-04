@@ -88,8 +88,6 @@
             :to="`/dashboard/projects/${frameworkId}/impacts/${card.id}`"
             class="impact-card"
           >
-            <span class="impact-watermark" aria-hidden="true">{{ card.number }}</span>
-
             <div class="impact-top">
               <span class="impact-index">Impact {{ card.number }}</span>
               <div v-if="card.progress !== null" class="ring ring--sm" :title="`${card.progress}% of target reached`">
