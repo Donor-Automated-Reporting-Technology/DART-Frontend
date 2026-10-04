@@ -143,15 +143,20 @@
             <!-- Outputs under an outcome -->
             <div v-if="childrenOf(child.id).length" class="tree-children">
               <NuxtLink
-                v-for="out in childrenOf(child.id)"
+                v-for="out in childrenOf(child.id).slice(outputIndex, outputIndex + 1)"
                 :key="out.id"
                 :to="levelLink(out.id)"
                 class="tree-leaf"
               >
                 <span class="tree-type tree-type--leaf">{{ typeLabel(out.level_type) }}</span>
-                <span class="tree-leaf-title">{{ out.title }}</span>
+                <span class="tree-leaf-title" :title="out.title">{{ out.title }}</span>
                 <span class="tree-leaf-pct">{{ progressOf(out.id) !== null ? `${progressOf(out.id)}%` : '—' }}</span>
               </NuxtLink>
+              <div v-if="childrenOf(child.id).length > 1" class="pager tree-pager" role="group" aria-label="Outputs">
+                <button type="button" class="pager-btn" :disabled="outputIndex === 0" aria-label="Previous output" @click="outputIndex--">‹</button>
+                <span class="pager-label num">Output {{ outputIndex + 1 }} of {{ childrenOf(child.id).length }}</span>
+                <button type="button" class="pager-btn" :disabled="outputIndex >= childrenOf(child.id).length - 1" aria-label="Next output" @click="outputIndex++">›</button>
+              </div>
             </div>
           </div>
         </div>
@@ -205,7 +210,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProjectDetail } from '~/composables/useProjectDetail'
 import { activityDashboardRoute } from '~/utils/activityConfig'
@@ -248,8 +253,11 @@ function childrenOf(id: string): ProjectLogframeLevel[] {
     )
 }
 const childLevels = computed(() => childrenOf(levelId))
-// One outcome (or output) on screen at a time; the arrows page through them.
+// One outcome (or output) on screen at a time; the arrows page through them,
+// and the outputs under the shown outcome page the same way.
 const childIndex = ref(0)
+const outputIndex = ref(0)
+watch(childIndex, () => { outputIndex.value = 0 })
 
 /** This level and everything beneath it. */
 const subtreeIds = computed(() => {
@@ -492,6 +500,7 @@ onMounted(() => fetchProjectDetail(frameworkId))
   background: var(--d-card); box-shadow: var(--d-shadow); transition: background 0.15s;
 }
 .tree-leaf:hover { background: var(--brand-soft); }
+.tree-pager { align-self: flex-start; }
 .tree-leaf-title {
   flex: 1; min-width: 0; font-size: 0.86rem; font-weight: 600; color: var(--d-text);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
