@@ -71,15 +71,15 @@
           v-if="impactYears.length"
           :impacts="impactYears"
           :current-year="currentYear"
-          :selected="impactFilter"
-          @select="impactFilter = $event"
+          :active="activeImpact"
+          @select="activeImpact = $event"
         />
         <ProjectImpactColumns
           v-else-if="impactCards.length"
           :impacts="impactCards"
           :expected="expected"
-          :selected="impactFilter"
-          @select="impactFilter = $event"
+          :selected="activeImpact"
+          @select="activeImpact = $event ?? activeImpact"
         />
       </section>
 
@@ -87,8 +87,8 @@
       <ProjectIndicatorList
         :groups="groups"
         :expected="expected"
-        :impact-filter="impactFilter"
-        @clear-impact="impactFilter = null"
+        :active="activeImpact"
+        @select="activeImpact = $event"
       />
 
       <p class="dash-foot">
@@ -307,7 +307,8 @@ const groups = computed<IndicatorGroup[]>(() => {
   return out
 })
 
-const impactFilter = ref<string | null>(null)
+// The impact on screen in both the year chart and the indicator list.
+const activeImpact = ref<string | null>(null)
 
 onMounted(() => fetchProjectDetail(frameworkId))
 </script>

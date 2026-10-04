@@ -118,10 +118,15 @@
             <h2 class="block-title">{{ level.level_type === 'impact' ? 'Outcomes & outputs' : 'Outputs' }}</h2>
             <p class="block-hint">How this {{ typeLabel(level.level_type).toLowerCase() }} is being delivered. Open one to see its targets.</p>
           </div>
+          <div v-if="childLevels.length > 1" class="pager" role="group" :aria-label="level.level_type === 'impact' ? 'Outcomes' : 'Outputs'">
+            <button type="button" class="pager-btn" :disabled="childIndex === 0" aria-label="Previous" @click="childIndex--">‹</button>
+            <span class="pager-label num">{{ childIndex + 1 }} of {{ childLevels.length }}</span>
+            <button type="button" class="pager-btn" :disabled="childIndex >= childLevels.length - 1" aria-label="Next" @click="childIndex++">›</button>
+          </div>
         </div>
 
         <div class="tree">
-          <div v-for="child in childLevels" :key="child.id" class="tree-node">
+          <div v-for="child in childLevels.slice(childIndex, childIndex + 1)" :key="child.id" class="tree-node">
             <NuxtLink :to="levelLink(child.id)" class="tree-card" :class="`tree-card--${child.level_type}`">
               <div class="tree-card-top">
                 <span class="tree-type">{{ typeLabel(child.level_type) }}</span>
@@ -200,7 +205,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProjectDetail } from '~/composables/useProjectDetail'
 import { activityDashboardRoute } from '~/utils/activityConfig'
@@ -243,6 +248,8 @@ function childrenOf(id: string): ProjectLogframeLevel[] {
     )
 }
 const childLevels = computed(() => childrenOf(levelId))
+// One outcome (or output) on screen at a time; the arrows page through them.
+const childIndex = ref(0)
 
 /** This level and everything beneath it. */
 const subtreeIds = computed(() => {

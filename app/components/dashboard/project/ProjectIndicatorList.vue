@@ -1,16 +1,8 @@
 <template>
   <section class="panel" aria-label="Indicators">
     <div class="list-head">
-      <h2 class="panel-title">Indicators <span class="panel-count">{{ visibleCount }} of {{ totalCount }}</span></h2>
+      <h2 class="panel-title">Indicators <span class="panel-count">{{ totalCount }}</span></h2>
       <div class="filters">
-        <button
-          v-if="impactFilter"
-          type="button"
-          class="chip chip--impact"
-          aria-pressed="true"
-          :title="`Show all impacts`"
-          @click="emit('clear-impact')"
-        >Impact {{ filteredImpactNumber }} <span aria-hidden="true">×</span></button>
         <button
           v-for="f in FILTERS"
           :key="f.key"
@@ -35,13 +27,16 @@
 
     <template v-for="group in visibleGroups" :key="group.id">
       <div class="group">
-        <span class="group-title">
+        <button v-if="filteredGroups.length > 1" type="button" class="group-nav" :disabled="index === 0" aria-label="Previous impact" @click="go(-1)">‹</button>
+        <span class="group-title" :title="group.title">
           <template v-if="group.number">Impact {{ group.number }} · </template>{{ group.title }}
         </span>
         <span class="group-meta">
           <span v-if="group.progress !== null" class="num">{{ group.progress }}%</span>
-          <NuxtLink v-if="group.link" :to="group.link" class="group-link">Open impact →</NuxtLink>
+          <NuxtLink v-if="group.link" :to="group.link" class="group-link">Open →</NuxtLink>
+          <span v-if="filteredGroups.length > 1" class="group-count num">{{ index + 1 }} / {{ filteredGroups.length }}</span>
         </span>
+        <button v-if="filteredGroups.length > 1" type="button" class="group-nav" :disabled="index >= filteredGroups.length - 1" aria-label="Next impact" @click="go(1)">›</button>
       </div>
 
       <template v-for="row in group.rows" :key="row.ind.id">
@@ -137,11 +132,6 @@
         </div>
       </template>
     </template>
-
-    <button v-if="hiddenGroups" type="button" class="list-more" @click="showAll = !showAll">
-      <template v-if="showAll">Show fewer impacts</template>
-      <template v-else>View {{ hiddenGroups }} more impact{{ hiddenGroups === 1 ? '' : 's' }} with no data yet</template>
-    </button>
   </section>
 </template>
 
@@ -160,10 +150,11 @@ import type { IndicatorGroup } from '~/utils/projectDashboard'
 const props = defineProps<{
   groups: IndicatorGroup[]
   expected: number | null
-  impactFilter: string | null
+  /** The impact on screen, shared with the "Progress by year" chart. */
+  active: string | null
 }>()
 
-const emit = defineEmits<{ 'clear-impact': [] }>()
+const emit = defineEmits<{ select: [id: string] }>()
 
 type FilterKey = 'all' | 'behind' | 'setup'
 const FILTERS: { key: FilterKey; label: string }[] = [
@@ -188,40 +179,25 @@ function matches(row: IndicatorGroup['rows'][number], key: FilterKey): boolean {
   return true
 }
 
-const inImpact = computed(() =>
-  props.impactFilter ? props.groups.filter(g => g.id === props.impactFilter) : props.groups,
-)
+const counts = computed(() => ({
+  all: allRows.value.length,
+  behind: allRows.value.filter(r => matches(r, 'behind')).length,
+  setup: allRows.value.filter(r => matches(r, 'setup')).length,
+}))
 
-const counts = computed(() => {
-  const rows = inImpact.value.flatMap(g => g.rows)
-  return {
-    all: rows.length,
-    behind: rows.filter(r => matches(r, 'behind')).length,
-    setup: rows.filter(r => matches(r, 'setup')).length,
-  }
-})
-
-// Impacts with data lead; the rest stay folded behind "View more" (at least
-// MIN_GROUPS are always shown) unless a filter or an impact is selected.
-const MIN_GROUPS = 2
-const showAll = ref(false)
-
+// One impact at a time (impacts with data first); the arrows page through the
+// impacts that have indicators matching the filter.
 const filteredGroups = computed(() =>
-  inImpact.value
+  props.groups
     .map(g => ({ ...g, rows: g.rows.filter(r => matches(r, filter.value)) }))
     .filter(g => g.rows.length),
 )
-const collapsible = computed(() => filter.value === 'all' && !props.impactFilter)
-const shownCount = computed(() =>
-  Math.max(filteredGroups.value.filter(g => g.hasData).length, MIN_GROUPS),
-)
-const hiddenGroups = computed(() =>
-  collapsible.value ? Math.max(filteredGroups.value.length - shownCount.value, 0) : 0,
-)
-const visibleGroups = computed(() =>
-  hiddenGroups.value && !showAll.value ? filteredGroups.value.slice(0, shownCount.value) : filteredGroups.value,
-)
+const index = computed(() => Math.max(filteredGroups.value.findIndex(g => g.id === props.active), 0))
+const visibleGroups = computed(() => filteredGroups.value.slice(index.value, index.value + 1))
 const visibleCount = computed(() => filteredGroups.value.reduce((s, g) => s + g.rows.length, 0))
 
-const filteredImpactNumber = computed(() => props.groups.find(g => g.id === props.impactFilter)?.number ?? '')
+function go(step: number) {
+  const next = filteredGroups.value[index.value + step]
+  if (next) emit('select', next.id)
+}
 </script>
