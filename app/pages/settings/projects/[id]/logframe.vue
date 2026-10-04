@@ -1,23 +1,27 @@
 <template>
   <NuxtLayout name="app" :breadcrumbs="breadcrumbs">
-    <div class="logframe-page">
+    <div class="ps-page logframe-page">
       <!-- Header -->
-      <div class="page-header">
-        <div>
-          <h1 class="page-title">M&E Logframe</h1>
+      <header class="page-header">
+        <div class="page-header-text">
+          <span class="page-eyebrow">M&E</span>
+          <h1 class="page-title">Logframe</h1>
           <p class="page-subtitle">
-            Theory of change, indicators and donor alignment for {{ project?.project_name ?? 'this project' }}
+            Theory of change, indicators and donor alignment for {{ project?.project_name ?? 'this project' }}.
           </p>
         </div>
         <div class="header-actions">
-          <button class="btn-secondary" @click="showImport = true" :disabled="!templates.length">
-            <AppIcon name="download" :size="14" /> Import donor template
+          <button v-if="canManage" class="btn-secondary" :disabled="!templates.length" @click="showImport = true">
+            Import donor template
           </button>
-          <NuxtLink :to="`/settings/projects/${projectId}`" class="btn-back">
-            <AppIcon name="arrow-left" :size="14" /> Project settings
-          </NuxtLink>
         </div>
-      </div>
+      </header>
+
+      <!-- Sub-navigation -->
+      <nav class="sub-nav">
+        <NuxtLink :to="`/settings/projects/${projectId}`" class="sub-nav-item">Project settings</NuxtLink>
+        <span class="sub-nav-item sub-nav-item--active">M&E logframe</span>
+      </nav>
 
       <!-- Loading -->
       <div v-if="loading && !logframe" class="state state--loading">
@@ -25,21 +29,22 @@
       </div>
 
       <!-- Error -->
-      <div v-else-if="loadError" class="state state--error">
-        <AppIcon name="alert-circle" :size="18" /> {{ loadError }}
-      </div>
+      <div v-else-if="loadError" class="state state--error">{{ loadError }}</div>
 
       <template v-else>
         <!-- ═══ Empty state: no logframe yet ═══ -->
-        <div v-if="!logframe" class="empty-state">
-          <div class="empty-icon"><AppIcon name="layers" :size="28" /></div>
-          <h2>No logframe yet</h2>
-          <p>Create an empty logframe, or import a donor template (e.g. ECHO DRA protection) to scaffold outcomes and indicators automatically.</p>
+        <template v-if="!logframe">
+          <section class="section-card">
+            <h2 class="card-title">No logframe yet</h2>
+            <p class="card-hint">Create an empty logframe, or import a donor template (e.g. ECHO DRA protection) to scaffold outcomes and indicators automatically.</p>
+          </section>
 
           <div class="empty-grid">
             <!-- Create empty -->
-            <div class="section-card">
-              <div class="section-label">Create empty logframe</div>
+            <section class="section-card">
+              <div class="card-head">
+                <h2 class="card-title">Create empty logframe</h2>
+              </div>
               <div class="field">
                 <label class="field-label" for="lf-name">Logframe name *</label>
                 <input id="lf-name" v-model="createForm.name" type="text" class="field-input" placeholder="e.g. SSWOCO Child Protection Logframe" />
@@ -52,56 +57,77 @@
                 <label class="field-label" for="lf-donor">Donor framework</label>
                 <input id="lf-donor" v-model="createForm.donor_framework" type="text" class="field-input" placeholder="e.g. ECHO DRA 2025" />
               </div>
-              <div v-if="createError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ createError }}</div>
+              <div v-if="createError" class="api-err">{{ createError }}</div>
               <div class="actions">
                 <button class="btn-primary" :disabled="creating" @click="createLogframe">
                   <span v-if="creating" class="btn-spinner" /> Create logframe
                 </button>
               </div>
-            </div>
+            </section>
 
             <!-- Import template -->
-            <div class="section-card">
-              <div class="section-label">Import donor template</div>
-              <p class="section-hint">Available templates for this project:</p>
+            <section class="section-card">
+              <div class="card-head">
+                <div class="card-head-text">
+                  <h2 class="card-title">Import donor template</h2>
+                  <p class="card-hint">Available templates for this project.</p>
+                </div>
+              </div>
               <div v-if="templatesLoading" class="empty-inline">Loading templates…</div>
               <div v-else-if="!templates.length" class="empty-inline">No donor templates available.</div>
-              <div v-for="t in templates" :key="t.id" class="template-row">
-                <div class="template-info">
-                  <div class="template-name">{{ t.name }}</div>
-                  <div class="template-meta">{{ t.donor }} · {{ t.indicator_count }} indicators</div>
-                  <div class="template-desc">{{ t.description }}</div>
+              <div v-else class="list">
+                <div v-for="t in templates" :key="t.id" class="list-row">
+                  <div class="list-row-body">
+                    <span class="list-row-title">{{ t.name }}</span>
+                    <span class="list-row-meta">{{ t.donor }} · {{ t.indicator_count }} indicators</span>
+                    <span v-if="t.description" class="list-row-meta">{{ t.description }}</span>
+                  </div>
+                  <button class="btn-secondary" :disabled="importing" @click="importTemplate(t)">Import</button>
                 </div>
-                <button class="btn-secondary" :disabled="importing" @click="importTemplate(t)">
-                  <AppIcon name="download" :size="13" /> Import
-                </button>
               </div>
-              <div v-if="importError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ importError }}</div>
-            </div>
+              <div v-if="importError" class="api-err">{{ importError }}</div>
+            </section>
           </div>
-        </div>
+        </template>
 
         <!-- ═══ Existing logframe ═══ -->
         <template v-else>
           <!-- Metadata -->
-          <div class="section-label">Logframe</div>
-          <div class="section-card meta-card">
-            <div v-if="!editingMeta" class="meta-view">
-              <div>
-                <h2 class="meta-name">{{ logframe.name }}</h2>
-                <p v-if="logframe.description" class="meta-desc">{{ logframe.description }}</p>
-                <div class="meta-tags">
-                  <span v-if="logframe.donor_framework" class="tag tag--donor"><AppIcon name="shield" :size="12" /> {{ logframe.donor_framework }}</span>
-                  <span class="tag tag--status"><AppIcon name="clock" :size="12" /> {{ logframe.status }}</span>
-                  <span class="tag">v{{ logframe.version }}</span>
-                  <span class="tag">{{ levelCount }} levels · {{ indicatorCount }} indicators</span>
-                </div>
+          <section class="section-card">
+            <div class="card-head">
+              <div class="card-head-text">
+                <h2 class="card-title">Logframe</h2>
+                <p class="card-hint">Name, donor and status of this project's logframe.</p>
               </div>
-              <div class="meta-actions" v-if="canManage">
-                <button class="btn-secondary" @click="startEditMeta"><AppIcon name="pencil" :size="13" /> Edit</button>
-              </div>
+              <button v-if="canManage && !editingMeta" class="btn-edit" @click="startEditMeta">Edit</button>
             </div>
-            <form v-else class="meta-form" @submit.prevent="saveMeta">
+
+            <div v-if="!editingMeta">
+              <p class="view-statement">{{ logframe.name }}</p>
+              <dl class="view-grid">
+                <div v-if="logframe.description" class="view-item view-item--wide">
+                  <dt>Description</dt>
+                  <dd>{{ logframe.description }}</dd>
+                </div>
+                <div class="view-item">
+                  <dt>Donor framework</dt>
+                  <dd>{{ logframe.donor_framework || '—' }}</dd>
+                </div>
+                <div class="view-item">
+                  <dt>Status</dt>
+                  <dd class="capitalize">{{ logframe.status }}</dd>
+                </div>
+                <div class="view-item">
+                  <dt>Version</dt>
+                  <dd>v{{ logframe.version }}</dd>
+                </div>
+                <div class="view-item">
+                  <dt>Contents</dt>
+                  <dd>{{ levelCount }} levels · {{ indicatorCount }} indicators</dd>
+                </div>
+              </dl>
+            </div>
+            <form v-else @submit.prevent="saveMeta">
               <div class="field">
                 <label class="field-label" for="lfem-name">Logframe name *</label>
                 <input id="lfem-name" v-model="metaForm.name" type="text" class="field-input" />
@@ -115,44 +141,42 @@
                 <input id="lfem-donor" v-model="metaForm.donor_framework" type="text" class="field-input" />
               </div>
               <CustomFieldsEditor v-model="metaForm.custom_fields" label="Custom fields" hint="Add your own logframe-level fields." />
-              <div v-if="metaError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ metaError }}</div>
+              <div v-if="metaError" class="api-err">{{ metaError }}</div>
               <div class="actions">
                 <button type="button" class="btn-ghost" @click="editingMeta = false">Cancel</button>
                 <button type="submit" class="btn-primary" :disabled="metaSaving"><span v-if="metaSaving" class="btn-spinner" /> Save</button>
               </div>
             </form>
-          </div>
+          </section>
 
           <!-- ═══ Impacts ═══ -->
-          <div class="section-label">Impacts</div>
-          <p class="section-hint">Open an impact to write its indicator, set numerical targets and toggle the activities that feed it.</p>
+          <section class="section-card">
+            <div class="card-head">
+              <div class="card-head-text">
+                <h2 class="card-title">Impacts</h2>
+                <p class="card-hint">Open an impact to write its indicator, set numerical targets and toggle the activities that feed it.</p>
+              </div>
+              <button v-if="canManage" class="btn-primary" @click="openImpactModal">+ Add impact</button>
+            </div>
 
-          <div v-if="impacts.length" class="impact-list">
-            <NuxtLink
-              v-for="imp in impacts"
-              :key="imp.id"
-              :to="`/settings/projects/${projectId}/impacts/${imp.id}`"
-              class="impact-row"
-            >
-              <span class="impact-icon"><AppIcon name="target" :size="16" /></span>
-              <span class="impact-body">
-                <span class="impact-title">{{ imp.title }}</span>
-                <span class="impact-meta">{{ indicatorCountByLevel(imp.id) }} indicator{{ indicatorCountByLevel(imp.id) === 1 ? '' : 's' }}</span>
-              </span>
-              <AppIcon name="chevron-right" :size="15" class="impact-arrow" />
-            </NuxtLink>
-          </div>
-          <div v-else class="empty-inline">
-            No impacts yet — add one to start building the theory of change.
-          </div>
-
-          <div class="actions tree-actions" v-if="canManage">
-            <button class="btn-secondary" @click="openImpactModal">
-              <AppIcon name="plus" :size="14" /> Add impact
-            </button>
-          </div>
-
-
+            <div v-if="impacts.length" class="list">
+              <NuxtLink
+                v-for="imp in impacts"
+                :key="imp.id"
+                :to="`/settings/projects/${projectId}/impacts/${imp.id}`"
+                class="list-row"
+              >
+                <span class="list-row-body">
+                  <span class="list-row-title">{{ imp.title }}</span>
+                  <span class="list-row-meta">{{ indicatorCountByLevel(imp.id) }} indicator{{ indicatorCountByLevel(imp.id) === 1 ? '' : 's' }}</span>
+                </span>
+                <span class="list-row-go">Open →</span>
+              </NuxtLink>
+            </div>
+            <p v-else class="empty-inline">
+              No impacts yet — add one to start building the theory of change.
+            </p>
+          </section>
         </template>
       </template>
 
@@ -161,7 +185,7 @@
         <div class="modal">
           <div class="modal-head">
             <h3>Add impact</h3>
-            <button class="icon-btn" @click="impactModal.open = false"><AppIcon name="x" :size="15" /></button>
+            <button class="icon-btn" aria-label="Close" @click="impactModal.open = false">&times;</button>
           </div>
           <p class="modal-hint">An impact is a top-level statement of change (e.g. “Children feel safer and more resilient”).</p>
           <form class="modal-form" @submit.prevent="saveImpact">
@@ -169,7 +193,7 @@
               <label class="field-label" for="imp-title">Impact statement *</label>
               <textarea id="imp-title" v-model="impactForm.title" rows="2" class="field-input" placeholder="e.g. Children in supported communities feel safer and more resilient"></textarea>
             </div>
-            <div v-if="impactError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ impactError }}</div>
+            <div v-if="impactError" class="api-err">{{ impactError }}</div>
             <div class="actions">
               <button type="button" class="btn-ghost" @click="impactModal.open = false">Cancel</button>
               <button type="submit" class="btn-primary" :disabled="impactSaving"><span v-if="impactSaving" class="btn-spinner" /> Add impact</button>
@@ -183,20 +207,22 @@
         <div class="modal">
           <div class="modal-head">
             <h3>Import donor template</h3>
-            <button class="icon-btn" @click="showImport = false"><AppIcon name="x" :size="15" /></button>
+            <button class="icon-btn" aria-label="Close" @click="showImport = false">&times;</button>
           </div>
           <p class="modal-hint">Imports all indicators from the template as outcome → result levels. Baselines and targets are left empty for tailoring.</p>
           <div v-if="importing" class="empty-inline">Importing…</div>
           <div v-else>
-            <div v-for="t in templates" :key="t.id" class="template-row">
-              <div class="template-info">
-                <div class="template-name">{{ t.name }}</div>
-                <div class="template-meta">{{ t.donor }} · {{ t.indicator_count }} indicators</div>
-                <div class="template-desc">{{ t.description }}</div>
+            <div class="list">
+              <div v-for="t in templates" :key="t.id" class="list-row">
+                <div class="list-row-body">
+                  <span class="list-row-title">{{ t.name }}</span>
+                  <span class="list-row-meta">{{ t.donor }} · {{ t.indicator_count }} indicators</span>
+                  <span v-if="t.description" class="list-row-meta">{{ t.description }}</span>
+                </div>
+                <button class="btn-primary" @click="importTemplate(t)">Import</button>
               </div>
-              <button class="btn-secondary" @click="importTemplate(t)">Import</button>
             </div>
-            <div v-if="importError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ importError }}</div>
+            <div v-if="importError" class="api-err">{{ importError }}</div>
           </div>
         </div>
       </div>
@@ -208,7 +234,7 @@
         <div class="modal modal--wide">
           <div class="modal-head">
             <h3>{{ indicatorModal.editing ? 'Edit indicator' : 'Add indicator' }}</h3>
-            <button class="icon-btn" @click="indicatorModal.open = false"><AppIcon name="x" :size="15" /></button>
+            <button class="icon-btn" aria-label="Close" @click="indicatorModal.open = false">&times;</button>
           </div>
           <form class="modal-form" @submit.prevent="saveIndicator">
             <div class="field">
@@ -287,13 +313,13 @@
               <div v-for="(link, i) in indicatorForm.external_links" :key="i" class="link-row">
                 <input v-model="link.label" type="text" class="field-input" placeholder="Label" />
                 <input v-model="link.url" type="url" class="field-input" placeholder="https://…" />
-                <button type="button" class="icon-btn icon-btn--danger" @click="indicatorForm.external_links.splice(i, 1)"><AppIcon name="x" :size="13" /></button>
+                <button type="button" class="icon-btn icon-btn--danger" @click="indicatorForm.external_links.splice(i, 1)">&times;</button>
               </div>
               <button type="button" class="btn-ghost" @click="indicatorForm.external_links.push({ label: '', url: '' })">
-                <AppIcon name="plus" :size="13" /> Add reference
+                + Add reference
               </button>
             </div>
-            <div v-if="indicatorError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ indicatorError }}</div>
+            <div v-if="indicatorError" class="api-err">{{ indicatorError }}</div>
             <div class="actions">
               <button type="button" class="btn-ghost" @click="indicatorModal.open = false">Cancel</button>
               <button type="submit" class="btn-primary" :disabled="indicatorSaving"><span v-if="indicatorSaving" class="btn-spinner" /> {{ indicatorModal.editing ? 'Save' : 'Add indicator' }}</button>
@@ -307,7 +333,7 @@
         <div class="modal">
           <div class="modal-head">
             <h3>Link activity</h3>
-            <button class="icon-btn" @click="linkModal.open = false"><AppIcon name="x" :size="15" /></button>
+            <button class="icon-btn" aria-label="Close" @click="linkModal.open = false">&times;</button>
           </div>
           <p class="modal-hint">Connect a project activity whose data feeds “{{ linkModal.indicator?.indicator }}”.</p>
           <div v-if="linkLoading" class="empty-inline">Loading activities…</div>
@@ -318,7 +344,7 @@
               <span>{{ activityName(a.id) }}<span v-if="a.template?.code" class="link-code">{{ a.template.code }}</span></span>
             </label>
           </div>
-          <div v-if="linkError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ linkError }}</div>
+          <div v-if="linkError" class="api-err">{{ linkError }}</div>
           <div class="actions">
             <button class="btn-ghost" @click="linkModal.open = false">Cancel</button>
             <button class="btn-primary" :disabled="linkSaving || !linkForm.framework_activity_id" @click="saveLink">
@@ -334,7 +360,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import AppIcon from '../../../../components/interfaces/AppIcon.vue'
 import CustomFieldsEditor from '../../../../components/settings/CustomFieldsEditor.vue'
 import TargetFieldsEditor from '../../../../components/settings/TargetFieldsEditor.vue'
 import { frameworkApi } from '../../../../services/frameworkApi'
@@ -774,244 +799,20 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.logframe-page { max-width: 960px; padding-bottom: 48px; }
+/* Shared look comes from assets/css/project-settings.css (.ps-page). */
+.logframe-page { max-width: 960px; }
 
-.page-header {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
-  margin-bottom: 24px; flex-wrap: wrap;
-}
-.page-title { font-size: 1.35rem; font-weight: 750; margin: 0 0 2px; }
-.page-subtitle { font-size: 0.82rem; color: var(--text-secondary); margin: 0; }
-.header-actions { display: flex; gap: 8px; align-items: center; }
+.empty-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+.capitalize { text-transform: capitalize; }
 
-.btn-back {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 0.82rem; font-weight: 600; color: var(--text-primary); text-decoration: none;
-  padding: 8px 12px; background: var(--bg-panel);
-  border: 1px solid var(--border-color); border-radius: 8px;
-  transition: border-color 0.15s, color 0.15s;
-}
-.btn-back:hover { border-color: var(--accent); color: var(--accent); }
-.btn-secondary {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 12px; font-size: 0.82rem; font-weight: 600;
-  background: var(--bg-panel); color: var(--text-primary);
-  border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer;
-}
-.btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn-ghost {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 12px; font-size: 0.82rem;
-  background: transparent; color: var(--text-muted);
-  border: none; border-radius: 8px; cursor: pointer;
-}
-.btn-primary {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 14px; font-size: 0.82rem; font-weight: 600;
-  background: var(--accent); color: white; border: none; border-radius: 8px;
-  cursor: pointer;
-}
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn-spinner {
-  width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3);
-  border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.section-label {
-  font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
-  color: var(--text-muted); margin: 24px 0 6px; padding-left: 2px;
-}
-.section-hint { font-size: 0.78rem; color: var(--text-muted); margin: -2px 0 10px; padding-left: 2px; }
-.section-card {
-  background: var(--bg-panel); border: 1px solid var(--border-color);
-  border-radius: 10px; padding: 18px;
-}
-.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
-.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
-.field-label { font-size: 0.75rem; font-weight: 600; color: var(--text-primary); }
-.field-input {
-  width: 100%; padding: 8px 10px; font-size: 0.85rem;
-  background: var(--bg-input); border: 1px solid var(--border-color);
-  border-radius: 6px; color: var(--text-primary);
-  font-family: inherit;
-}
-.field-input:disabled { background: var(--bg-surface); color: var(--text-muted); cursor: not-allowed; }
-.field-hint { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
-
-.api-err {
-  display: flex; align-items: center; gap: 6px; margin-top: 12px;
-  padding: 10px 12px; font-size: 0.82rem; color: var(--error);
-  background: var(--error-bg); border-radius: 6px;
-}
-.actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
-
-.empty-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 16px; }
-.empty-state { text-align: left; padding: 24px 0; }
-.empty-state h2 { margin: 12px 0 4px; font-size: 1.1rem; }
-.empty-state p { color: var(--text-muted); font-size: 0.85rem; max-width: 560px; }
-.empty-icon {
-  width: 52px; height: 52px; border-radius: 12px;
-  background: var(--bg-panel); border: 1px solid var(--border-color);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--accent);
-}
-.empty-inline {
-  padding: 14px; font-size: 0.82rem; color: var(--text-muted);
-  background: var(--bg-surface); border-radius: 8px;
-}
-
-.template-row {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 8px;
-  background: var(--bg-surface);
-}
-.template-name { font-size: 0.88rem; font-weight: 650; }
-.template-meta { font-size: 0.74rem; color: var(--text-muted); margin: 2px 0; }
-.template-desc { font-size: 0.76rem; color: var(--text-muted); }
-
-/* Metadata card */
-.meta-card { padding: 20px; }
-.meta-view { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.meta-name { margin: 0 0 4px; font-size: 1.1rem; }
-.meta-desc { margin: 0 0 8px; font-size: 0.84rem; color: var(--text-muted); }
-.meta-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-.meta-actions { display: flex; gap: 8px; }
-.meta-form .field { margin-bottom: 12px; }
-
-.tag {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 3px 8px; font-size: 0.72rem; font-weight: 600;
-  background: var(--bg-surface); border: 1px solid var(--border-color);
-  border-radius: 999px; color: var(--text-muted);
-}
-.tag--donor { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
-.tag--status { text-transform: capitalize; }
-.tag--baseline { color: var(--text-secondary); }
-.tag--target { color: var(--success); border-color: color-mix(in srgb, var(--success) 35%, transparent); }
-.tag--disagg { color: var(--text-muted); }
-
-/* Hierarchy tree */
-.level-node { margin-bottom: 10px; }
-.level-card {
-  background: var(--bg-panel); border: 1px solid var(--border-color);
-  border-radius: 10px; padding: 14px 16px;
-  border-left: 3px solid var(--border-color);
-}
-.level-card--goal { border-left-color: #818cf8; }
-.level-card--impact { border-left-color: #a78bfa; }
-.level-card--outcome { border-left-color: #38bdf8; }
-.level-card--result { border-left-color: #34d399; }
-.level-card--activity { border-left-color: #fbbf24; }
-.level-head { display: flex; align-items: center; gap: 10px; }
-.level-badge {
-  padding: 2px 8px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.05em; border-radius: 999px;
-  background: var(--bg-surface); border: 1px solid var(--border-color); color: var(--text-muted);
-}
-.level-card--goal .level-badge { color: #818cf8; }
-.level-card--impact .level-badge { color: #a78bfa; }
-.level-card--outcome .level-badge { color: #38bdf8; }
-.level-card--result .level-badge { color: #34d399; }
-.level-card--activity .level-badge { color: #fbbf24; }
-.level-title { font-size: 0.9rem; font-weight: 650; flex: 1; }
-.level-actions { display: flex; gap: 2px; }
-.icon-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 26px; height: 26px; border-radius: 6px; border: none;
-  background: transparent; color: var(--text-muted); cursor: pointer;
-}
-.icon-btn:hover { background: var(--bg-surface); color: var(--text-primary); }
-.icon-btn--danger:hover { background: var(--error-bg); color: var(--error); }
-.level-empty { margin-top: 8px; font-size: 0.76rem; color: var(--text-muted); font-style: italic; }
-.tree-actions { justify-content: flex-start; }
-
-/* Impacts list */
-.impact-list { display: flex; flex-direction: column; gap: 8px; }
-.impact-row {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 16px; text-decoration: none; color: inherit;
-  background: var(--bg-panel); border: 1px solid var(--border-color);
-  border-left: 3px solid #a78bfa; border-radius: 10px;
-  transition: border-color 0.15s, transform 0.1s;
-}
-.impact-row:hover { border-color: var(--accent); }
-.impact-row:active { transform: scale(0.995); }
-.impact-icon {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
-  background: color-mix(in srgb, #a78bfa 14%, transparent); color: #a78bfa;
-}
-.impact-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.impact-title { font-size: 0.9rem; font-weight: 600; }
-.impact-meta { font-size: 0.74rem; color: var(--text-muted); }
-.impact-arrow { color: var(--text-muted); flex-shrink: 0; }
-
-/* Indicators */
-.indicator-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-.indicator-card {
-  background: var(--bg-surface); border: 1px solid var(--border-color);
-  border-radius: 8px; padding: 10px 12px;
-}
-.indicator-head { display: flex; align-items: center; gap: 8px; }
-.indicator-code {
-  padding: 1px 7px; font-size: 0.7rem; font-weight: 700;
-  background: var(--bg-panel); border: 1px solid var(--border-color);
-  border-radius: 5px; color: var(--accent);
-}
-.indicator-title { font-size: 0.85rem; font-weight: 600; flex: 1; }
-.indicator-def { margin: 6px 0 0; font-size: 0.78rem; color: var(--text-muted); }
-.indicator-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.indicator-mov { margin: 8px 0 0; font-size: 0.78rem; color: var(--text-secondary); }
-.indicator-mov strong { color: var(--text-muted); font-weight: 600; }
-
-.linked-activities { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
-.linked-label { display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); }
-.linked-chip {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 2px 8px; font-size: 0.72rem;
-  background: var(--bg-panel); border: 1px solid var(--border-color);
-  border-radius: 999px; color: var(--text-secondary);
-}
-.linked-chip--link { color: var(--accent); text-decoration: none; }
-.chip-x {
-  display: inline-flex; border: none; background: transparent;
-  color: var(--text-muted); cursor: pointer; padding: 0;
-}
-.chip-x:hover { color: var(--error); }
-
-/* Modals */
-.modal-overlay {
-  position: fixed; inset: 0; z-index: 60;
-  background: rgba(10, 10, 20, 0.6); backdrop-filter: blur(2px);
-  display: flex; align-items: flex-start; justify-content: center;
-  padding: 48px 16px; overflow-y: auto;
-}
-.modal {
-  width: 100%; max-width: 520px;
-  background: var(--bg-panel); border: 1px solid var(--border-color);
-  border-radius: 12px; padding: 20px;
-}
-.modal--wide { max-width: 640px; }
-.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-.modal-head h3 { margin: 0; font-size: 1rem; }
-.modal-hint { font-size: 0.78rem; color: var(--text-muted); margin: 0 0 14px; }
-.modal-form .field { margin-bottom: 12px; }
-.checkbox-row { display: flex; flex-wrap: wrap; gap: 14px; padding: 4px 0; }
-.checkbox-item { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; cursor: pointer; }
+/* Modal content */
+.checkbox-row { display: flex; flex-wrap: wrap; gap: 16px; padding: 4px 0; }
+.checkbox-item { display: inline-flex; align-items: center; gap: 6px; font-size: 0.86rem; color: var(--ps-text); cursor: pointer; }
 .link-row { display: grid; grid-template-columns: 1fr 2fr auto; gap: 8px; margin-bottom: 8px; align-items: center; }
-.link-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.link-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
 .link-option {
-  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
-  border: 1px solid var(--border-color); border-radius: 8px;
-  font-size: 0.84rem; cursor: pointer; background: var(--bg-surface);
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  font-size: 0.88rem; color: var(--ps-text); background: var(--ps-tile); border-radius: 8px; cursor: pointer;
 }
-.link-code { margin-left: 6px; font-size: 0.72rem; color: var(--text-muted); }
-
-.state { padding: 40px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-muted); }
-.state--error { color: var(--error); }
-.pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); animation: pulse 1.4s infinite; }
-.pulse-dot:nth-child(2) { animation-delay: 0.2s; }
-.pulse-dot:nth-child(3) { animation-delay: 0.4s; }
-@keyframes pulse { 0%,80%,100% { opacity: 0.3; } 40% { opacity: 1; } }
+.link-code { margin-left: 8px; font-size: 0.76rem; color: var(--ps-text-2); }
 </style>

@@ -21,12 +21,12 @@
         @input="emitValue"
       />
       <button type="button" class="cf-remove" title="Remove field" @click="removeRow(i)">
-        <AppIcon name="x" :size="13" />
+        &times;
       </button>
     </div>
 
     <button type="button" class="cf-add" @click="addRow">
-      <AppIcon name="plus" :size="13" /> Add field
+      + Add field
     </button>
   </div>
 </template>
@@ -105,28 +105,30 @@ function removeRow(index: number) {
 </script>
 
 <style scoped>
-.cf-editor { margin-bottom: 12px; }
-.cf-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
-.cf-label { font-size: 0.75rem; font-weight: 600; color: var(--text-primary); }
-.cf-hint { font-size: 0.7rem; color: var(--text-muted); }
+.cf-editor { margin: 6px 0 16px; }
+.cf-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
+.cf-label { font-size: 0.8rem; font-weight: 600; color: var(--ps-text, var(--text-primary)); }
+.cf-hint { font-size: 0.76rem; color: var(--ps-text-2, var(--text-secondary)); }
 .cf-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .cf-input {
-  flex: 1; min-width: 0; padding: 8px 10px; font-size: 0.85rem;
-  background: var(--bg-input); border: 1px solid var(--border-color);
-  border-radius: 6px; color: var(--text-primary); font-family: inherit;
+  flex: 1; min-width: 0; padding: 10px 12px; font-size: 0.9rem;
+  background: var(--ps-input, var(--bg-input)); border: 1px solid var(--ps-input-border, var(--border-color));
+  border-radius: 8px; color: var(--ps-text, var(--text-primary)); font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 .cf-input--key { flex: 0 0 38%; }
 .cf-remove {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px; border: none; border-radius: 6px;
-  background: transparent; color: var(--text-muted); cursor: pointer; flex-shrink: 0;
+  width: 32px; height: 32px; border: none; border-radius: 8px; font-size: 1.1rem; line-height: 1;
+  background: transparent; color: var(--ps-text-2, var(--text-secondary)); cursor: pointer; flex-shrink: 0;
 }
 .cf-remove:hover { background: var(--error-bg); color: var(--error); }
 .cf-add {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 10px; font-size: 0.78rem;
-  background: transparent; color: var(--text-muted);
-  border: 1px dashed var(--border-color); border-radius: 6px; cursor: pointer;
+  padding: 8px 14px; font-size: 0.82rem; font-weight: 600; font-family: inherit;
+  background: var(--brand-soft, var(--bg-surface)); color: var(--ps-text, var(--text-primary));
+  border: none; border-radius: 8px; cursor: pointer; transition: background 0.15s, color 0.15s;
 }
-.cf-add:hover { color: var(--text-primary); border-color: var(--text-muted); }
+.cf-add:hover { background: var(--brand, var(--accent)); color: #fff; }
+.cf-input:focus { outline: none; border-color: var(--brand, var(--accent)); box-shadow: 0 0 0 3px var(--brand-soft, transparent); }
 </style>

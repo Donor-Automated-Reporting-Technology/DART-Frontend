@@ -57,12 +57,12 @@
       />
 
       <button type="button" class="tf-remove" title="Remove field" @click="removeRow(i)">
-        <AppIcon name="x" :size="13" />
+        &times;
       </button>
     </div>
 
     <button type="button" class="tf-add" @click="addRow">
-      <AppIcon name="plus" :size="13" /> Add target field
+      + Add target field
     </button>
   </div>
 </template>
@@ -194,20 +194,21 @@ function removeRow(index: number) {
 </script>
 
 <style scoped>
-.tf-editor { margin-bottom: 12px; }
-.tf-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
-.tf-label { font-size: 0.75rem; font-weight: 600; color: var(--text-primary); }
-.tf-hint { font-size: 0.7rem; color: var(--text-muted); }
+.tf-editor { margin: 6px 0 16px; }
+.tf-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
+.tf-label { font-size: 0.8rem; font-weight: 600; color: var(--ps-text, var(--text-primary)); }
+.tf-hint { font-size: 0.76rem; color: var(--ps-text-2, var(--text-secondary)); }
 .tf-empty {
-  font-size: 0.78rem; color: var(--text-muted);
-  background: var(--bg-surface); border-radius: 8px;
+  font-size: 0.84rem; color: var(--ps-text-2, var(--text-secondary));
+  background: var(--ps-tile, var(--bg-surface)); border-radius: 8px;
   padding: 10px 12px; margin-bottom: 8px;
 }
 .tf-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .tf-input {
-  min-width: 0; padding: 8px 10px; font-size: 0.85rem;
-  background: var(--bg-input); border: 1px solid var(--border-color);
-  border-radius: 6px; color: var(--text-primary); font-family: inherit;
+  min-width: 0; padding: 10px 12px; font-size: 0.9rem;
+  background: var(--ps-input, var(--bg-input)); border: 1px solid var(--ps-input-border, var(--border-color));
+  border-radius: 8px; color: var(--ps-text, var(--text-primary)); font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 .tf-input--name { flex: 1 1 26%; }
 .tf-input--type { flex: 0 0 120px; }
@@ -215,17 +216,18 @@ function removeRow(index: number) {
 .tf-input--unit { flex: 1 1 20%; }
 .tf-remove {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px; border: none; border-radius: 6px;
-  background: transparent; color: var(--text-muted); cursor: pointer; flex-shrink: 0;
+  width: 32px; height: 32px; border: none; border-radius: 8px; font-size: 1.1rem; line-height: 1;
+  background: transparent; color: var(--ps-text-2, var(--text-secondary)); cursor: pointer; flex-shrink: 0;
 }
 .tf-remove:hover { background: var(--error-bg); color: var(--error); }
 .tf-add {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 10px; font-size: 0.78rem;
-  background: transparent; color: var(--text-muted);
-  border: 1px dashed var(--border-color); border-radius: 6px; cursor: pointer;
+  padding: 8px 14px; font-size: 0.82rem; font-weight: 600; font-family: inherit;
+  background: var(--brand-soft, var(--bg-surface)); color: var(--ps-text, var(--text-primary));
+  border: none; border-radius: 8px; cursor: pointer; transition: background 0.15s, color 0.15s;
 }
-.tf-add:hover { color: var(--text-primary); border-color: var(--text-muted); }
+.tf-add:hover { background: var(--brand, var(--accent)); color: #fff; }
+.tf-input:focus { outline: none; border-color: var(--brand, var(--accent)); box-shadow: 0 0 0 3px var(--brand-soft, transparent); }
 
 @media (max-width: 640px) {
   .tf-row { flex-wrap: wrap; }
