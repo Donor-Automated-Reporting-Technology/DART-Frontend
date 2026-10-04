@@ -23,155 +23,149 @@
     <!-- Content -->
     <template v-else-if="hasData">
 
-      <!-- ═══ Project header card ═══ -->
-      <div class="project-header-card">
-        <div class="project-header-top">
-          <div class="project-header-info">
-            <h1 class="project-header-name">{{ project.project_name }}</h1>
-            <div class="project-header-chips">
-              <span class="chip">
-                <AppIcon name="layers" :size="12" />
-                {{ formatType(project.framework_type) }}
-              </span>
-              <span class="chip">
-                <AppIcon name="users" :size="12" />
-                {{ project.partner_name }}
-              </span>
-              <span class="chip">
-                <AppIcon name="briefcase" :size="12" />
-                {{ project.reporting_to }}
-              </span>
-              <span class="chip">
-                <AppIcon name="calendar" :size="12" />
-                {{ formatDate(project.period_start) }} — {{ formatDate(project.period_end) }}
-              </span>
-            </div>
-          </div>
-          <div v-if="overallProgress !== null" class="project-header-progress" title="Progress against logframe targets">
-            <svg class="ring" viewBox="0 0 36 36">
-              <path
-                class="ring-bg"
-                d="M18 2.0845
-                   a 15.9155 15.9155 0 0 1 0 31.831
-                   a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                stroke-width="3"
-              />
-              <path
-                class="ring-fill"
-                d="M18 2.0845
-                   a 15.9155 15.9155 0 0 1 0 31.831
-                   a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                stroke-width="3"
-                :stroke-dasharray="overallProgress + ', 100'"
-              />
+      <!-- ═══ Project header ═══ -->
+      <header class="project-hero">
+        <div class="project-hero-info">
+          <span class="eyebrow">Project dashboard</span>
+          <h1 class="project-hero-name">{{ project.project_name }}</h1>
+          <p class="project-hero-meta">
+            <span>{{ formatType(project.framework_type) }}</span>
+            <span v-if="project.partner_name">{{ project.partner_name }}</span>
+            <span v-if="project.reporting_to">Reporting to {{ project.reporting_to }}</span>
+            <span v-if="project.period_start">{{ formatDate(project.period_start) }} – {{ formatDate(project.period_end) }}</span>
+          </p>
+        </div>
+
+        <div v-if="overallProgress !== null" class="project-hero-progress">
+          <div class="ring ring--lg">
+            <svg viewBox="0 0 36 36">
+              <circle class="ring-bg" cx="18" cy="18" r="15.9155" />
+              <circle class="ring-fill" cx="18" cy="18" r="15.9155" :stroke-dasharray="`${overallProgress} 100`" />
             </svg>
-            <span class="ring-label">{{ overallProgress }}%</span>
+            <span class="ring-value">{{ overallProgress }}<small>%</small></span>
+          </div>
+          <span class="ring-caption">Logframe<br />progress</span>
+        </div>
+      </header>
+
+      <!-- ═══ Headline numbers ═══ -->
+      <section class="kpi-grid">
+        <div class="kpi kpi--featured">
+          <span class="kpi-label">Unique beneficiaries</span>
+          <span class="kpi-value">{{ summary.unique_beneficiaries.toLocaleString() }}</span>
+          <span class="kpi-foot">Enrolled across the project</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">Impacts</span>
+          <span class="kpi-value">{{ impactCards.length }}</span>
+          <span class="kpi-foot">{{ indicatorTotal }} indicator{{ indicatorTotal === 1 ? '' : 's' }}</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">Activities</span>
+          <span class="kpi-value">{{ activeCount }}</span>
+          <span class="kpi-foot">{{ activities.length - activeCount }} inactive</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">Locations</span>
+          <span class="kpi-value">{{ summary.total_locations ?? summary.active_locations }}</span>
+          <span class="kpi-foot">{{ summary.total_service_points ?? 0 }} service points</span>
+        </div>
+      </section>
+
+      <!-- ═══ Impacts ═══ -->
+      <section v-if="impactCards.length" class="block">
+        <div class="block-head">
+          <div>
+            <h2 class="block-title">Impacts</h2>
+            <p class="block-hint">The change this project is working towards. Open an impact to see its targets and activities.</p>
           </div>
         </div>
-      </div>
 
-      <!-- ═══ Summary bento grid ═══ -->
-      <div class="bento-grid">
-
-        <!-- Hero: unique beneficiaries -->
-        <div class="bento-item bento-hero metric-card hero-modern">
-          <div class="hero-top">
-            <span class="hero-badge">BENEFICIARIES</span>
-          </div>
-          <div class="metric-primary">
-            <span class="metric-big">{{ summary.unique_beneficiaries }}</span>
-            <span class="metric-label">Unique Beneficiaries</span>
-          </div>
-          <div class="hero-compact-row">
-            <div class="hero-compact-item">
-              <span class="hero-compact-value">{{ summary.total_locations }}</span>
-              <span class="hero-compact-label">Locations</span>
-            </div>
-            <div class="hero-compact-divider"></div>
-            <div class="hero-compact-item">
-              <span class="hero-compact-value">{{ activeCount }}</span>
-              <span class="hero-compact-label">Activities</span>
-            </div>
-            <div class="hero-compact-divider"></div>
-            <div class="hero-compact-item">
-              <span class="hero-compact-value">{{ summary.total_service_points }}</span>
-              <span class="hero-compact-label">Service Points</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Impacts (Logframe Levels) -->
-        <template v-if="logframe?.levels?.length">
+        <div class="impact-grid">
           <NuxtLink
-            v-for="level in logframe.levels"
-            :key="level.id"
-            :to="`/dashboard/projects/${route.params.frameworkId}/impacts/${level.id}`"
-            class="bento-item metric-card metric-card--reach impact-card"
+            v-for="card in impactCards"
+            :key="card.id"
+            :to="`/dashboard/projects/${frameworkId}/impacts/${card.id}`"
+            class="impact-card"
           >
-            <div class="metric-card-head">
-              <span class="metric-label metric-label--clamp" :title="level.title">{{ level.title }}</span>
+            <span class="impact-watermark" aria-hidden="true">{{ card.number }}</span>
+
+            <div class="impact-top">
+              <span class="impact-index">Impact {{ card.number }}</span>
+              <div v-if="card.progress !== null" class="ring ring--sm" :title="`${card.progress}% of target reached`">
+                <svg viewBox="0 0 36 36">
+                  <circle class="ring-bg" cx="18" cy="18" r="15.9155" />
+                  <circle class="ring-fill" cx="18" cy="18" r="15.9155" :stroke-dasharray="`${card.progress} 100`" />
+                </svg>
+                <span class="ring-value">{{ card.progress }}<small>%</small></span>
+              </div>
+              <span v-else class="impact-pill">No targets yet</span>
             </div>
-            <div class="metric-target-row">
-              <span class="metric-sublabel">{{ level.level_type }}</span>
+
+            <h3 class="impact-title" :title="card.title">{{ card.title }}</h3>
+
+            <div v-if="card.target > 0" class="impact-bar">
+              <div class="impact-bar-fill" :style="{ width: `${card.progress}%` }" />
+            </div>
+
+            <div class="impact-foot">
+              <div class="impact-stats">
+                <span v-if="card.target > 0"><strong>{{ card.actual.toLocaleString() }}</strong> of {{ card.target.toLocaleString() }}</span>
+                <span><strong>{{ card.indicators }}</strong> indicator{{ card.indicators === 1 ? '' : 's' }}</span>
+                <span><strong>{{ card.activities }}</strong> activit{{ card.activities === 1 ? 'y' : 'ies' }}</span>
+              </div>
+              <span class="impact-go" aria-hidden="true">→</span>
             </div>
           </NuxtLink>
-        </template>
-
-
-      </div>
-
-      <!-- ═══ Activities section ═══ -->
-      <div class="activities-section">
-        <div class="section-header">
-          <div class="section-header-left">
-            <h3 class="section-title">Activities</h3>
-            <span class="section-count">{{ projectActivities.length }}</span>
-          </div>
-          <span v-if="projectActivities.length" class="section-hint">Click to explore</span>
         </div>
-        <div v-if="!projectActivities.length" class="section-empty">
+      </section>
+
+      <!-- ═══ Activities ═══ -->
+      <section class="block">
+        <div class="block-head">
+          <div>
+            <h2 class="block-title">Activities <span class="block-count">{{ projectActivities.length }}</span></h2>
+            <p class="block-hint">Everything delivered under this project. Click an activity to explore its data.</p>
+          </div>
+        </div>
+
+        <div v-if="!projectActivities.length" class="block-empty">
           No activities on this project yet.
         </div>
+
         <div v-else class="activity-grid">
-          <div
+          <button
             v-for="a in projectActivities"
             :key="a.id"
+            type="button"
             class="activity-card"
+            :class="{ 'activity-card--inactive': !a.is_active }"
             @click="navigateToActivity(a)"
           >
-            <!-- Top: name + arrow -->
-            <div class="activity-card-top">
-              <div class="activity-card-title-block">
-                <span class="activity-card-name">{{ a.name }}</span>
-                <span class="activity-card-code">{{ a.code }}</span>
-              </div>
-              <span
-                class="status-dot"
-                :class="a.is_active ? 'status-dot--active' : 'status-dot--inactive'"
-                :title="a.is_active ? 'Active' : 'Inactive'"
-              ></span>
-              <AppIcon name="chevron-right" :size="16" class="activity-arrow" />
+            <div class="activity-top">
+              <span v-if="a.module" class="activity-module">{{ a.module.toUpperCase() }}</span>
+              <span class="activity-status" :class="{ 'activity-status--on': a.is_active }">
+                {{ a.is_active ? 'Active' : 'Inactive' }}
+              </span>
             </div>
 
-            <!-- Chips: pattern / module -->
-            <div class="activity-chips">
-              <span v-if="a.pattern_type" class="chip">{{ formatPattern(a.pattern_type) }}</span>
-              <span v-if="a.module" class="chip">{{ a.module.toUpperCase() }}</span>
-              <span v-if="!a.is_active" class="chip">Inactive</span>
-            </div>
+            <span class="activity-name">{{ a.name }}</span>
+            <span v-if="a.code || a.pattern_type" class="activity-meta">
+              {{ [a.code, a.pattern_type ? formatPattern(a.pattern_type) : ''].filter(Boolean).join(' · ') }}
+            </span>
 
-            <!-- Stats row (targets live on the logframe, so only actuals here) -->
-            <div class="activity-stats">
-              <div class="activity-stat">
-                <span class="activity-stat-value">{{ a.actual_count }}</span>
-                <span class="activity-stat-label">Enrolled</span>
+            <div class="activity-foot">
+              <div class="activity-count">
+                <span class="activity-count-value">{{ a.actual_count.toLocaleString() }}</span>
+                <span class="activity-count-label">enrolled</span>
               </div>
+              <span class="activity-links">
+                {{ impactsFedBy(a.id) ? `Feeds ${impactsFedBy(a.id)} impact${impactsFedBy(a.id) === 1 ? '' : 's'}` : 'Not linked yet' }}
+              </span>
             </div>
-          </div>
+          </button>
         </div>
-      </div>
+      </section>
 
     </template>
   </div>
@@ -194,13 +188,12 @@ const {
   error,
   project,
   summary,
-  disaggregations,
   logframe,
   activities,
   hasData,
-  sortedActivities,
   activeCount,
   overallProgress,
+  logframeProgress,
   formatDate,
   formatType,
   formatPattern,
@@ -212,8 +205,6 @@ const breadcrumbs = computed(() => [
   { title: project.value.project_name || 'Project', href: route.fullPath, current: true },
 ])
 
-
-
 // Every activity on the project, active first. Activities linked to an impact
 // are listed here too so the project dashboard never hides one.
 const projectActivities = computed(() =>
@@ -222,44 +213,40 @@ const projectActivities = computed(() =>
   ),
 )
 
-function formatTarget(value: number | undefined | null): string {
-  if (value == null) return '—'
-  return Number.isInteger(value) ? String(value) : value.toFixed(1)
-}
+const indicatorTotal = computed(() => logframe.value?.indicators?.length ?? 0)
 
-// Accent styling is keyed off the well-known values so the familiar
-// girls/boys/disability colours still apply; unknown values stay neutral.
-function accentCardClass(key: string): string {
-  switch (key) {
-    case 'female': return 'metric-card--girls-accent'
-    case 'male': return 'metric-card--boys-accent'
-    case 'with_disability': return 'metric-card--disability-accent'
-    default: return ''
+/** One card per impact, with its progress rolled up from its own indicators. */
+const impactCards = computed(() =>
+  (logframe.value?.levels ?? []).map((level, i) => {
+    const indicators = (logframe.value?.indicators ?? []).filter(ind => ind.level_id === level.id)
+    const targeted = indicators.filter(ind => ind.target_value != null && ind.target_value > 0)
+    const activityIds = new Set(indicators.flatMap(ind => ind.linked_activity_ids ?? []))
+    return {
+      id: level.id,
+      title: level.title,
+      number: String(i + 1).padStart(2, '0'),
+      progress: logframeProgress(level.id),
+      target: targeted.reduce((sum, ind) => sum + (ind.target_value ?? 0), 0),
+      actual: targeted.reduce((sum, ind) => sum + (ind.actual_value ?? 0), 0),
+      indicators: indicators.length,
+      activities: activityIds.size,
+    }
+  }),
+)
+
+/** How many impacts an activity feeds through its linked indicators. */
+const impactsByActivity = computed(() => {
+  const map = new Map<string, Set<string>>()
+  for (const ind of logframe.value?.indicators ?? []) {
+    for (const id of ind.linked_activity_ids ?? []) {
+      if (!map.has(id)) map.set(id, new Set())
+      map.get(id)!.add(ind.level_id)
+    }
   }
-}
-
-function accentNumberClass(key: string): string {
-  switch (key) {
-    case 'female': return 'target-number--girls'
-    case 'male': return 'target-number--boys'
-    case 'with_disability': return 'target-number--disability'
-    default: return ''
-  }
-}
-
-function accentFillClass(key: string): string {
-  switch (key) {
-    case 'female': return 'metric-bar-fill--girls'
-    case 'male': return 'metric-bar-fill--boys'
-    case 'with_disability': return 'metric-bar-fill--disability'
-    default: return ''
-  }
-}
-
-function pctColor(pct: number): string {
-  if (pct >= 80) return 'clr-green'
-  if (pct >= 50) return 'clr-yellow'
-  return 'clr-red'
+  return map
+})
+function impactsFedBy(activityId: string): number {
+  return impactsByActivity.value.get(activityId)?.size ?? 0
 }
 
 /** Open the activity dashboard for the module that owns the activity. */
@@ -326,548 +313,211 @@ onMounted(() => fetchProjectDetail(frameworkId))
 }
 .btn-retry:hover { background: var(--error-bg); }
 
-/* ═══ Project header card ═════════════════════════ */
+/* ═══ Page tokens ═════════════════════════════════
+   Brand teal (#077163) is the single accent. Secondary text is kept dark
+   (light theme) / bright (dark theme) so it stays readable on cards. */
 .project-detail {
+  --brand: #077163;
+  --brand-deep: #054f45;
+  --brand-soft: rgba(7, 113, 99, 0.14);
+  --brand-text: #5cc8b6;
+  --d-card: var(--bg-card);
+  --d-tile: #1f1f26;
+  --d-text: #f4f4f5;
+  --d-text-2: #d4d4d8;
+  --d-track: rgba(255, 255, 255, 0.12);
+  --d-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --d-shadow-hover: 0 14px 34px rgba(0, 0, 0, 0.45);
+
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
+  color: var(--d-text);
+}
+:global([data-theme="light"]) .project-detail {
+  --brand-text: #077163;
+  --d-card: #ffffff;
+  --d-tile: #f2f6f5;
+  --d-text: #111827;
+  --d-text-2: #374151;
+  --d-track: rgba(7, 113, 99, 0.14);
+  --d-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
+  --d-shadow-hover: 0 16px 36px rgba(7, 113, 99, 0.16);
 }
 
-.project-header-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  position: relative;
-  overflow: hidden;
-}
-.project-header-card::before {
-  content: '';
-  position: absolute;
-  top: -40px;
-  right: -40px;
-  width: 160px;
-  height: 160px;
-  background: radial-gradient(circle, var(--primary-dim) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-}
-.project-header-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24px;
-  position: relative;
-}
-.project-header-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.project-header-name {
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-  letter-spacing: -0.025em;
-  line-height: 1.25;
-}
-.project-header-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.eyebrow {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--brand-text);
 }
 
-/* Progress ring in header */
-.project-header-progress {
-  position: relative;
-  width: 64px;
-  height: 64px;
-  flex-shrink: 0;
+/* ═══ Progress rings ══════════════════════════════ */
+.ring { position: relative; flex-shrink: 0; display: grid; place-items: center; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 3.2; }
+.ring-bg { stroke: var(--d-track); }
+.ring-fill { stroke: var(--brand-text); stroke-linecap: round; transition: stroke-dasharray 0.8s ease; }
+.ring-value {
+  position: absolute; font-weight: 750; color: var(--d-text); font-variant-numeric: tabular-nums;
 }
-.ring {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
+.ring-value small { font-size: 0.6em; font-weight: 600; margin-left: 1px; color: var(--d-text-2); }
+.ring--lg { width: 92px; height: 92px; }
+.ring--lg .ring-value { font-size: 1.35rem; }
+.ring--sm { width: 54px; height: 54px; }
+.ring--sm .ring-value { font-size: 0.85rem; }
+
+/* ═══ Project header ══════════════════════════════ */
+.project-hero {
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  padding: 28px 30px; border-radius: 16px;
+  background: var(--d-card); box-shadow: var(--d-shadow);
 }
-.ring-bg {
-  stroke: var(--hover-bg, rgba(0,0,0,0.06));
+.project-hero::before {
+  content: ''; position: absolute; inset: 0 0 auto 0; height: 4px;
+  background: linear-gradient(90deg, var(--brand) 0%, #0fa58f 100%);
 }
-.ring-fill {
-  stroke: var(--primary);
-  stroke-linecap: round;
-  transition: stroke-dasharray 0.6s ease;
+.project-hero-info { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.project-hero-name {
+  margin: 0; font-size: 1.6rem; font-weight: 750; line-height: 1.25; letter-spacing: -0.02em;
+  color: var(--d-text); overflow-wrap: anywhere;
 }
-.ring-label {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
+.project-hero-meta {
+  display: flex; flex-wrap: wrap; gap: 4px 0; margin: 4px 0 0;
+  font-size: 0.88rem; color: var(--d-text-2);
+}
+.project-hero-meta span:not(:last-child)::after { content: '·'; margin: 0 10px; opacity: 0.6; }
+.project-hero-progress { display: flex; align-items: center; gap: 14px; }
+.ring-caption { font-size: 0.78rem; font-weight: 600; line-height: 1.35; color: var(--d-text-2); }
+
+/* ═══ KPI tiles ═══════════════════════════════════ */
+.kpi-grid { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 16px; }
+.kpi {
+  display: flex; flex-direction: column; gap: 6px; min-width: 0;
+  padding: 20px 22px; border-radius: 14px; background: var(--d-card); box-shadow: var(--d-shadow);
+}
+.kpi-label { font-size: 0.8rem; font-weight: 600; color: var(--d-text-2); }
+.kpi-value {
+  font-size: 1.9rem; font-weight: 750; line-height: 1.1; letter-spacing: -0.02em;
+  color: var(--d-text); font-variant-numeric: tabular-nums;
+}
+.kpi-foot { font-size: 0.78rem; color: var(--d-text-2); }
+.kpi--featured {
+  position: relative; overflow: hidden;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-deep) 100%);
+}
+.kpi--featured::after {
+  content: ''; position: absolute; right: -40px; bottom: -60px; width: 180px; height: 180px;
+  border-radius: 50%; background: rgba(255, 255, 255, 0.07);
+}
+.kpi--featured .kpi-label,
+.kpi--featured .kpi-foot { color: rgba(255, 255, 255, 0.88); }
+.kpi--featured .kpi-value { color: #fff; font-size: 2.4rem; }
+
+/* ═══ Sections ════════════════════════════════════ */
+.block { display: flex; flex-direction: column; gap: 14px; }
+.block-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.block-title {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--d-text);
+}
+.block-count {
+  padding: 2px 9px; font-size: 0.75rem; font-weight: 700; border-radius: 999px;
+  color: var(--brand-text); background: var(--brand-soft);
+}
+.block-hint { margin: 4px 0 0; font-size: 0.86rem; color: var(--d-text-2); }
+.block-empty {
+  padding: 20px; font-size: 0.88rem; color: var(--d-text-2);
+  background: var(--d-card); border-radius: 12px;
 }
 
-/* ═══ Bento grid (summary) ════════════════════════ */
-.bento-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  animation: fadeIn 0.35s ease-out;
+/* ═══ Impact cards ════════════════════════════════ */
+.impact-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+.impact-card {
+  position: relative; overflow: hidden; isolation: isolate;
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 22px 22px 18px; min-height: 210px; border-radius: 16px;
+  color: inherit; text-decoration: none;
+  background: var(--d-card); box-shadow: var(--d-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.bento-item { min-width: 0; }
-.bento-hero { grid-column: 1 / -1; }
-@media (max-width: 640px) {
-  .bento-grid { grid-template-columns: 1fr; }
-  .bento-hero { grid-column: auto; }
+/* Soft brand glow in the corner, brighter on hover. */
+.impact-card::before {
+  content: ''; position: absolute; z-index: -1; top: -90px; right: -90px;
+  width: 220px; height: 220px; border-radius: 50%;
+  background: radial-gradient(circle, var(--brand-soft) 0%, transparent 70%);
+  transition: transform 0.35s ease, opacity 0.35s ease; opacity: 0.8;
 }
+.impact-card:hover { transform: translateY(-3px); box-shadow: var(--d-shadow-hover); }
+.impact-card:hover::before { transform: scale(1.35); opacity: 1; }
+.impact-card:focus-visible { outline: 2px solid var(--brand-text); outline-offset: 3px; }
 
-/* ── Metric cards ────────────────────────────────── */
-.metric-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color, #E5E5EA);
-  border-radius: var(--radius-lg, 20px);
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  transition: box-shadow 0.2s, transform 0.2s;
+.impact-watermark {
+  position: absolute; z-index: -1; left: 14px; bottom: -26px;
+  font-size: 6.5rem; font-weight: 800; line-height: 1; letter-spacing: -0.05em;
+  color: var(--brand-text); opacity: 0.06; pointer-events: none;
 }
-.metric-card:hover {
-  box-shadow: var(--shadow-elevated);
-  transform: translateY(-1px);
+.impact-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.impact-index {
+  padding: 4px 10px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--brand-text); background: var(--brand-soft); border-radius: 999px;
 }
+.impact-pill {
+  padding: 4px 10px; font-size: 0.74rem; font-weight: 600;
+  color: var(--d-text-2); background: var(--d-tile); border-radius: 999px;
+}
+.impact-title {
+  margin: 0; font-size: 1.02rem; font-weight: 650; line-height: 1.45; color: var(--d-text);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.impact-bar { height: 6px; border-radius: 999px; background: var(--d-track); overflow: hidden; }
+.impact-bar-fill {
+  height: 100%; border-radius: inherit;
+  background: linear-gradient(90deg, var(--brand) 0%, #0fa58f 100%);
+  transition: width 0.8s ease;
+}
+.impact-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; }
+.impact-stats { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.82rem; color: var(--d-text-2); }
+.impact-stats strong { font-weight: 700; color: var(--d-text); }
+.impact-go {
+  display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px;
+  font-size: 1rem; border-radius: 50%; color: var(--brand-text); background: var(--brand-soft);
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+.impact-card:hover .impact-go { transform: translateX(3px); background: var(--brand); color: #fff; }
 
-.hero-modern {
-  position: relative;
-  overflow: hidden;
-}
-.hero-modern::before {
-  content: '';
-  position: absolute;
-  top: -40px;
-  right: -40px;
-  width: 160px;
-  height: 160px;
-  background: radial-gradient(circle, var(--data-teal-dim) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-}
-.hero-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-.hero-badge {
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--text-muted, #AEAEB2);
-  background: var(--hover-bg, rgba(0,0,0,0.03));
-  padding: 4px 10px;
-  border-radius: 20px;
-  letter-spacing: 0.02em;
-}
-.metric-primary {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 22px;
-}
-.metric-big {
-  font-size: 2.8rem;
-  font-weight: 800;
-  color: var(--text-primary, #1D1D1F);
-  line-height: 1;
-  letter-spacing: -1px;
-  font-variant-numeric: tabular-nums;
-}
-.metric-label {
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--text-secondary, #86868B);
-}
-/* Logframe indicator titles can be long — clamp to one line, full text on hover */
-.metric-label--clamp {
-  max-width: 24ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.metric-sublabel {
-  font-size: 0.68rem;
-  font-weight: 500;
-  color: var(--text-muted, #AEAEB2);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Hero compact row (locations / activities) */
-.hero-compact-row {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  padding: 14px 0 0;
-  border-top: 1px solid var(--border-subtle);
-}
-.hero-compact-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-.hero-compact-value {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-.hero-compact-label {
-  font-size: 0.65rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.hero-compact-divider {
-  width: 1px;
-  height: 28px;
-  background: var(--border-subtle);
-  flex-shrink: 0;
-}
-
-/* ── Reach cards (actual / target) ───────────────── */
-.metric-card--reach {
-  gap: 14px;
-}
-.metric-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.metric-pct-pill {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  background: var(--hover-bg);
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-variant-numeric: tabular-nums;
-}
-.metric-target-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex: 1;
-}
-.metric-target-block {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.target-number {
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  line-height: 1;
-  letter-spacing: -0.5px;
-  font-variant-numeric: tabular-nums;
-}
-.target-number--muted { color: var(--text-muted, #AEAEB2); }
-.target-number--girls { color: var(--data-teal); }
-.target-number--boys { color: var(--data-purple); }
-.target-number--disability { color: var(--warning); }
-.target-caption {
-  font-size: 0.68rem;
-  font-weight: 500;
-  color: var(--text-muted, #AEAEB2);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.target-slash {
-  font-size: 1.4rem;
-  font-weight: 300;
-  color: var(--text-muted, #AEAEB2);
-  line-height: 1;
-  margin-bottom: 14px;
-}
-
-.metric-bar {
-  height: 5px;
-  background: var(--hover-bg, rgba(0,0,0,0.03));
-  border-radius: 3px;
-  overflow: hidden;
-}
-.metric-bar-fill {
-  height: 100%;
-  border-radius: 3px;
-  /* Default for disaggregation values with no specific accent key */
-  background: var(--text-muted, #AEAEB2);
-  opacity: 0.5;
-  transition: width 0.5s ease;
-}
-.metric-bar-fill--girls { background: var(--data-teal); opacity: 0.7; }
-.metric-bar-fill--boys { background: var(--data-purple); opacity: 0.7; }
-.metric-bar-fill--disability { background: var(--warning); opacity: 0.7; }
-
-/* Card accent tints (light mode) */
-.metric-card--girls-accent { background: var(--data-teal-dim); border-color: rgba(13, 148, 136, 0.12); }
-.metric-card--boys-accent { background: var(--data-purple-dim); border-color: rgba(124, 58, 237, 0.12); }
-.metric-card--disability-accent { background: rgba(255, 149, 0, 0.06); border-color: rgba(255, 149, 0, 0.12); }
-
-/* Bento grid: 3 columns for reach cards */
-@media (min-width: 900px) {
-  .bento-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .bento-hero { grid-column: 1 / -1; }
-}
-
-/* ═══ Shared chips ════════════════════════════════ */
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.72rem;
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: 100px;
-  background: var(--hover-bg);
-  color: var(--text-secondary);
-}
-
-/* ═══ Activities section ══════════════════════════ */
-.activities-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.section-header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.section-title {
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-.section-count {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  background: var(--hover-bg);
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-weight: 600;
-}
-.section-hint {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-.section-empty {
-  padding: 32px;
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  background: var(--bg-card);
-  border: 1px dashed var(--border-color);
-  border-radius: var(--radius-lg);
-}
-
-/* ── Activity grid ───────────────────────────────── */
-.activity-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
-}
-@media (max-width: 480px) {
-  .activity-grid { grid-template-columns: 1fr; }
-}
-
-/* ── Activity card ───────────────────────────────── */
+/* ═══ Activity cards ══════════════════════════════ */
+.activity-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
 .activity-card {
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  cursor: pointer;
-  position: relative;
-  box-shadow: var(--shadow-card);
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
-              box-shadow 0.2s ease;
+  display: flex; flex-direction: column; align-items: stretch; gap: 6px; text-align: left;
+  padding: 18px 20px; border: none; border-radius: 14px; cursor: pointer; font: inherit; color: inherit;
+  background: var(--d-card); box-shadow: var(--d-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.activity-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius-lg);
-  border: 1.5px solid transparent;
-  pointer-events: none;
-  transition: border-color 0.2s ease;
+.activity-card:hover { transform: translateY(-2px); box-shadow: var(--d-shadow-hover); }
+.activity-card:focus-visible { outline: 2px solid var(--brand-text); outline-offset: 3px; }
+.activity-card--inactive { opacity: 0.7; }
+.activity-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.activity-module {
+  padding: 3px 9px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em;
+  color: var(--d-text); background: var(--d-tile); border-radius: 6px;
 }
-.activity-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-elevated);
+.activity-status {
+  display: inline-flex; align-items: center; gap: 6px; margin-left: auto;
+  font-size: 0.76rem; font-weight: 600; color: var(--d-text-2);
 }
-.activity-card:hover::after {
-  border-color: var(--primary);
+.activity-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--d-text-2); opacity: 0.6; }
+.activity-status--on { color: var(--brand-text); }
+.activity-status--on::before { background: var(--brand-text); opacity: 1; box-shadow: 0 0 0 3px var(--brand-soft); }
+.activity-name { font-size: 0.98rem; font-weight: 650; line-height: 1.35; color: var(--d-text); overflow-wrap: anywhere; }
+.activity-meta { font-size: 0.8rem; color: var(--d-text-2); }
+.activity-foot {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 10px;
+  margin-top: 12px; padding-top: 14px; border-top: 1px dashed var(--d-track);
 }
-.activity-card:active {
-  transform: scale(0.99);
-}
-.activity-card--inactive {
-  opacity: 0.6;
-}
-
-/* Card top row */
-.activity-card-top {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-.activity-card-title-block {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.activity-card-name {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  line-height: 1.3;
-  letter-spacing: -0.01em;
-}
-.activity-card-code {
-  font-size: 0.68rem;
-  color: var(--text-muted);
-  font-weight: 500;
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
-  letter-spacing: 0.02em;
-}
-
-/* Status dot */
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  margin-top: 5px;
-}
-.status-dot--active {
-  background: var(--success, #34C759);
-  box-shadow: 0 0 6px rgba(52, 199, 89, 0.4);
-}
-.status-dot--inactive {
-  background: var(--text-muted, #AEAEB2);
-}
-
-/* Arrow */
-.activity-arrow {
-  color: var(--text-muted);
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: opacity 0.2s ease, transform 0.2s ease, color 0.2s ease;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-.activity-card:hover .activity-arrow {
-  opacity: 1;
-  transform: translateX(0);
-  color: var(--primary);
-}
-
-/* Chips */
-.activity-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-/* Stats row */
-.activity-stats {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  padding: 12px 0;
-  border-top: 1px solid var(--border-subtle);
-  border-bottom: 1px solid var(--border-subtle);
-}
-.activity-stat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-.activity-stat-value {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-.activity-stat-value.clr-green { color: var(--progress-high); }
-.activity-stat-value.clr-yellow { color: var(--progress-mid); }
-.activity-stat-value.clr-red { color: var(--progress-low); }
-.activity-stat-label {
-  font-size: 0.65rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.activity-stat-of {
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--text-muted);
-}
-.activity-stat-divider {
-  width: 1px;
-  height: 28px;
-  background: var(--border-subtle);
-  flex-shrink: 0;
-}
-
-/* Progress bar */
-.activity-progress {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.activity-progress-track {
-  height: 5px;
-  background: var(--hover-bg);
-  border-radius: 3px;
-  overflow: hidden;
-}
-.activity-progress-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.5s ease;
-}
-.activity-progress-fill.clr-green { background: var(--progress-high); }
-.activity-progress-fill.clr-yellow { background: var(--progress-mid); }
-.activity-progress-fill.clr-red { background: var(--progress-low); }
+.activity-count { display: flex; align-items: baseline; gap: 6px; }
+.activity-count-value { font-size: 1.5rem; font-weight: 750; color: var(--d-text); font-variant-numeric: tabular-nums; }
+.activity-count-label { font-size: 0.8rem; color: var(--d-text-2); }
+.activity-links { font-size: 0.78rem; font-weight: 600; color: var(--brand-text); text-align: right; }
 
 /* ═══ Animations ══════════════════════════════════ */
 @keyframes fadeIn {
@@ -879,10 +529,16 @@ onMounted(() => fetchProjectDetail(frameworkId))
   50% { opacity: 0.4; }
 }
 
-/* ═══ Mobile ══════════════════════════════════════ */
+/* ═══ Responsive ══════════════════════════════════ */
+@media (max-width: 900px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .kpi--featured { grid-column: 1 / -1; }
+}
 @media (max-width: 640px) {
-  .project-header-top { flex-direction: column; gap: 16px; }
-  .project-header-progress { align-self: flex-start; }
-  .activity-arrow { opacity: 0.5; transform: translateX(0); }
+  .project-hero { flex-direction: column; align-items: flex-start; padding: 22px 18px; }
+  .impact-grid, .activity-grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .impact-card, .activity-card, .impact-card::before, .impact-go { transition: none; }
 }
 </style>
