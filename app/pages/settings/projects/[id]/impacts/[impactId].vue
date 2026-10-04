@@ -2,22 +2,23 @@
   <NuxtLayout name="app" :breadcrumbs="breadcrumbs">
     <div class="impact-page">
       <!-- Header -->
-      <div class="page-header">
-        <div>
+      <header class="page-header">
+        <div class="page-header-text">
+          <span class="page-eyebrow">Impact</span>
           <h1 class="page-title">{{ impact?.title ?? 'Impact' }}</h1>
           <p class="page-subtitle">Indicator, numerical targets and the activities that feed them.</p>
         </div>
         <NuxtLink :to="`/settings/projects/${projectId}/logframe`" class="btn-back">
-          <AppIcon name="arrow-left" :size="14" /> Logframe
+          &larr; Back to logframe
         </NuxtLink>
-      </div>
+      </header>
 
       <!-- Loading / error -->
       <div v-if="loading" class="state state--loading">
         <div class="pulse-dot" /><div class="pulse-dot" /><div class="pulse-dot" />
       </div>
       <div v-else-if="loadError" class="state state--error">
-        <AppIcon name="alert-circle" :size="18" /> {{ loadError }}
+        {{ loadError }}
       </div>
 
       <template v-else-if="impact">
@@ -94,10 +95,10 @@
             hint="Any extra key/value data not covered above."
           />
 
-          <div v-if="saveError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ saveError }}</div>
+          <div v-if="saveError" class="api-err">{{ saveError }}</div>
           <div class="actions">
             <Transition name="fade">
-              <span v-if="saveSuccess" class="save-ok"><AppIcon name="check-circle" :size="14" /> Saved</span>
+              <span v-if="saveSuccess" class="save-ok">Saved</span>
             </Transition>
             <button class="btn-primary" :disabled="saving" @click="saveIndicator">
               <span v-if="saving" class="btn-spinner" /> {{ hasIndicator ? 'Save' : 'Create indicator' }}
@@ -112,7 +113,7 @@
             <p class="section-hint">Activities belong to this project's logframe. Add the ones from your own logframe, then switch on the ones that feed this indicator.</p>
           </div>
           <button v-if="canManage && !showAddActivity" class="btn-secondary" @click="openAddActivity">
-            <AppIcon name="plus" :size="14" /> Add activity
+            Add activity
           </button>
         </div>
 
@@ -138,7 +139,7 @@
             <label class="field-label" for="aa-desc">Description</label>
             <textarea id="aa-desc" v-model="addForm.description" rows="2" class="field-input" placeholder="Optional"></textarea>
           </div>
-          <div v-if="addError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ addError }}</div>
+          <div v-if="addError" class="api-err">{{ addError }}</div>
           <div class="actions">
             <button type="button" class="btn-ghost" @click="showAddActivity = false">Cancel</button>
             <button type="button" class="btn-primary" :disabled="addSaving" @click="saveActivity">
@@ -176,7 +177,7 @@
           </div>
         </div>
 
-        <div v-if="toggleError" class="api-err"><AppIcon name="alert-circle" :size="14" /> {{ toggleError }}</div>
+        <div v-if="toggleError" class="api-err">{{ toggleError }}</div>
       </template>
     </div>
   </NuxtLayout>
@@ -185,7 +186,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import AppIcon from '../../../../../components/interfaces/AppIcon.vue'
 import TargetFieldsEditor from '../../../../../components/settings/TargetFieldsEditor.vue'
 import CustomFieldsEditor from '../../../../../components/settings/CustomFieldsEditor.vue'
 import { frameworkApi } from '../../../../../services/frameworkApi'
@@ -450,17 +450,28 @@ onMounted(fetchAll)
 .impact-page { max-width: 860px; padding-bottom: 48px; }
 
 .page-header {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
-  margin-bottom: 24px; flex-wrap: wrap;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  flex-wrap: wrap; margin-bottom: 28px; padding: 20px 22px;
+  background: var(--bg-panel); border: 1px solid var(--border-color);
+  border-left: 3px solid #a78bfa; border-radius: 12px;
 }
-.page-title { font-size: 1.35rem; font-weight: 750; margin: 0 0 2px; }
-.page-subtitle { font-size: 0.8rem; color: var(--text-muted); margin: 0; }
+.page-header-text { min-width: 0; flex: 1; }
+.page-eyebrow {
+  display: block; margin-bottom: 4px;
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  color: #a78bfa;
+}
+.page-title { font-size: 1.35rem; font-weight: 750; line-height: 1.3; margin: 0 0 4px; color: var(--text-primary); }
+.page-subtitle { font-size: 0.85rem; color: var(--text-secondary); margin: 0; }
 
 .btn-back {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 0.8rem; color: var(--text-muted); text-decoration: none;
-  padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 8px;
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  font-size: 0.82rem; font-weight: 600; color: var(--text-primary); text-decoration: none;
+  padding: 8px 14px; background: var(--bg-input);
+  border: 1px solid var(--border-color); border-radius: 8px;
+  transition: border-color 0.15s, color 0.15s;
 }
+.btn-back:hover { border-color: var(--accent); color: var(--accent); }
 .btn-primary {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 14px; font-size: 0.82rem; font-weight: 600;
@@ -475,9 +486,9 @@ onMounted(fetchAll)
 
 .section-label {
   font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
-  color: var(--text-muted); margin: 24px 0 6px; padding-left: 2px;
+  color: var(--text-secondary); margin: 28px 0 6px; padding-left: 2px;
 }
-.section-hint { font-size: 0.78rem; color: var(--text-muted); margin: -2px 0 10px; padding-left: 2px; }
+.section-hint { font-size: 0.8rem; color: var(--text-secondary); margin: -2px 0 10px; padding-left: 2px; }
 .section-card {
   background: var(--bg-panel); border: 1px solid var(--border-color);
   border-radius: 10px; padding: 18px;
@@ -509,7 +520,7 @@ onMounted(fetchAll)
 .btn-ghost {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 12px; font-size: 0.8rem; font-weight: 600;
-  background: transparent; color: var(--text-muted);
+  background: transparent; color: var(--text-secondary);
   border: 1px solid transparent; border-radius: 8px; cursor: pointer;
 }
 .btn-ghost:hover { color: var(--text-primary); }
@@ -528,8 +539,8 @@ onMounted(fetchAll)
   background: var(--bg-surface); border: 1px solid var(--border-color);
   border-radius: 5px; color: var(--accent);
 }
-.indicator-code--muted { color: var(--text-muted); }
-.indicator-status { font-size: 0.72rem; color: var(--text-muted); }
+.indicator-code--muted { color: var(--text-secondary); }
+.indicator-status { font-size: 0.74rem; color: var(--text-secondary); }
 
 /* Activities */
 .activity-list { display: flex; flex-direction: column; gap: 8px; }
@@ -542,12 +553,12 @@ onMounted(fetchAll)
 .activity-info { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; }
 .activity-name { font-size: 0.85rem; font-weight: 600; }
 .activity-code {
-  font-size: 0.68rem; color: var(--text-muted);
+  font-size: 0.7rem; color: var(--text-secondary);
   background: var(--bg-surface); border: 1px solid var(--border-color);
   border-radius: 5px; padding: 1px 6px;
 }
-.activity-live { font-size: 0.68rem; color: var(--success); }
-.activity-off { font-size: 0.68rem; color: var(--text-muted); }
+.activity-live { font-size: 0.7rem; color: var(--success); }
+.activity-off { font-size: 0.7rem; color: var(--text-secondary); }
 
 /* Switch */
 .switch { position: relative; flex-shrink: 0; cursor: pointer; }
@@ -572,9 +583,9 @@ onMounted(fetchAll)
   padding: 10px 12px; font-size: 0.82rem; color: var(--error);
   background: var(--error-bg); border-radius: 6px;
 }
-.empty-inline { padding: 14px; font-size: 0.82rem; color: var(--text-muted); background: var(--bg-surface); border-radius: 8px; }
+.empty-inline { padding: 14px; font-size: 0.82rem; color: var(--text-secondary); background: var(--bg-surface); border-radius: 8px; }
 
-.state { padding: 40px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-muted); }
+.state { padding: 40px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-secondary); }
 .state--error { color: var(--error); }
 .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); animation: pulse 1.4s infinite; }
 .pulse-dot:nth-child(2) { animation-delay: 0.2s; }

@@ -781,14 +781,17 @@ onMounted(() => {
   margin-bottom: 24px; flex-wrap: wrap;
 }
 .page-title { font-size: 1.35rem; font-weight: 750; margin: 0 0 2px; }
-.page-subtitle { font-size: 0.8rem; color: var(--text-muted); margin: 0; }
+.page-subtitle { font-size: 0.82rem; color: var(--text-secondary); margin: 0; }
 .header-actions { display: flex; gap: 8px; align-items: center; }
 
 .btn-back {
   display: inline-flex; align-items: center; gap: 6px;
-  font-size: 0.8rem; color: var(--text-muted); text-decoration: none;
-  padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 8px;
+  font-size: 0.82rem; font-weight: 600; color: var(--text-primary); text-decoration: none;
+  padding: 8px 12px; background: var(--bg-panel);
+  border: 1px solid var(--border-color); border-radius: 8px;
+  transition: border-color 0.15s, color 0.15s;
 }
+.btn-back:hover { border-color: var(--accent); color: var(--accent); }
 .btn-secondary {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 12px; font-size: 0.82rem; font-weight: 600;
