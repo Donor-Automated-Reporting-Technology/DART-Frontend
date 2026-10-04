@@ -63,6 +63,15 @@ export const TARGET_FIELD_MEASURES: Array<{ value: TargetFieldMeasure; label: st
 /** Key used inside `custom_fields` to persist the target field list. */
 export const TARGET_FIELDS_KEY = 'target_fields'
 
+/** An indicator's target for one project year (Year 1 = first year of the project period). */
+export interface LogframeYearTarget {
+  year: number
+  value: number
+}
+
+/** Key used inside `custom_fields` to persist the per-project-year targets. */
+export const YEAR_TARGETS_KEY = 'year_targets'
+
 /** External reference link attached to an indicator. */
 export interface LogframeLink {
   label: string

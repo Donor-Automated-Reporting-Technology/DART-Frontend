@@ -103,6 +103,23 @@ export interface ProjectInfo {
   reporting_to: string;
   period_start: string;
   period_end: string;
+  /** Reporting years of the project period; extending the end date adds years. */
+  years?: ProjectYear[];
+}
+
+/** One reporting year of a project: Year 1 starts on the project start date. */
+export interface ProjectYear {
+  year: number;
+  start: string;
+  end: string;
+}
+
+/** An indicator's target and actual in one project year. */
+export interface ProjectIndicatorYear {
+  year: number;
+  target?: number;
+  actual: number;
+  percentage: number;
 }
 
 export interface ProjectSummary {
@@ -162,6 +179,8 @@ export interface ProjectLogframeIndicator {
   linked_activity_ids: string[];
   /** Custom target fields with their actuals (computed or entered). */
   target_fields?: ProjectTargetFieldProgress[];
+  /** Progress per project year; empty when the project has no period. */
+  years?: ProjectIndicatorYear[];
   custom_fields?: Record<string, any>;
 }
 

@@ -247,3 +247,11 @@
   .ps-page .view-item--wide { grid-column: auto; }
   .ps-page .list-row { padding: 14px; }
 }
+
+/* Targets by year (indicator editor) */
+.ps-page .year-targets { margin: 4px 0 18px; }
+.ps-page .year-targets-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; }
+.ps-page .year-targets-head .view-subtitle { margin-bottom: 4px; }
+.ps-page .year-targets .card-hint { margin: 0 0 12px; }
+.ps-page .year-targets-sum { font-size: 0.78rem; color: var(--ps-text-2); font-variant-numeric: tabular-nums; }
+.ps-page .year-targets-sum--off { color: var(--warning); font-weight: 600; }

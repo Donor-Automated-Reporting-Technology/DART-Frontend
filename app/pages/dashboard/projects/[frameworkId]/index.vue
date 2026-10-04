@@ -25,24 +25,8 @@
 
       <!-- ═══ Header ═══ -->
       <header class="dash-head">
-        <div class="dash-head-info">
-          <span class="eyebrow">{{ formatType(project.framework_type) }} · Project dashboard</span>
-          <h1 class="dash-title">{{ project.project_name }}</h1>
-          <p class="dash-meta">
-            <span v-if="project.partner_name"><i class="dot" />Partner: {{ project.partner_name }}</span>
-            <span v-if="project.reporting_to"><i class="dot" />Reporting to {{ project.reporting_to }}</span>
-            <span v-if="logframe"><i class="dot" />Logframe: {{ logframe.name }}</span>
-          </p>
-        </div>
-
-        <div v-if="project.period_start && project.period_end" class="period">
-          <div class="period-head">
-            <span>{{ formatDate(project.period_start) }} – {{ formatDate(project.period_end) }}</span>
-            <strong v-if="expected !== null" class="num">{{ expected }}%</strong>
-          </div>
-          <div class="meter"><i :style="{ width: `${expected ?? 0}%` }" /></div>
-          <span class="period-note">{{ periodNote }}</span>
-        </div>
+        <span class="eyebrow">{{ formatType(project.framework_type) }} · Project dashboard</span>
+        <h1 class="dash-title">{{ project.project_name }}</h1>
       </header>
 
       <!-- ═══ Headline figures ═══ -->
@@ -61,7 +45,7 @@
         <div class="kpi">
           <span class="kpi-label">Indicators on track</span>
           <span class="kpi-value num">{{ onTrack }}<small> of {{ targetedCount }}</small></span>
-          <span class="kpi-foot">{{ expected === null ? 'Set project dates to judge pace' : `Against ${expected}% of the period passed` }}</span>
+          <span class="kpi-foot">{{ paceNote }}</span>
         </div>
         <div class="kpi">
           <span class="kpi-label">Activities</span>
@@ -81,11 +65,18 @@
       </section>
 
       <!-- ═══ Summary panels ═══ -->
-      <section class="grid2" :class="{ 'grid2--single': !impactColumns.length }">
+      <section class="grid2" :class="{ 'grid2--single': !impactCards.length }">
         <ProjectReachPanel :disaggregations="disaggregations" :summary="summary" />
+        <ProjectYearProgress
+          v-if="impactYears.length"
+          :impacts="impactYears"
+          :current-year="currentYear"
+          :selected="impactFilter"
+          @select="impactFilter = $event"
+        />
         <ProjectImpactColumns
-          v-if="impactColumns.length"
-          :impacts="impactColumns"
+          v-else-if="impactCards.length"
+          :impacts="impactCards"
           :expected="expected"
           :selected="impactFilter"
           @select="impactFilter = $event"
@@ -117,16 +108,22 @@ import { useProjectDetail } from '~/composables/useProjectDetail'
 import DashboardBreadcrumb from '~/components/dashboard/DashboardBreadcrumb.vue'
 import ProjectReachPanel from '~/components/dashboard/project/ProjectReachPanel.vue'
 import ProjectImpactColumns from '~/components/dashboard/project/ProjectImpactColumns.vue'
+import ProjectYearProgress from '~/components/dashboard/project/ProjectYearProgress.vue'
 import ProjectIndicatorList from '~/components/dashboard/project/ProjectIndicatorList.vue'
 import AppIcon from '~/components/interfaces/AppIcon.vue'
 import {
+  currentYearIndex,
   formatNumber,
   hasTarget,
   impactAncestor,
   indicatorChecks,
+  indicatorHasData,
+  indicatorProgress,
   levelTypeLabel,
   paceStatus,
   periodElapsed,
+  yearLabel,
+  type ImpactYears,
   type IndicatorGroup,
   type IndicatorRow,
 } from '~/utils/projectDashboard'
@@ -145,8 +142,6 @@ const {
   hasData,
   activeCount,
   overallProgress,
-  logframeProgress,
-  formatDate,
   formatType,
   fetchProjectDetail,
 } = useProjectDetail()
@@ -162,19 +157,21 @@ const indicators = computed(() => logframe.value?.indicators ?? [])
 // ── Pace ──────────────────────────────────────────
 const expected = computed(() => periodElapsed(project.value.period_start, project.value.period_end))
 
-const periodNote = computed(() => {
-  if (expected.value === null) return 'Project dates are not valid'
-  if (expected.value === 0) return 'Not started yet'
-  if (expected.value === 100) return 'Project period has ended'
-  return 'of the project period has passed'
+const paceNote = computed(() => {
+  if (expected.value === null) return 'Set project dates to judge pace'
+  if (expected.value === 0) return 'Project has not started yet'
+  return `Against ${expected.value}% of the period passed`
 })
+
+const years = computed(() => project.value.years ?? [])
+const currentYear = computed(() => currentYearIndex(years.value))
 
 // ── Indicator rows ────────────────────────────────
 const activityById = computed(() => new Map(activities.value.map(a => [a.id, a])))
 
 const rows = computed<IndicatorRow[]>(() =>
   indicators.value.map((ind) => {
-    const progress = hasTarget(ind.target_value) ? Math.round(ind.percentage) : null
+    const progress = indicatorProgress(ind)
     const checks = indicatorChecks(ind)
     return {
       ind,
@@ -217,42 +214,95 @@ const activityFoot = computed(() => {
 // ── Impacts ───────────────────────────────────────
 const impacts = computed(() => levels.value.filter(l => l.level_type === 'impact'))
 
-const impactColumns = computed(() =>
-  impacts.value.map((level, i) => {
-    const progress = logframeProgress(level.id)
+/** Indicator rows under each impact (outcomes and outputs included). */
+const rowsByImpact = computed(() => {
+  const map = new Map<string, IndicatorRow[]>()
+  for (const row of rows.value) {
+    const impact = impactAncestor(row.ind.level_id, levels.value)
+    const key = impact?.id ?? 'other'
+    if (!map.has(key)) map.set(key, [])
+    map.get(key)!.push(row)
+  }
+  return map
+})
+
+/** Progress of a set of rows against their numerical targets. */
+function rollup(list: IndicatorRow[]): number | null {
+  const targeted = list.filter(r => hasTarget(r.ind.target_value))
+  if (!targeted.length) {
+    const measured = list.filter(r => r.progress !== null)
+    return measured.length ? Math.round(measured.reduce((s, r) => s + r.progress!, 0) / measured.length) : null
+  }
+  const target = targeted.reduce((s, r) => s + (r.ind.target_value ?? 0), 0)
+  const actual = targeted.reduce((s, r) => s + r.ind.actual_value, 0)
+  return Math.min(Math.round((actual / target) * 100), 100)
+}
+
+/** Impacts numbered in logframe order, those with data first. */
+const impactCards = computed(() => {
+  const cards = impacts.value.map((level, i) => {
+    const list = rowsByImpact.value.get(level.id) ?? []
+    const progress = rollup(list)
     return {
       id: level.id,
       number: String(i + 1).padStart(2, '0'),
       title: level.title,
+      rows: list,
       progress,
       status: paceStatus(progress, expected.value),
+      hasData: list.some(r => indicatorHasData(r.ind)),
     }
-  }),
-)
+  })
+  return [...cards.filter(c => c.hasData), ...cards.filter(c => !c.hasData)]
+})
 
-/** Indicators under the impact they roll up to; the rest go last. */
+const impactYears = computed<ImpactYears[]>(() => {
+  if (!years.value.length) return []
+  const today = new Date().toISOString().slice(0, 10)
+  return impactCards.value.map((card) => {
+    const yearRows = card.rows.map(r => r.ind.years ?? [])
+    const points = years.value.map((y) => {
+      let target = 0
+      let actual = 0
+      for (const list of yearRows) {
+        const entry = list.find(e => e.year === y.year)
+        target += entry?.target ?? 0
+        actual += entry?.actual ?? 0
+      }
+      return { year: y.year, label: yearLabel(y), target, actual, pct: target ? Math.round((actual / target) * 100) : 0, future: y.start > today }
+    })
+    const targeted = card.rows.filter(r => hasTarget(r.ind.target_value))
+    return {
+      id: card.id,
+      number: card.number,
+      title: card.title,
+      target: targeted.reduce((s, r) => s + (r.ind.target_value ?? 0), 0),
+      actual: card.rows.reduce((s, r) => s + r.ind.actual_value, 0),
+      hasYearTargets: points.some(p => p.target > 0),
+      years: points,
+    }
+  })
+})
+
+/** Indicators under the impact they roll up to (data first); the rest go last. */
 const groups = computed<IndicatorGroup[]>(() => {
-  const byImpact = new Map<string, IndicatorRow[]>()
-  const loose: IndicatorRow[] = []
-  for (const row of rows.value) {
-    const impact = impactAncestor(row.ind.level_id, levels.value)
-    if (!impact) { loose.push(row); continue }
-    if (!byImpact.has(impact.id)) byImpact.set(impact.id, [])
-    byImpact.get(impact.id)!.push(row)
-  }
-
-  const out: IndicatorGroup[] = impactColumns.value
-    .filter(col => byImpact.has(col.id))
-    .map(col => ({
-      id: col.id,
-      number: col.number,
-      title: col.title,
-      progress: col.progress,
-      link: `/dashboard/projects/${frameworkId}/impacts/${col.id}`,
-      rows: byImpact.get(col.id)!,
+  const out: IndicatorGroup[] = impactCards.value
+    .filter(card => card.rows.length)
+    .map(card => ({
+      id: card.id,
+      number: card.number,
+      title: card.title,
+      progress: card.progress,
+      link: `/dashboard/projects/${frameworkId}/impacts/${card.id}`,
+      hasData: card.hasData,
+      rows: card.rows,
     }))
+  const loose = rowsByImpact.value.get('other') ?? []
   if (loose.length) {
-    out.push({ id: 'other', number: '', title: impacts.value.length ? 'Not under an impact' : 'All indicators', progress: null, link: null, rows: loose })
+    out.push({
+      id: 'other', number: '', title: impacts.value.length ? 'Not under an impact' : 'All indicators',
+      progress: rollup(loose), link: null, hasData: loose.some(r => indicatorHasData(r.ind)), rows: loose,
+    })
   }
   return out
 })

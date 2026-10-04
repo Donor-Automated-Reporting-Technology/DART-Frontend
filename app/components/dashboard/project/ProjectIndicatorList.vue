@@ -71,7 +71,8 @@
                 <b v-if="expected" class="track-expected" :style="{ left: `${expected}%` }" />
               </div>
               <div class="lbl">
-                <span class="num">{{ formatNumber(row.ind.actual_value) }} of {{ formatNumber(row.ind.target_value) }}{{ row.ind.unit ? ` ${row.ind.unit}` : '' }}</span>
+                <span v-if="hasTarget(row.ind.target_value)" class="num">{{ formatNumber(row.ind.actual_value) }} of {{ formatNumber(row.ind.target_value) }}{{ row.ind.unit ? ` ${row.ind.unit}` : '' }}</span>
+                <span v-else class="num">{{ formatNumber(row.ind.actual_value) }} reached · against target fields</span>
                 <span class="num">{{ row.progress }}%</span>
               </div>
             </template>
@@ -136,6 +137,11 @@
         </div>
       </template>
     </template>
+
+    <button v-if="hiddenGroups" type="button" class="list-more" @click="showAll = !showAll">
+      <template v-if="showAll">Show fewer impacts</template>
+      <template v-else>View {{ hiddenGroups }} more impact{{ hiddenGroups === 1 ? '' : 's' }} with no data yet</template>
+    </button>
   </section>
 </template>
 
@@ -195,12 +201,27 @@ const counts = computed(() => {
   }
 })
 
-const visibleGroups = computed(() =>
+// Impacts with data lead; the rest stay folded behind "View more" (at least
+// MIN_GROUPS are always shown) unless a filter or an impact is selected.
+const MIN_GROUPS = 2
+const showAll = ref(false)
+
+const filteredGroups = computed(() =>
   inImpact.value
     .map(g => ({ ...g, rows: g.rows.filter(r => matches(r, filter.value)) }))
     .filter(g => g.rows.length),
 )
-const visibleCount = computed(() => visibleGroups.value.reduce((s, g) => s + g.rows.length, 0))
+const collapsible = computed(() => filter.value === 'all' && !props.impactFilter)
+const shownCount = computed(() =>
+  Math.max(filteredGroups.value.filter(g => g.hasData).length, MIN_GROUPS),
+)
+const hiddenGroups = computed(() =>
+  collapsible.value ? Math.max(filteredGroups.value.length - shownCount.value, 0) : 0,
+)
+const visibleGroups = computed(() =>
+  hiddenGroups.value && !showAll.value ? filteredGroups.value.slice(0, shownCount.value) : filteredGroups.value,
+)
+const visibleCount = computed(() => filteredGroups.value.reduce((s, g) => s + g.rows.length, 0))
 
 const filteredImpactNumber = computed(() => props.groups.find(g => g.id === props.impactFilter)?.number ?? '')
 </script>

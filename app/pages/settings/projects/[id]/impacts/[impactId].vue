@@ -126,6 +126,22 @@
               </div>
             </div>
 
+            <div v-if="years.length" class="year-targets">
+              <div class="year-targets-head">
+                <h3 class="view-subtitle">Targets by year</h3>
+                <span class="year-targets-sum" :class="{ 'year-targets-sum--off': yearSumMismatch }">
+                  Years add up to {{ yearSum.toLocaleString() }}<template v-if="form.target_value != null"> · overall target {{ form.target_value.toLocaleString() }}</template>
+                </span>
+              </div>
+              <p class="card-hint">One target per project year. Extending the project end date adds a year here.</p>
+              <div class="form-grid">
+                <div v-for="y in years" :key="y.year" class="field">
+                  <label class="field-label" :for="`im-yt-${y.year}`">{{ yearLabel(y, true) }}</label>
+                  <input :id="`im-yt-${y.year}`" v-model.number="form.year_targets[y.year]" type="number" step="any" min="0" class="field-input" placeholder="—" />
+                </div>
+              </div>
+            </div>
+
             <TargetFieldsEditor
               v-model="form.target_fields"
               label="Target fields"
@@ -168,6 +184,16 @@
                 <dd>{{ display(form.baseline_year) }}</dd>
               </div>
             </dl>
+
+            <template v-if="years.length">
+              <h3 class="view-subtitle">Targets by year</h3>
+              <dl class="view-grid">
+                <div v-for="y in years" :key="y.year" class="view-item">
+                  <dt>{{ yearLabel(y, true) }}</dt>
+                  <dd>{{ display(form.year_targets[y.year]) }}<span v-if="form.year_targets[y.year] != null && form.unit" class="view-unit"> {{ form.unit }}</span></dd>
+                </div>
+              </dl>
+            </template>
 
             <template v-if="savedTargetFields.length">
               <h3 class="view-subtitle">Target fields</h3>
@@ -360,13 +386,16 @@ import { useAuthStore } from '../../../../../stores/auth'
 import type { Framework } from '../../../../../interfaces/framework'
 import {
   TARGET_FIELDS_KEY,
+  YEAR_TARGETS_KEY,
   type CustomFields,
   type LogframeIndicator,
   type LogframeIndicatorRequest,
   type LogframeLevel,
   type LogframeLevelType,
   type LogframeTargetField,
+  type LogframeYearTarget,
 } from '../../../../../interfaces/logframe'
+import { projectYears, yearLabel } from '../../../../../utils/projectDashboard'
 
 definePageMeta({
   layout: false,
@@ -547,8 +576,19 @@ const form = reactive({
   baseline_value: null as number | null,
   baseline_year: null as number | null,
   target_fields: [] as LogframeTargetField[],
+  /** Target per project year, keyed by year number. */
+  year_targets: {} as Record<number, number | null>,
   custom_fields: {} as CustomFields,
 })
+
+// Project years from the project period; they grow when the end date is extended.
+const years = computed(() => projectYears(project.value?.period_start, project.value?.period_end))
+const yearSum = computed(() =>
+  years.value.reduce((sum, y) => sum + (typeof form.year_targets[y.year] === 'number' ? form.year_targets[y.year]! : 0), 0),
+)
+const yearSumMismatch = computed(() =>
+  form.target_value != null && yearSum.value > 0 && yearSum.value !== form.target_value,
+)
 
 const saving = ref(false)
 const saveError = ref('')
@@ -605,6 +645,15 @@ function seedTargetFields() {
   const stored = custom[TARGET_FIELDS_KEY]
   form.target_fields = Array.isArray(stored) ? (stored as LogframeTargetField[]).map((f) => ({ ...f })) : []
   delete custom[TARGET_FIELDS_KEY]
+
+  const storedYears = custom[YEAR_TARGETS_KEY]
+  form.year_targets = {}
+  if (Array.isArray(storedYears)) {
+    for (const t of storedYears as LogframeYearTarget[]) {
+      if (t && typeof t.year === 'number' && typeof t.value === 'number') form.year_targets[t.year] = t.value
+    }
+  }
+  delete custom[YEAR_TARGETS_KEY]
   form.custom_fields = custom
 }
 
@@ -657,6 +706,11 @@ async function fetchAll() {
 function buildPayload(): LogframeIndicatorRequest {
   const ind = indicator.value
   const targetFields = cleanTargetFields()
+  // Year targets outside the current period (after shortening it) are kept.
+  const yearTargets: LogframeYearTarget[] = Object.entries(form.year_targets)
+    .filter(([, v]) => typeof v === 'number' && Number.isFinite(v))
+    .map(([year, value]) => ({ year: Number(year), value: value as number }))
+    .sort((a, b) => a.year - b.year)
   return {
     level_id: impactId,
     code: form.code.trim() || null,
@@ -677,6 +731,7 @@ function buildPayload(): LogframeIndicatorRequest {
     custom_fields: {
       ...form.custom_fields,
       ...(targetFields.length ? { [TARGET_FIELDS_KEY]: targetFields } : {}),
+      ...(yearTargets.length ? { [YEAR_TARGETS_KEY]: yearTargets } : {}),
     },
   }
 }

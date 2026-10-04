@@ -44,6 +44,46 @@ export function hasTarget(value?: number | null): value is number {
   return value != null && value > 0
 }
 
+// ── Project years ────────────────────────────────────────────────────────────
+
+export interface ProjectYearSpan { year: number; start: string; end: string }
+
+const isoDate = (d: Date) => d.toISOString().slice(0, 10)
+
+/**
+ * Reporting years of a project period, matching the backend: Year 1 starts on
+ * the project start date, each following year one calendar year later, and
+ * the last year ends on the project end date.
+ */
+export function projectYears(start?: string | null, end?: string | null): ProjectYearSpan[] {
+  if (!start || !end) return []
+  const s = new Date(`${start.slice(0, 10)}T00:00:00Z`)
+  const e = new Date(`${end.slice(0, 10)}T00:00:00Z`)
+  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime()) || e < s) return []
+  const out: ProjectYearSpan[] = []
+  for (let i = 0; i < 20; i++) {
+    const ys = new Date(s); ys.setUTCFullYear(s.getUTCFullYear() + i)
+    if (ys > e) break
+    const ye = new Date(s); ye.setUTCFullYear(s.getUTCFullYear() + i + 1); ye.setUTCDate(ye.getUTCDate() - 1)
+    out.push({ year: i + 1, start: isoDate(ys), end: isoDate(ye > e ? e : ye) })
+  }
+  return out
+}
+
+/** "Y1 · 2027", or "Y1 · 2027–28" when the year spans two calendar years. */
+export function yearLabel(y: ProjectYearSpan, long = false): string {
+  const a = y.start.slice(0, 4)
+  const b = y.end.slice(0, 4)
+  const span = a === b ? a : `${a}–${b.slice(2)}`
+  return `${long ? 'Year ' : 'Y'}${y.year} · ${span}`
+}
+
+/** Index of the year containing `now`, or null outside the period. */
+export function currentYearIndex(years: ProjectYearSpan[], now = new Date()): number | null {
+  const today = isoDate(now)
+  return years.find(y => y.start <= today && today <= y.end)?.year ?? null
+}
+
 // ── Pace ─────────────────────────────────────────────────────────────────────
 
 /**
@@ -58,7 +98,7 @@ export function periodElapsed(start?: string, end?: string, now = new Date()): n
   return Math.round(Math.min(Math.max((now.getTime() - s) / (e - s), 0), 1) * 100)
 }
 
-export type IndicatorStatus = 'achieved' | 'good' | 'warn' | 'bad' | 'pending' | 'none'
+export type IndicatorStatus = 'achieved' | 'good' | 'warn' | 'bad' | 'pending' | 'upcoming' | 'none'
 
 export const STATUS_LABELS: Record<IndicatorStatus, string> = {
   achieved: 'Achieved',
@@ -66,21 +106,43 @@ export const STATUS_LABELS: Record<IndicatorStatus, string> = {
   warn: 'Needs attention',
   bad: 'Behind',
   pending: 'In progress',
+  upcoming: 'Not started',
   none: 'No target',
 }
 
 /**
  * Status of a progress percentage against how much of the project period has
  * passed: at least 90% of the expected pace is on track, 60–89% needs
- * attention, under 60% is behind. Without dates (or before the project
- * starts) nothing can be expected yet, so it reads "In progress".
+ * attention, under 60% is behind. Before the project starts nothing is
+ * expected yet, so any progress is on track. Without dates it reads
+ * "In progress".
  */
 export function paceStatus(progress: number | null, expected: number | null): IndicatorStatus {
   if (progress === null) return 'none'
   if (progress >= 100) return 'achieved'
-  if (!expected) return 'pending'
+  if (expected === null) return 'pending'
+  if (expected === 0) return progress > 0 ? 'good' : 'upcoming'
   const pace = progress / expected
   return pace >= 0.9 ? 'good' : pace >= 0.6 ? 'warn' : 'bad'
+}
+
+/**
+ * Progress of an indicator, 0+: against its overall target, or, when it only
+ * has target fields, against the fields that carry both a target and an
+ * actual. Null when there is nothing to measure against.
+ */
+export function indicatorProgress(ind: ProjectLogframeIndicator): number | null {
+  if (hasTarget(ind.target_value)) return Math.round(ind.percentage)
+  const fields = (ind.target_fields ?? []).filter(f => hasTarget(f.target) && f.actual != null)
+  if (!fields.length) return null
+  const target = fields.reduce((s, f) => s + (f.target ?? 0), 0)
+  const actual = fields.reduce((s, f) => s + (f.actual ?? 0), 0)
+  return Math.min(Math.round((actual / target) * 100), 100)
+}
+
+/** True once anything has been counted towards the indicator. */
+export function indicatorHasData(ind: ProjectLogframeIndicator): boolean {
+  return ind.actual_value > 0 || (ind.target_fields ?? []).some(f => (f.actual ?? 0) > 0)
 }
 
 // ── Data checks ──────────────────────────────────────────────────────────────
@@ -147,5 +209,29 @@ export interface IndicatorGroup {
   title: string
   progress: number | null
   link: string | null
+  /** Anything counted yet; groups without data start collapsed. */
+  hasData: boolean
   rows: IndicatorRow[]
+}
+
+/** One project year of an impact: summed year targets and reach of its indicators. */
+export interface YearPoint {
+  year: number
+  label: string
+  target: number
+  actual: number
+  pct: number
+  /** The year has not started yet. */
+  future: boolean
+}
+
+export interface ImpactYears {
+  id: string
+  number: string
+  title: string
+  /** Life-of-project totals of the impact's indicators. */
+  target: number
+  actual: number
+  hasYearTargets: boolean
+  years: YearPoint[]
 }
