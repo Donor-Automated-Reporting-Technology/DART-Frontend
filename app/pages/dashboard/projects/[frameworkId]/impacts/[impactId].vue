@@ -47,7 +47,7 @@
               </span>
             </div>
           </div>
-          <div class="project-header-progress">
+          <div v-if="impactProgress !== null" class="project-header-progress" title="Progress against logframe targets">
             <svg class="ring" viewBox="0 0 36 36">
               <path
                 class="ring-bg"
@@ -64,10 +64,10 @@
                    a 15.9155 15.9155 0 0 1 0 -31.831"
                 fill="none"
                 stroke-width="3"
-                :stroke-dasharray="overallProgress + ', 100'"
+                :stroke-dasharray="impactProgress + ', 100'"
               />
             </svg>
-            <span class="ring-label">{{ overallProgress }}%</span>
+            <span class="ring-label">{{ impactProgress }}%</span>
           </div>
         </div>
       </div>
@@ -150,17 +150,14 @@
       <div class="activities-section">
         <div class="section-header">
           <div class="section-header-left">
-            <h3 class="section-title">Active Activities</h3>
-            <span class="section-count">{{ sortedActivities.length }}</span>
+            <h3 class="section-title">Activities</h3>
+            <span class="section-count">{{ impactActivities.length }}</span>
           </div>
-          <span class="section-hint">
-            <AppIcon name="mouse-pointer" :size="12" />
-            Click to explore
-          </span>
+          <span v-if="impactActivities.length" class="section-hint">Click to explore</span>
         </div>
 
         <div v-if="impactActivities.length === 0" class="section-empty">
-          No active activities linked to this impact.
+          No activities linked to this impact yet.
         </div>
 
         <div v-else class="activity-grid">
@@ -176,43 +173,26 @@
                 <span class="activity-card-name">{{ a.name }}</span>
                 <span class="activity-card-code">{{ a.code }}</span>
               </div>
-              <span class="status-dot status-dot--active" title="Active"></span>
+              <span
+                class="status-dot"
+                :class="a.is_active ? 'status-dot--active' : 'status-dot--inactive'"
+                :title="a.is_active ? 'Active' : 'Inactive'"
+              ></span>
               <AppIcon name="chevron-right" :size="16" class="activity-arrow" />
             </div>
 
-            <!-- Chips: pattern + target unit -->
+            <!-- Chips: pattern / module -->
             <div class="activity-chips">
-              <span class="chip">
-                <AppIcon name="git-branch" :size="12" />
-                {{ formatPattern(a.pattern_type) }}
-              </span>
-              <span class="chip">
-                <AppIcon name="target" :size="12" />
-                {{ a.target_count }} {{ a.target_unit }}
-              </span>
+              <span v-if="a.pattern_type" class="chip">{{ formatPattern(a.pattern_type) }}</span>
+              <span v-if="a.module" class="chip">{{ a.module.toUpperCase() }}</span>
+              <span v-if="!a.is_active" class="chip">Inactive</span>
             </div>
 
-            <!-- Stats row -->
+            <!-- Stats row (targets live on the logframe, so only actuals here) -->
             <div class="activity-stats">
               <div class="activity-stat">
-                <span class="activity-stat-value">{{ a.actual_count }} <span class="activity-stat-of">/ {{ a.target_count }}</span></span>
+                <span class="activity-stat-value">{{ a.actual_count }}</span>
                 <span class="activity-stat-label">Enrolled</span>
-              </div>
-              <div class="activity-stat-divider"></div>
-              <div class="activity-stat">
-                <span class="activity-stat-value" :class="pctColor(a.percentage)">{{ a.percentage }}%</span>
-                <span class="activity-stat-label">Progress</span>
-              </div>
-            </div>
-
-            <!-- Progress bar -->
-            <div class="activity-progress">
-              <div class="activity-progress-track">
-                <div
-                  class="activity-progress-fill"
-                  :class="pctColor(a.percentage)"
-                  :style="{ width: Math.min(a.percentage, 100) + '%' }"
-                />
               </div>
             </div>
           </div>
@@ -248,6 +228,7 @@ const {
   sortedActivities,
   activeCount,
   overallProgress,
+  logframeProgress,
   formatDate,
   formatType,
   formatPattern,
@@ -284,9 +265,13 @@ const impactActivities = computed(() => {
       linkedIds.add(id)
     }
   }
-  return sortedActivities.value.filter((act: any) => linkedIds.has(act.id))
+  return activities.value
+    .filter((act: any) => linkedIds.has(act.id))
+    .sort((a, b) => Number(b.is_active) - Number(a.is_active) || a.name.localeCompare(b.name))
 })
 
+
+const impactProgress = computed(() => logframeProgress(impactId.value))
 
 const hasLogframeTargets = computed(() => logframeTargets.value.length > 0)
 

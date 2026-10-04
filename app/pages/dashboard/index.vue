@@ -329,27 +329,8 @@
                     <span class="project-stat-value">{{ p.total_beneficiaries }}</span>
                     <span class="project-stat-label">Beneficiaries</span>
                   </div>
-                  <div class="project-stat-divider"></div>
-                  <div class="project-stat">
-                    <span class="project-stat-value">{{ p.overall_target }}</span>
-                    <span class="project-stat-label">Target</span>
-                  </div>
                 </div>
-
-                <!-- Progress bar -->
-                <div class="project-progress">
-                  <div class="project-progress-header">
-                    <span class="project-progress-label">Progress</span>
-                    <span class="project-progress-pct" :class="barColor(p.overall_progress)">{{ p.overall_progress }}%</span>
-                  </div>
-                  <div class="project-progress-track">
-                    <div
-                      class="project-progress-fill"
-                      :class="barColor(p.overall_progress)"
-                      :style="{ width: Math.min(p.overall_progress, 100) + '%' }"
-                    />
-                  </div>
-                </div>
+                <!-- Targets live on each project's logframe; open the project to see them. -->
               </div>
             </div>
           </div>

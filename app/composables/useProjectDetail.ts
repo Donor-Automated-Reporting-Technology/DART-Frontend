@@ -82,11 +82,20 @@ export const useProjectDetail = () => {
 
   const activeCount = computed(() => activities.value.filter(a => a.is_active).length)
 
-  const overallProgress = computed(() => {
-    const totalTarget = summary.value.total_target
-    if (!totalTarget) return 0
-    return Math.min(Math.round(((summary.value.total_actual || summary.value.unique_beneficiaries) / totalTarget) * 100), 100)
-  })
+  // Progress comes from the project's logframe only: actuals against the
+  // numerical targets set on its indicators. Legacy framework/activity
+  // targets are ignored so the dashboard always matches the logframe.
+  function logframeProgress(levelId?: string): number | null {
+    const indicators = (logframe.value?.indicators ?? []).filter(
+      ind => (!levelId || ind.level_id === levelId) && ind.target_value != null && ind.target_value > 0,
+    )
+    if (!indicators.length) return null
+    const target = indicators.reduce((sum, ind) => sum + (ind.target_value ?? 0), 0)
+    const actual = indicators.reduce((sum, ind) => sum + (ind.actual_value ?? 0), 0)
+    return Math.min(Math.round((actual / target) * 100), 100)
+  }
+
+  const overallProgress = computed(() => logframeProgress())
 
   // ── Formatters ─────────────────────────────────────────────────────────────
   const formatDate = (iso: string): string =>
@@ -133,6 +142,7 @@ export const useProjectDetail = () => {
     sortedActivities,
     activeCount,
     overallProgress,
+    logframeProgress,
     formatDate,
     formatType,
     formatPattern,

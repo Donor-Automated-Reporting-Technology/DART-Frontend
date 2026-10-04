@@ -47,7 +47,7 @@
               </span>
             </div>
           </div>
-          <div class="project-header-progress">
+          <div v-if="overallProgress !== null" class="project-header-progress" title="Progress against logframe targets">
             <svg class="ring" viewBox="0 0 36 36">
               <path
                 class="ring-bg"
@@ -122,21 +122,21 @@
 
       </div>
 
-      <!-- ═══ Unlinked Activities section (Fallback) ═══ -->
-      <div v-if="unlinkedActivities.length > 0" class="activities-section">
+      <!-- ═══ Activities section ═══ -->
+      <div class="activities-section">
         <div class="section-header">
           <div class="section-header-left">
-            <h3 class="section-title">Other Activities</h3>
-            <span class="section-count">{{ unlinkedActivities.length }}</span>
+            <h3 class="section-title">Activities</h3>
+            <span class="section-count">{{ projectActivities.length }}</span>
           </div>
-          <span class="section-hint">
-            <AppIcon name="mouse-pointer" :size="12" />
-            Click to explore
-          </span>
+          <span v-if="projectActivities.length" class="section-hint">Click to explore</span>
         </div>
-        <div class="activity-grid">
+        <div v-if="!projectActivities.length" class="section-empty">
+          No activities on this project yet.
+        </div>
+        <div v-else class="activity-grid">
           <div
-            v-for="a in unlinkedActivities"
+            v-for="a in projectActivities"
             :key="a.id"
             class="activity-card"
             @click="navigateToActivity(a)"
@@ -147,43 +147,26 @@
                 <span class="activity-card-name">{{ a.name }}</span>
                 <span class="activity-card-code">{{ a.code }}</span>
               </div>
-              <span class="status-dot status-dot--active" title="Active"></span>
+              <span
+                class="status-dot"
+                :class="a.is_active ? 'status-dot--active' : 'status-dot--inactive'"
+                :title="a.is_active ? 'Active' : 'Inactive'"
+              ></span>
               <AppIcon name="chevron-right" :size="16" class="activity-arrow" />
             </div>
 
-            <!-- Chips: pattern + target unit -->
+            <!-- Chips: pattern / module -->
             <div class="activity-chips">
-              <span class="chip">
-                <AppIcon name="git-branch" :size="12" />
-                {{ formatPattern(a.pattern_type) }}
-              </span>
-              <span class="chip">
-                <AppIcon name="target" :size="12" />
-                {{ a.target_count }} {{ a.target_unit }}
-              </span>
+              <span v-if="a.pattern_type" class="chip">{{ formatPattern(a.pattern_type) }}</span>
+              <span v-if="a.module" class="chip">{{ a.module.toUpperCase() }}</span>
+              <span v-if="!a.is_active" class="chip">Inactive</span>
             </div>
 
-            <!-- Stats row -->
+            <!-- Stats row (targets live on the logframe, so only actuals here) -->
             <div class="activity-stats">
               <div class="activity-stat">
-                <span class="activity-stat-value">{{ a.actual_count }} <span class="activity-stat-of">/ {{ a.target_count }}</span></span>
+                <span class="activity-stat-value">{{ a.actual_count }}</span>
                 <span class="activity-stat-label">Enrolled</span>
-              </div>
-              <div class="activity-stat-divider"></div>
-              <div class="activity-stat">
-                <span class="activity-stat-value" :class="pctColor(a.percentage)">{{ a.percentage }}%</span>
-                <span class="activity-stat-label">Progress</span>
-              </div>
-            </div>
-
-            <!-- Progress bar -->
-            <div class="activity-progress">
-              <div class="activity-progress-track">
-                <div
-                  class="activity-progress-fill"
-                  :class="pctColor(a.percentage)"
-                  :style="{ width: Math.min(a.percentage, 100) + '%' }"
-                />
               </div>
             </div>
           </div>
@@ -231,18 +214,13 @@ const breadcrumbs = computed(() => [
 
 
 
-const unlinkedActivities = computed(() => {
-  // Get all activity IDs that are linked to ANY indicator in the logframe
-  const linkedIds = new Set<string>()
-  for (const ind of logframe.value?.indicators || []) {
-    for (const id of ind.linked_activity_ids || []) {
-      linkedIds.add(id)
-    }
-  }
-  
-  // Return activities that are NOT in the linked set
-  return sortedActivities.value.filter(act => !linkedIds.has(act.id))
-})
+// Every activity on the project, active first. Activities linked to an impact
+// are listed here too so the project dashboard never hides one.
+const projectActivities = computed(() =>
+  [...activities.value].sort(
+    (a, b) => Number(b.is_active) - Number(a.is_active) || a.name.localeCompare(b.name),
+  ),
+)
 
 function formatTarget(value: number | undefined | null): string {
   if (value == null) return '—'
