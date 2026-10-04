@@ -20,6 +20,7 @@ export function levelTypeLabel(type: string): string {
 }
 
 const MEASURE_LABELS: Record<string, string> = {
+  year: 'enrolments in that project year',
   total: 'all beneficiaries',
   female: 'girls / female',
   male: 'boys / male',
@@ -35,6 +36,27 @@ export function targetFieldSourceLabel(tf: ProjectTargetFieldProgress): string {
   if (tf.measure === 'manual') return 'Manual — no actual entered yet'
   if (tf.target == null) return 'No numeric target'
   return 'Not tracked — choose what this counts in Settings'
+}
+
+const YEAR_FIELD = /^\s*year\s*(\d+)\s*target/i
+
+/**
+ * Target fields as the dashboards show them. "Year N target" fields take
+ * their actual from the indicator's enrolments in that project year, and a
+ * field with a target but nothing counted yet reads 0 rather than blank.
+ */
+export function resolveTargetFields(ind: ProjectLogframeIndicator): ProjectTargetFieldProgress[] {
+  return (ind.target_fields ?? []).map((f) => {
+    const m = f.label.match(YEAR_FIELD)
+    const year = m ? ind.years?.find(y => y.year === Number(m[1])) : undefined
+    if (year) {
+      const actual = year.actual
+      const percentage = hasTarget(f.target) ? Math.min(Math.round((actual / f.target) * 100), 100) : 0
+      return { ...f, actual, percentage, measure: 'year', source: 'computed' as const }
+    }
+    if (f.target != null && f.actual == null) return { ...f, actual: 0, percentage: 0 }
+    return f
+  })
 }
 
 export const formatNumber = (n: number | null | undefined): string =>
@@ -133,7 +155,8 @@ export function paceStatus(progress: number | null, expected: number | null): In
  */
 export function indicatorProgress(ind: ProjectLogframeIndicator): number | null {
   if (hasTarget(ind.target_value)) return Math.round(ind.percentage)
-  const fields = (ind.target_fields ?? []).filter(f => hasTarget(f.target) && f.actual != null)
+  // Year fields repeat the same people as the breakdown fields, so leave them out.
+  const fields = (ind.target_fields ?? []).filter(f => f.measure !== 'year' && hasTarget(f.target) && f.actual != null)
   if (!fields.length) return null
   const target = fields.reduce((s, f) => s + (f.target ?? 0), 0)
   const actual = fields.reduce((s, f) => s + (f.actual ?? 0), 0)

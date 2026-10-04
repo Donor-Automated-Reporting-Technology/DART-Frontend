@@ -7,6 +7,7 @@
 
 import { ref, computed } from 'vue'
 import { useAuthStore } from '../stores/auth'
+import { resolveTargetFields } from '../utils/projectDashboard'
 import type {
   ProjectInfo,
   ProjectSummary,
@@ -121,7 +122,12 @@ export const useProjectDetail = () => {
       project.value = data.project
       summary.value = data.summary
       disaggregations.value = data.disaggregations ?? []
-      logframe.value = data.logframe ?? null
+      logframe.value = data.logframe
+        ? {
+            ...data.logframe,
+            indicators: (data.logframe.indicators ?? []).map(ind => ({ ...ind, target_fields: resolveTargetFields(ind) })),
+          }
+        : null
       activities.value = data.activities ?? []
     } catch (e: any) {
       error.value = e?.message ?? 'Failed to load project detail'

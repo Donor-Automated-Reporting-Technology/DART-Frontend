@@ -115,7 +115,7 @@
                 <span class="tr"><i v-if="tf.target != null && tf.actual != null" :style="{ width: `${Math.min(tf.percentage, 100)}%` }" /></span>
                 <span class="n num">
                   <template v-if="tf.actual != null">{{ formatNumber(tf.actual) }}<template v-if="tf.target != null"> / {{ formatNumber(tf.target) }}</template></template>
-                  <template v-else-if="tf.target != null">— / {{ formatNumber(tf.target) }}</template>
+                  <template v-else-if="tf.target != null">0 / {{ formatNumber(tf.target) }}</template>
                   <template v-else>—</template>
                 </span>
               </div>
