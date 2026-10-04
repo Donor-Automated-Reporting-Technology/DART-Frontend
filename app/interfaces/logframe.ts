@@ -8,7 +8,7 @@
  */
 
 /** Hierarchy level types in the logframe tree. */
-export type LogframeLevelType = 'goal' | 'impact' | 'outcome' | 'result' | 'activity'
+export type LogframeLevelType = 'goal' | 'impact' | 'outcome' | 'output' | 'result' | 'activity'
 
 /** Disaggregation dimensions allowed on an indicator. */
 export type LogframeDisaggregation = 'age_group' | 'gender' | 'disability' | 'other'
@@ -31,7 +31,34 @@ export interface LogframeTargetField {
   value: string | number | boolean | null
   /** Optional unit, e.g. persons, %. */
   unit?: string
+  /**
+   * What the dashboard counts as this field's actual. Omitted = inferred from
+   * the label ("Girls" → female). `manual` uses `actual` below.
+   */
+  measure?: TargetFieldMeasure
+  /** Actual entered by M&E staff, used when `measure` is `manual`. */
+  actual?: number | null
 }
+
+/** Beneficiary group a target field's actual is counted from. */
+export type TargetFieldMeasure =
+  | 'total'
+  | 'female'
+  | 'male'
+  | 'disability'
+  | 'female_disability'
+  | 'male_disability'
+  | 'manual'
+
+export const TARGET_FIELD_MEASURES: Array<{ value: TargetFieldMeasure; label: string }> = [
+  { value: 'total', label: 'All beneficiaries' },
+  { value: 'female', label: 'Girls / female' },
+  { value: 'male', label: 'Boys / male' },
+  { value: 'disability', label: 'With disability' },
+  { value: 'female_disability', label: 'Girls with disability' },
+  { value: 'male_disability', label: 'Boys with disability' },
+  { value: 'manual', label: 'Entered manually' },
+]
 
 /** Key used inside `custom_fields` to persist the target field list. */
 export const TARGET_FIELDS_KEY = 'target_fields'

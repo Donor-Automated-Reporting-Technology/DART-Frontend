@@ -1,5 +1,5 @@
 <template>
-  <div class="project-detail">
+  <div class="project-detail level-dash">
 
     <!-- Breadcrumb -->
     <DashboardBreadcrumb :crumbs="breadcrumbs" />
@@ -20,184 +20,180 @@
       <button class="btn-retry" @click="fetchProjectDetail(frameworkId)">Retry</button>
     </div>
 
+    <div v-else-if="hasData && !level" class="block-empty">
+      This part of the logframe no longer exists.
+      <NuxtLink :to="`/dashboard/projects/${frameworkId}`" class="inline-link">Back to the project</NuxtLink>
+    </div>
+
     <!-- Content -->
-    <template v-else-if="hasData">
+    <template v-else-if="hasData && level">
 
-      <!-- ═══ Project header card ═══ -->
-      <div class="project-header-card">
-        <div class="project-header-top">
-          <div class="project-header-info">
-            <h1 class="project-header-name">{{ project.project_name }}</h1>
-            <div class="project-header-chips">
-              <span class="chip">
-                <AppIcon name="layers" :size="12" />
-                {{ formatType(project.framework_type) }}
-              </span>
-              <span class="chip">
-                <AppIcon name="users" :size="12" />
-                {{ project.partner_name }}
-              </span>
-              <span class="chip">
-                <AppIcon name="briefcase" :size="12" />
-                {{ project.reporting_to }}
-              </span>
-              <span class="chip">
-                <AppIcon name="calendar" :size="12" />
-                {{ formatDate(project.period_start) }} — {{ formatDate(project.period_end) }}
-              </span>
-            </div>
-          </div>
-          <div v-if="impactProgress !== null" class="project-header-progress" title="Progress against logframe targets">
-            <svg class="ring" viewBox="0 0 36 36">
-              <path
-                class="ring-bg"
-                d="M18 2.0845
-                   a 15.9155 15.9155 0 0 1 0 31.831
-                   a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                stroke-width="3"
-              />
-              <path
-                class="ring-fill"
-                d="M18 2.0845
-                   a 15.9155 15.9155 0 0 1 0 31.831
-                   a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                stroke-width="3"
-                :stroke-dasharray="impactProgress + ', 100'"
-              />
+      <!-- ═══ Header ═══ -->
+      <header class="project-hero">
+        <div class="project-hero-info">
+          <span class="eyebrow">{{ typeLabel(level.level_type) }}</span>
+          <h1 class="project-hero-name level-title">{{ level.title }}</h1>
+          <p class="project-hero-meta">
+            <span>{{ project.project_name }}</span>
+            <span v-if="parentLevel">Part of {{ typeLabel(parentLevel.level_type).toLowerCase() }} “{{ shorten(parentLevel.title, 48) }}”</span>
+            <span v-if="outcomeCount">{{ outcomeCount }} outcome{{ outcomeCount === 1 ? '' : 's' }}</span>
+            <span v-if="outputCount">{{ outputCount }} output{{ outputCount === 1 ? '' : 's' }}</span>
+          </p>
+        </div>
+
+        <div v-if="levelProgress !== null" class="project-hero-progress">
+          <div class="ring ring--lg">
+            <svg viewBox="0 0 36 36">
+              <circle class="ring-bg" cx="18" cy="18" r="15.9155" />
+              <circle class="ring-fill" cx="18" cy="18" r="15.9155" :stroke-dasharray="`${levelProgress} 100`" />
             </svg>
-            <span class="ring-label">{{ impactProgress }}%</span>
+            <span class="ring-value">{{ levelProgress }}<small>%</small></span>
+          </div>
+          <span class="ring-caption">Target<br />progress</span>
+        </div>
+      </header>
+
+      <!-- ═══ Targets ═══ -->
+      <section class="block">
+        <div class="block-head">
+          <div>
+            <h2 class="block-title">Targets</h2>
+            <p class="block-hint">What this {{ typeLabel(level.level_type).toLowerCase() }} committed to, against what has been achieved so far.</p>
           </div>
         </div>
-      </div>
 
-      <!-- ═══ Summary bento grid ═══ -->
-      <!-- ═══ Impact Hero ═══ -->
-      <div v-if="impact" class="bento-grid">
-        <div class="bento-item bento-hero metric-card hero-modern">
-          <div class="hero-top">
-            <span class="hero-badge">IMPACT</span>
-          </div>
-          <div class="metric-primary" style="margin-bottom: 12px;">
-            <span class="metric-big" style="font-size: 24px; line-height: 1.2;">{{ impact.title }}</span>
-          </div>
-          <div v-if="impact.description" class="hero-compact-row" style="margin-top: 0;">
-            <p style="color: var(--text-muted); font-size: 14px; margin: 0;">{{ impact.description }}</p>
-          </div>
-        </div>
-      </div>
-      
-      <div class="bento-grid" style="margin-top: var(--space-xl);">
-
-        <!-- Target cards (Logframe Indicators) -->
-        <template v-if="hasLogframeTargets">
-          <div
-            v-for="ind in logframeTargets"
-            :key="ind.id"
-            class="bento-item metric-card metric-card--reach"
-          >
-            <div class="metric-card-head">
-              <span class="metric-label metric-label--clamp" :title="ind.indicator">{{ ind.indicator }}</span>
-              <span class="metric-pct-pill">{{ ind.percentage }}%</span>
-            </div>
-            <div class="metric-target-row">
-              <div class="metric-target-block">
-                <span class="target-number">{{ ind.actual_value }}</span>
-                <span class="target-caption">Actual</span>
-              </div>
-              <span class="target-slash">/</span>
-              <div class="metric-target-block">
-                <span class="target-number target-number--muted">{{ formatTarget(ind.target_value) }}</span>
-                <span class="target-caption">Target</span>
-              </div>
-            </div>
-            <div class="metric-bar">
-              <div class="metric-bar-fill" :style="{ width: Math.min(ind.percentage, 100) + '%' }"></div>
-            </div>
-            <span class="metric-sublabel" :title="ind.level_title">{{ ind.level_title }}</span>
-          </div>
-        </template>
-
-        <!-- Custom target fields (from indicator custom_fields) -->
-        <template v-if="customTargetMetrics.length">
-          <div
-            v-for="metric in customTargetMetrics"
-            :key="metric.id"
-            class="bento-item metric-card metric-card--reach"
-            :class="accentCardClass('custom')"
-          >
-            <div class="metric-card-head">
-              <span class="metric-label metric-label--clamp" :title="metric.label">{{ metric.label }}</span>
-            </div>
-            <div class="metric-target-row">
-              <div class="metric-target-block">
-                <span class="target-number target-number--muted" style="margin-left: 0;">{{ formatTarget(Number(metric.target)) }}</span>
-                <span class="target-caption">Target {{ metric.unit ? '(' + metric.unit + ')' : '' }}</span>
-              </div>
-            </div>
-            <!-- Custom targets only store a target, no actual is tracked yet -->
-            <div class="metric-bar">
-              <div class="metric-bar-fill metric-bar-fill--muted" style="width: 0%"></div>
-            </div>
-            <span class="metric-sublabel" :title="metric.indicatorName">{{ metric.indicatorName }}</span>
-          </div>
-        </template>
-
-      </div>
-
-      <!-- ═══ Activities section ═══ -->
-      <div class="activities-section">
-        <div class="section-header">
-          <div class="section-header-left">
-            <h3 class="section-title">Activities</h3>
-            <span class="section-count">{{ impactActivities.length }}</span>
-          </div>
-          <span v-if="impactActivities.length" class="section-hint">Click to explore</span>
+        <div v-if="!levelIndicators.length" class="block-empty">
+          No indicator has been set yet. Add one in Settings → Projects → Logframe.
         </div>
 
-        <div v-if="impactActivities.length === 0" class="section-empty">
-          No activities linked to this impact yet.
+        <article v-for="ind in levelIndicators" :key="ind.id" class="target-card">
+          <div class="target-head">
+            <span v-if="ind.code" class="target-code">{{ ind.code }}</span>
+            <h3 class="target-statement">{{ ind.indicator }}</h3>
+          </div>
+
+          <!-- Overall target -->
+          <div v-if="hasTarget(ind.target_value)" class="target-main">
+            <div class="target-figures">
+              <span class="target-actual">{{ fmt(ind.actual_value) }}</span>
+              <span class="target-of">of {{ fmt(ind.target_value!) }}{{ ind.unit ? ` ${ind.unit}` : '' }}</span>
+            </div>
+            <span class="target-pct">{{ ind.percentage }}%</span>
+            <div class="target-bar"><div class="target-bar-fill" :style="{ width: `${ind.percentage}%` }" /></div>
+            <span class="target-note">Overall target · counted from {{ linkedLabel(ind.linked_activity_ids.length) }}</span>
+          </div>
+
+          <!-- Custom target fields -->
+          <div v-if="(ind.target_fields ?? []).length" class="field-list">
+            <div v-for="(tf, i) in ind.target_fields" :key="i" class="field-row">
+              <div class="field-row-head">
+                <span class="field-name">{{ tf.label }}</span>
+                <span class="field-figures">
+                  <template v-if="tf.actual != null">
+                    <strong>{{ fmt(tf.actual) }}</strong>
+                    <template v-if="tf.target != null"> of {{ fmt(tf.target) }}</template>
+                  </template>
+                  <template v-else-if="tf.target != null">Target {{ fmt(tf.target) }}</template>
+                  <template v-else>—</template>
+                  {{ tf.unit ?? (tf.type === 'percent' ? '%' : '') }}
+                </span>
+              </div>
+              <div v-if="tf.target != null && tf.actual != null" class="target-bar target-bar--thin">
+                <div class="target-bar-fill" :style="{ width: `${tf.percentage}%` }" />
+              </div>
+              <span class="field-source" :class="`field-source--${tf.source}`">{{ sourceLabel(tf) }}</span>
+            </div>
+          </div>
+
+          <p v-if="!hasTarget(ind.target_value) && !(ind.target_fields ?? []).length" class="target-note">
+            No numerical targets set for this indicator yet.
+          </p>
+        </article>
+      </section>
+
+      <!-- ═══ Outcomes & outputs ═══ -->
+      <section v-if="childLevels.length" class="block">
+        <div class="block-head">
+          <div>
+            <h2 class="block-title">{{ level.level_type === 'impact' ? 'Outcomes & outputs' : 'Outputs' }}</h2>
+            <p class="block-hint">How this {{ typeLabel(level.level_type).toLowerCase() }} is being delivered. Open one to see its targets.</p>
+          </div>
+        </div>
+
+        <div class="tree">
+          <div v-for="child in childLevels" :key="child.id" class="tree-node">
+            <NuxtLink :to="levelLink(child.id)" class="tree-card" :class="`tree-card--${child.level_type}`">
+              <div class="tree-card-top">
+                <span class="tree-type">{{ typeLabel(child.level_type) }}</span>
+                <span v-if="progressOf(child.id) !== null" class="tree-pct">{{ progressOf(child.id) }}%</span>
+                <span v-else class="tree-none">No targets yet</span>
+              </div>
+              <span class="tree-title">{{ child.title }}</span>
+              <div v-if="progressOf(child.id) !== null" class="target-bar target-bar--thin">
+                <div class="target-bar-fill" :style="{ width: `${progressOf(child.id)}%` }" />
+              </div>
+              <span class="tree-meta">{{ levelMeta(child.id) }}</span>
+            </NuxtLink>
+
+            <!-- Outputs under an outcome -->
+            <div v-if="childrenOf(child.id).length" class="tree-children">
+              <NuxtLink
+                v-for="out in childrenOf(child.id)"
+                :key="out.id"
+                :to="levelLink(out.id)"
+                class="tree-leaf"
+              >
+                <span class="tree-type tree-type--leaf">{{ typeLabel(out.level_type) }}</span>
+                <span class="tree-leaf-title">{{ out.title }}</span>
+                <span class="tree-leaf-pct">{{ progressOf(out.id) !== null ? `${progressOf(out.id)}%` : '—' }}</span>
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ Activities ═══ -->
+      <section class="block">
+        <div class="block-head">
+          <div>
+            <h2 class="block-title">Activities <span class="block-count">{{ levelActivities.length }}</span></h2>
+            <p class="block-hint">Activities feeding this {{ typeLabel(level.level_type).toLowerCase() }}<template v-if="childLevels.length"> and its {{ level.level_type === 'impact' ? 'outcomes and outputs' : 'outputs' }}</template>.</p>
+          </div>
+        </div>
+
+        <div v-if="!levelActivities.length" class="block-empty">
+          No activities linked yet. Switch them on from the indicator in Settings → Logframe.
         </div>
 
         <div v-else class="activity-grid">
-          <div
-            v-for="a in impactActivities"
+          <button
+            v-for="a in levelActivities"
             :key="a.id"
+            type="button"
             class="activity-card"
+            :class="{ 'activity-card--inactive': !a.is_active }"
             @click="navigateToActivity(a)"
           >
-            <!-- Top: name + arrow -->
-            <div class="activity-card-top">
-              <div class="activity-card-title-block">
-                <span class="activity-card-name">{{ a.name }}</span>
-                <span class="activity-card-code">{{ a.code }}</span>
+            <div class="activity-top">
+              <span v-if="a.module" class="activity-module">{{ a.module.toUpperCase() }}</span>
+              <span class="activity-status" :class="{ 'activity-status--on': a.is_active }">
+                {{ a.is_active ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+            <span class="activity-name">{{ a.name }}</span>
+            <span v-if="a.code || a.pattern_type" class="activity-meta">
+              {{ [a.code, a.pattern_type ? formatPattern(a.pattern_type) : ''].filter(Boolean).join(' · ') }}
+            </span>
+            <div class="activity-foot">
+              <div class="activity-count">
+                <span class="activity-count-value">{{ a.actual_count.toLocaleString() }}</span>
+                <span class="activity-count-label">enrolled</span>
               </div>
-              <span
-                class="status-dot"
-                :class="a.is_active ? 'status-dot--active' : 'status-dot--inactive'"
-                :title="a.is_active ? 'Active' : 'Inactive'"
-              ></span>
-              <AppIcon name="chevron-right" :size="16" class="activity-arrow" />
+              <span class="activity-links">{{ feedsLabel(a.id) }}</span>
             </div>
-
-            <!-- Chips: pattern / module -->
-            <div class="activity-chips">
-              <span v-if="a.pattern_type" class="chip">{{ formatPattern(a.pattern_type) }}</span>
-              <span v-if="a.module" class="chip">{{ a.module.toUpperCase() }}</span>
-              <span v-if="!a.is_active" class="chip">Inactive</span>
-            </div>
-
-            <!-- Stats row (targets live on the logframe, so only actuals here) -->
-            <div class="activity-stats">
-              <div class="activity-stat">
-                <span class="activity-stat-value">{{ a.actual_count }}</span>
-                <span class="activity-stat-label">Enrolled</span>
-              </div>
-            </div>
-          </div>
+          </button>
         </div>
-      </div>
+      </section>
 
     </template>
   </div>
@@ -210,147 +206,167 @@ import { useProjectDetail } from '~/composables/useProjectDetail'
 import { activityDashboardRoute } from '~/utils/activityConfig'
 import DashboardBreadcrumb from '~/components/dashboard/DashboardBreadcrumb.vue'
 import AppIcon from '~/components/interfaces/AppIcon.vue'
-import type { ProjectLogframeIndicator } from '~/interfaces/dashboard'
+import type { ProjectLogframeLevel, ProjectTargetFieldProgress } from '~/interfaces/dashboard'
+
+// Remount when moving between levels (impact → outcome → output).
+definePageMeta({ key: (r) => r.fullPath })
 
 const route = useRoute()
 const router = useRouter()
 const frameworkId = route.params.frameworkId as string
+const levelId = route.params.impactId as string
 
 const {
   isLoading,
   error,
   project,
-  summary,
-  disaggregations,
   logframe,
   activities,
   hasData,
-  sortedActivities,
-  activeCount,
-  overallProgress,
   logframeProgress,
-  formatDate,
-  formatType,
   formatPattern,
   fetchProjectDetail,
 } = useProjectDetail()
 
-const impactId = computed(() => route.params.impactId as string)
+// ─── Hierarchy ───
 
-const impact = computed(() => 
-  logframe.value?.levels?.find((l: any) => l.id === impactId.value)
-)
+const TYPE_LABELS: Record<string, string> = {
+  goal: 'Goal', impact: 'Impact', outcome: 'Outcome', output: 'Output', result: 'Result', activity: 'Activity',
+}
+function typeLabel(type: string): string {
+  return TYPE_LABELS[type] ?? type
+}
 
-const breadcrumbs = computed(() => [
-  { title: 'Organisation', href: '/dashboard' },
-  { title: project.value.project_name || 'Project', href: `/dashboard/projects/${frameworkId}` },
-  { title: impact.value?.title || 'Impact', href: route.fullPath, current: true },
-])
+const levels = computed<ProjectLogframeLevel[]>(() => logframe.value?.levels ?? [])
+const level = computed(() => levels.value.find(l => l.id === levelId) ?? null)
+const parentLevel = computed(() => levels.value.find(l => l.id === level.value?.parent_id) ?? null)
 
-// The impact's logframe indicators
-const logframeTargets = computed(() =>
-  (logframe.value?.indicators ?? []).filter(
-    (ind: ProjectLogframeIndicator) => ind.level_id === impactId.value && ind.target_value != null && ind.target_value > 0,
-  ),
-)
+function childrenOf(id: string): ProjectLogframeLevel[] {
+  return levels.value
+    .filter(l => l.parent_id === id)
+    .sort((a, b) =>
+      Number(a.level_type === 'output') - Number(b.level_type === 'output') || (a.sort_order ?? 0) - (b.sort_order ?? 0),
+    )
+}
+const childLevels = computed(() => childrenOf(levelId))
 
-const impactActivities = computed(() => {
-  const linkedIds = new Set<string>()
-  // Only look at indicators for this impact
-  const indicators = (logframe.value?.indicators ?? []).filter(
-    (ind: ProjectLogframeIndicator) => ind.level_id === impactId.value
-  )
-  for (const ind of indicators) {
-    for (const id of ind.linked_activity_ids || []) {
-      linkedIds.add(id)
-    }
+/** This level and everything beneath it. */
+const subtreeIds = computed(() => {
+  const ids = [levelId]
+  for (let i = 0; i < ids.length; i++) {
+    for (const l of levels.value) if (l.parent_id === ids[i]) ids.push(l.id)
   }
-  return activities.value
-    .filter((act: any) => linkedIds.has(act.id))
-    .sort((a, b) => Number(b.is_active) - Number(a.is_active) || a.name.localeCompare(b.name))
+  return ids
+})
+const descendants = computed(() => levels.value.filter(l => subtreeIds.value.slice(1).includes(l.id)))
+const outcomeCount = computed(() => descendants.value.filter(l => l.level_type === 'outcome').length)
+const outputCount = computed(() => descendants.value.filter(l => l.level_type === 'output').length)
+
+const breadcrumbs = computed(() => {
+  const chain: ProjectLogframeLevel[] = []
+  let current = parentLevel.value
+  while (current && chain.length < 10) {
+    chain.unshift(current)
+    current = levels.value.find(l => l.id === current!.parent_id) ?? null
+  }
+  return [
+    { title: 'Organisation', href: '/dashboard' },
+    { title: project.value.project_name || 'Project', href: `/dashboard/projects/${frameworkId}` },
+    ...chain.map(l => ({ title: shorten(l.title, 30), href: levelLink(l.id) })),
+    { title: shorten(level.value?.title || 'Impact', 30), href: route.fullPath, current: true },
+  ]
 })
 
-
-const impactProgress = computed(() => logframeProgress(impactId.value))
-
-const hasLogframeTargets = computed(() => logframeTargets.value.length > 0)
-
-interface CustomTargetMetric {
-  id: string
-  label: string
-  target: number | string
-  unit?: string
-  indicatorId: string
-  indicatorName: string
+function levelLink(id: string): string {
+  return `/dashboard/projects/${frameworkId}/impacts/${id}`
 }
 
-const customTargetMetrics = computed(() => {
-  const metrics: CustomTargetMetric[] = []
-  const indicators = (logframe.value?.indicators ?? []).filter(
-    (ind: ProjectLogframeIndicator) => ind.level_id === impactId.value
-  )
-  for (const ind of indicators) {
-    const fields = ind.custom_fields?.['target_fields']
-    if (Array.isArray(fields)) {
-      for (let i = 0; i < fields.length; i++) {
-        const field = fields[i]
-        if (field.label && field.value != null && field.value !== '') {
-          metrics.push({
-            id: `${ind.id}-${i}`,
-            label: field.label,
-            target: field.value,
-            unit: field.unit,
-            indicatorId: ind.id,
-            indicatorName: ind.indicator
-          })
-        }
-      }
+// ─── Targets ───
+
+const indicators = computed(() => logframe.value?.indicators ?? [])
+const levelIndicators = computed(() => indicators.value.filter(ind => ind.level_id === levelId))
+const levelProgress = computed(() => logframeProgress(levelId))
+
+function progressOf(id: string): number | null {
+  return logframeProgress(id)
+}
+
+function levelMeta(id: string): string {
+  const inds = indicators.value.filter(ind => ind.level_id === id)
+  const targeted = inds.filter(ind => hasTarget(ind.target_value))
+  const parts = [`${inds.length} indicator${inds.length === 1 ? '' : 's'}`]
+  if (targeted.length) {
+    const actual = targeted.reduce((s, ind) => s + ind.actual_value, 0)
+    const target = targeted.reduce((s, ind) => s + (ind.target_value ?? 0), 0)
+    parts.unshift(`${fmt(actual)} of ${fmt(target)}`)
+  }
+  const outputs = childrenOf(id).length
+  if (outputs) parts.push(`${outputs} output${outputs === 1 ? '' : 's'}`)
+  return parts.join(' · ')
+}
+
+function hasTarget(v: number | null | undefined): boolean {
+  return v != null && v > 0
+}
+
+const MEASURE_LABELS: Record<string, string> = {
+  total: 'all beneficiaries',
+  female: 'girls / female',
+  male: 'boys / male',
+  disability: 'beneficiaries with disability',
+  female_disability: 'girls with disability',
+  male_disability: 'boys with disability',
+}
+
+function sourceLabel(tf: ProjectTargetFieldProgress): string {
+  if (tf.source === 'manual') return 'Entered manually'
+  if (tf.source === 'computed') return `Counted from ${MEASURE_LABELS[tf.measure] ?? 'linked activities'}`
+  if (tf.measure === 'manual') return 'Manual — no actual entered yet'
+  if (tf.target == null) return 'No numeric target'
+  return 'Not tracked — choose what this counts in Settings'
+}
+
+function linkedLabel(n: number): string {
+  return n ? `${n} linked activit${n === 1 ? 'y' : 'ies'}` : 'no linked activities yet'
+}
+
+function fmt(n: number): string {
+  return Number.isInteger(n) ? n.toLocaleString() : n.toLocaleString(undefined, { maximumFractionDigits: 1 })
+}
+
+function shorten(t: string, max: number): string {
+  return t.length > max ? `${t.slice(0, max)}…` : t
+}
+
+// ─── Activities ───
+
+/** Activity id → the levels (within this subtree) it feeds. */
+const feedsByActivity = computed(() => {
+  const map = new Map<string, Set<string>>()
+  for (const ind of indicators.value) {
+    if (!subtreeIds.value.includes(ind.level_id)) continue
+    for (const id of ind.linked_activity_ids ?? []) {
+      if (!map.has(id)) map.set(id, new Set())
+      map.get(id)!.add(ind.level_id)
     }
   }
-  return metrics
+  return map
 })
 
-function formatTarget(value: number | undefined | null): string {
-  if (value == null) return '—'
-  return Number.isInteger(value) ? String(value) : value.toFixed(1)
+const levelActivities = computed(() =>
+  activities.value
+    .filter(a => feedsByActivity.value.has(a.id))
+    .sort((a, b) => Number(b.is_active) - Number(a.is_active) || a.name.localeCompare(b.name)),
+)
+
+function feedsLabel(activityId: string): string {
+  const fed = [...(feedsByActivity.value.get(activityId) ?? [])]
+    .map(id => levels.value.find(l => l.id === id)?.level_type)
+    .filter(Boolean) as string[]
+  const types = [...new Set(fed)].map(t => typeLabel(t).toLowerCase())
+  return types.length ? `Feeds ${types.join(' & ')}` : ''
 }
 
-// Accent styling is keyed off the well-known values so the familiar
-// girls/boys/disability colours still apply; unknown values stay neutral.
-function accentCardClass(key: string): string {
-  switch (key) {
-    case 'female': return 'metric-card--girls-accent'
-    case 'male': return 'metric-card--boys-accent'
-    case 'with_disability': return 'metric-card--disability-accent'
-    default: return ''
-  }
-}
-
-function accentNumberClass(key: string): string {
-  switch (key) {
-    case 'female': return 'target-number--girls'
-    case 'male': return 'target-number--boys'
-    case 'with_disability': return 'target-number--disability'
-    default: return ''
-  }
-}
-
-function accentFillClass(key: string): string {
-  switch (key) {
-    case 'female': return 'metric-bar-fill--girls'
-    case 'male': return 'metric-bar-fill--boys'
-    case 'with_disability': return 'metric-bar-fill--disability'
-    default: return ''
-  }
-}
-
-function pctColor(pct: number): string {
-  if (pct >= 80) return 'clr-green'
-  if (pct >= 50) return 'clr-yellow'
-  return 'clr-red'
-}
-
-/** Open the activity dashboard for the module that owns the activity. */
 function navigateToActivity(activity: { id: string; module?: string | null }) {
   router.push(activityDashboardRoute(activity.module, activity.id))
 }
@@ -414,548 +430,89 @@ onMounted(() => fetchProjectDetail(frameworkId))
 }
 .btn-retry:hover { background: var(--error-bg); }
 
-/* ═══ Project header card ═════════════════════════ */
-.project-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
+/* Shared hero, rings, blocks and activity cards: assets/css/project-dashboard.css */
+.level-title { font-size: 1.45rem; }
+.inline-link { margin-left: 6px; font-weight: 600; color: var(--brand-text); }
 
-.project-header-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  position: relative;
-  overflow: hidden;
+/* ═══ Target cards ════════════════════════════════ */
+.target-card {
+  display: flex; flex-direction: column; gap: 18px;
+  padding: 22px 24px; border-radius: 16px; background: var(--d-card); box-shadow: var(--d-shadow);
 }
-.project-header-card::before {
-  content: '';
-  position: absolute;
-  top: -40px;
-  right: -40px;
-  width: 160px;
-  height: 160px;
-  background: radial-gradient(circle, var(--primary-dim) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
+.target-head { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.target-code {
+  padding: 3px 10px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;
+  color: #fff; background: var(--brand); border-radius: 6px;
 }
-.project-header-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24px;
-  position: relative;
-}
-.project-header-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.project-header-name {
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-  letter-spacing: -0.025em;
-  line-height: 1.25;
-}
-.project-header-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
+.target-statement { margin: 0; font-size: 1.02rem; font-weight: 650; line-height: 1.5; color: var(--d-text); }
 
-/* Progress ring in header */
-.project-header-progress {
-  position: relative;
-  width: 64px;
-  height: 64px;
-  flex-shrink: 0;
+.target-main {
+  display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 10px 16px;
+  padding: 18px 20px; border-radius: 12px; background: var(--d-tile);
 }
-.ring {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
+.target-figures { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.target-actual { font-size: 2rem; font-weight: 750; line-height: 1; color: var(--d-text); font-variant-numeric: tabular-nums; }
+.target-of { font-size: 0.95rem; font-weight: 600; color: var(--d-text-2); }
+.target-pct { font-size: 1.25rem; font-weight: 750; color: var(--brand-text); }
+.target-main .target-bar, .target-main .target-note { grid-column: 1 / -1; }
+.target-bar { height: 8px; border-radius: 999px; background: var(--d-track); overflow: hidden; }
+.target-bar--thin { height: 6px; }
+.target-bar-fill {
+  height: 100%; border-radius: inherit;
+  background: linear-gradient(90deg, var(--brand) 0%, #0fa58f 100%);
+  transition: width 0.8s ease;
 }
-.ring-bg {
-  stroke: var(--hover-bg, rgba(0,0,0,0.06));
-}
-.ring-fill {
-  stroke: var(--primary);
-  stroke-linecap: round;
-  transition: stroke-dasharray 0.6s ease;
-}
-.ring-label {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
+.target-note { margin: 0; font-size: 0.8rem; color: var(--d-text-2); }
 
-/* ═══ Bento grid (summary) ════════════════════════ */
-.bento-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  animation: fadeIn 0.35s ease-out;
+.field-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.field-row {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 14px 16px; border-radius: 12px; background: var(--d-tile);
 }
-.bento-item { min-width: 0; }
-.bento-hero { grid-column: 1 / -1; }
-@media (max-width: 640px) {
-  .bento-grid { grid-template-columns: 1fr; }
-  .bento-hero { grid-column: auto; }
-}
+.field-row-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.field-name { font-size: 0.9rem; font-weight: 650; color: var(--d-text); overflow-wrap: anywhere; }
+.field-figures { flex-shrink: 0; font-size: 0.85rem; color: var(--d-text-2); font-variant-numeric: tabular-nums; }
+.field-figures strong { font-size: 1.05rem; font-weight: 750; color: var(--d-text); }
+.field-source { font-size: 0.76rem; font-weight: 600; color: var(--d-text-2); }
+.field-source--computed, .field-source--manual { color: var(--brand-text); }
 
-/* ── Metric cards ────────────────────────────────── */
-.metric-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color, #E5E5EA);
-  border-radius: var(--radius-lg, 20px);
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  transition: box-shadow 0.2s, transform 0.2s;
+/* ═══ Outcomes & outputs tree ═════════════════════ */
+.tree { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; align-items: start; }
+.tree-node { display: flex; flex-direction: column; gap: 8px; }
+.tree-card {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 18px 20px; border-radius: 14px; color: inherit; text-decoration: none;
+  background: var(--d-card); box-shadow: var(--d-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.metric-card:hover {
-  box-shadow: var(--shadow-elevated);
-  transform: translateY(-1px);
+.tree-card:hover { transform: translateY(-2px); box-shadow: var(--d-shadow-hover); }
+.tree-card:focus-visible, .tree-leaf:focus-visible { outline: 2px solid var(--brand-text); outline-offset: 3px; }
+.tree-card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tree-type {
+  padding: 3px 10px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: #fff; background: var(--brand); border-radius: 999px;
 }
+.tree-card--output .tree-type, .tree-type--leaf { color: var(--brand-text); background: var(--brand-soft); }
+.tree-pct { font-size: 1rem; font-weight: 750; color: var(--brand-text); }
+.tree-none { font-size: 0.76rem; font-weight: 600; color: var(--d-text-2); }
+.tree-title { font-size: 0.96rem; font-weight: 650; line-height: 1.45; color: var(--d-text); overflow-wrap: anywhere; }
+.tree-meta { font-size: 0.8rem; color: var(--d-text-2); }
 
-.hero-modern {
-  position: relative;
-  overflow: hidden;
+.tree-children {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-left: 18px; padding-left: 14px; border-left: 2px solid var(--brand-soft);
 }
-.hero-modern::before {
-  content: '';
-  position: absolute;
-  top: -40px;
-  right: -40px;
-  width: 160px;
-  height: 160px;
-  background: radial-gradient(circle, var(--data-teal-dim) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
+.tree-leaf {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 10px; color: inherit; text-decoration: none;
+  background: var(--d-card); box-shadow: var(--d-shadow); transition: background 0.15s;
 }
-.hero-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
+.tree-leaf:hover { background: var(--brand-soft); }
+.tree-leaf-title {
+  flex: 1; min-width: 0; font-size: 0.86rem; font-weight: 600; color: var(--d-text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.hero-badge {
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--text-muted, #AEAEB2);
-  background: var(--hover-bg, rgba(0,0,0,0.03));
-  padding: 4px 10px;
-  border-radius: 20px;
-  letter-spacing: 0.02em;
-}
-.metric-primary {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 22px;
-}
-.metric-big {
-  font-size: 2.8rem;
-  font-weight: 800;
-  color: var(--text-primary, #1D1D1F);
-  line-height: 1;
-  letter-spacing: -1px;
-  font-variant-numeric: tabular-nums;
-}
-.metric-label {
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--text-secondary, #86868B);
-}
-/* Logframe indicator titles can be long — clamp to one line, full text on hover */
-.metric-label--clamp {
-  max-width: 24ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.metric-sublabel {
-  font-size: 0.68rem;
-  font-weight: 500;
-  color: var(--text-muted, #AEAEB2);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Hero compact row (locations / activities) */
-.hero-compact-row {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  padding: 14px 0 0;
-  border-top: 1px solid var(--border-subtle);
-}
-.hero-compact-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-.hero-compact-value {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-.hero-compact-label {
-  font-size: 0.65rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.hero-compact-divider {
-  width: 1px;
-  height: 28px;
-  background: var(--border-subtle);
-  flex-shrink: 0;
-}
-
-/* ── Reach cards (actual / target) ───────────────── */
-.metric-card--reach {
-  gap: 14px;
-}
-.metric-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.metric-pct-pill {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  background: var(--hover-bg);
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-variant-numeric: tabular-nums;
-}
-.metric-target-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex: 1;
-}
-.metric-target-block {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.target-number {
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  line-height: 1;
-  letter-spacing: -0.5px;
-  font-variant-numeric: tabular-nums;
-}
-.target-number--muted { color: var(--text-muted, #AEAEB2); }
-.target-number--girls { color: var(--data-teal); }
-.target-number--boys { color: var(--data-purple); }
-.target-number--disability { color: var(--warning); }
-.target-caption {
-  font-size: 0.68rem;
-  font-weight: 500;
-  color: var(--text-muted, #AEAEB2);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.target-slash {
-  font-size: 1.4rem;
-  font-weight: 300;
-  color: var(--text-muted, #AEAEB2);
-  line-height: 1;
-  margin-bottom: 14px;
-}
-
-.metric-bar {
-  height: 5px;
-  background: var(--hover-bg, rgba(0,0,0,0.03));
-  border-radius: 3px;
-  overflow: hidden;
-}
-.metric-bar-fill {
-  height: 100%;
-  border-radius: 3px;
-  /* Default for disaggregation values with no specific accent key */
-  background: var(--text-muted, #AEAEB2);
-  opacity: 0.5;
-  transition: width 0.5s ease;
-}
-.metric-bar-fill--girls { background: var(--data-teal); opacity: 0.7; }
-.metric-bar-fill--boys { background: var(--data-purple); opacity: 0.7; }
-.metric-bar-fill--disability { background: var(--warning); opacity: 0.7; }
-
-/* Card accent tints (light mode) */
-.metric-card--girls-accent { background: var(--data-teal-dim); border-color: rgba(13, 148, 136, 0.12); }
-.metric-card--boys-accent { background: var(--data-purple-dim); border-color: rgba(124, 58, 237, 0.12); }
-.metric-card--disability-accent { background: rgba(255, 149, 0, 0.06); border-color: rgba(255, 149, 0, 0.12); }
-
-/* Bento grid: 3 columns for reach cards */
-@media (min-width: 900px) {
-  .bento-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .bento-hero { grid-column: 1 / -1; }
-}
-
-/* ═══ Shared chips ════════════════════════════════ */
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.72rem;
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: 100px;
-  background: var(--hover-bg);
-  color: var(--text-secondary);
-}
-
-/* ═══ Activities section ══════════════════════════ */
-.activities-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.section-header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.section-title {
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-.section-count {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  background: var(--hover-bg);
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-weight: 600;
-}
-.section-hint {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-.section-empty {
-  padding: 32px;
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  background: var(--bg-card);
-  border: 1px dashed var(--border-color);
-  border-radius: var(--radius-lg);
-}
-
-/* ── Activity grid ───────────────────────────────── */
-.activity-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
-}
-@media (max-width: 480px) {
-  .activity-grid { grid-template-columns: 1fr; }
-}
-
-/* ── Activity card ───────────────────────────────── */
-.activity-card {
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  cursor: pointer;
-  position: relative;
-  box-shadow: var(--shadow-card);
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
-              box-shadow 0.2s ease;
-}
-.activity-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius-lg);
-  border: 1.5px solid transparent;
-  pointer-events: none;
-  transition: border-color 0.2s ease;
-}
-.activity-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-elevated);
-}
-.activity-card:hover::after {
-  border-color: var(--primary);
-}
-.activity-card:active {
-  transform: scale(0.99);
-}
-.activity-card--inactive {
-  opacity: 0.6;
-}
-
-/* Card top row */
-.activity-card-top {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-.activity-card-title-block {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.activity-card-name {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  line-height: 1.3;
-  letter-spacing: -0.01em;
-}
-.activity-card-code {
-  font-size: 0.68rem;
-  color: var(--text-muted);
-  font-weight: 500;
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
-  letter-spacing: 0.02em;
-}
-
-/* Status dot */
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  margin-top: 5px;
-}
-.status-dot--active {
-  background: var(--success, #34C759);
-  box-shadow: 0 0 6px rgba(52, 199, 89, 0.4);
-}
-.status-dot--inactive {
-  background: var(--text-muted, #AEAEB2);
-}
-
-/* Arrow */
-.activity-arrow {
-  color: var(--text-muted);
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: opacity 0.2s ease, transform 0.2s ease, color 0.2s ease;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-.activity-card:hover .activity-arrow {
-  opacity: 1;
-  transform: translateX(0);
-  color: var(--primary);
-}
-
-/* Chips */
-.activity-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-/* Stats row */
-.activity-stats {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  padding: 12px 0;
-  border-top: 1px solid var(--border-subtle);
-  border-bottom: 1px solid var(--border-subtle);
-}
-.activity-stat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-.activity-stat-value {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-.activity-stat-value.clr-green { color: var(--progress-high); }
-.activity-stat-value.clr-yellow { color: var(--progress-mid); }
-.activity-stat-value.clr-red { color: var(--progress-low); }
-.activity-stat-label {
-  font-size: 0.65rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.activity-stat-of {
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--text-muted);
-}
-.activity-stat-divider {
-  width: 1px;
-  height: 28px;
-  background: var(--border-subtle);
-  flex-shrink: 0;
-}
-
-/* Progress bar */
-.activity-progress {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.activity-progress-track {
-  height: 5px;
-  background: var(--hover-bg);
-  border-radius: 3px;
-  overflow: hidden;
-}
-.activity-progress-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.5s ease;
-}
-.activity-progress-fill.clr-green { background: var(--progress-high); }
-.activity-progress-fill.clr-yellow { background: var(--progress-mid); }
-.activity-progress-fill.clr-red { background: var(--progress-low); }
+.tree-leaf-pct { flex-shrink: 0; font-size: 0.84rem; font-weight: 700; color: var(--brand-text); }
 
 /* ═══ Animations ══════════════════════════════════ */
 @keyframes fadeIn {
@@ -967,10 +524,11 @@ onMounted(() => fetchProjectDetail(frameworkId))
   50% { opacity: 0.4; }
 }
 
-/* ═══ Mobile ══════════════════════════════════════ */
 @media (max-width: 640px) {
-  .project-header-top { flex-direction: column; gap: 16px; }
-  .project-header-progress { align-self: flex-start; }
-  .activity-arrow { opacity: 0.5; transform: translateX(0); }
+  .target-card { padding: 18px 16px; }
+  .tree { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tree-card, .target-bar-fill { transition: none; }
 }
 </style>

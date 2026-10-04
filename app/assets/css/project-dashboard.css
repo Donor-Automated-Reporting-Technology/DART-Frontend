@@ -1,0 +1,228 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Project-level dashboards (project overview + impact drill-down)
+   Shared by pages whose root is `.project-detail`. Brand teal (#077163) is
+   the single accent; secondary text stays readable on cards in both themes.
+   ══════════════════════════════════════════════════════════════════════════ */
+/* ═══ Page tokens ═════════════════════════════════
+   Brand teal (#077163) is the single accent. Secondary text is kept dark
+   (light theme) / bright (dark theme) so it stays readable on cards. */
+.project-detail {
+  --brand: #077163;
+  --brand-deep: #054f45;
+  --brand-soft: rgba(7, 113, 99, 0.14);
+  --brand-text: #5cc8b6;
+  --d-card: var(--bg-card);
+  --d-tile: #1f1f26;
+  --d-text: #f4f4f5;
+  --d-text-2: #d4d4d8;
+  --d-track: rgba(255, 255, 255, 0.12);
+  --d-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --d-shadow-hover: 0 14px 34px rgba(0, 0, 0, 0.45);
+
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  color: var(--d-text);
+}
+[data-theme="light"] .project-detail {
+  --brand-text: #077163;
+  --d-card: #ffffff;
+  --d-tile: #f2f6f5;
+  --d-text: #111827;
+  --d-text-2: #374151;
+  --d-track: rgba(7, 113, 99, 0.14);
+  --d-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
+  --d-shadow-hover: 0 16px 36px rgba(7, 113, 99, 0.16);
+}
+
+.project-detail .eyebrow {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--brand-text);
+}
+
+/* ═══ Progress rings ══════════════════════════════ */
+.project-detail .ring { position: relative; flex-shrink: 0; display: grid; place-items: center; }
+.project-detail .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.project-detail .ring circle { fill: none; stroke-width: 3.2; }
+.project-detail .ring-bg { stroke: var(--d-track); }
+.project-detail .ring-fill { stroke: var(--brand-text); stroke-linecap: round; transition: stroke-dasharray 0.8s ease; }
+.project-detail .ring-value {
+  position: absolute; font-weight: 750; color: var(--d-text); font-variant-numeric: tabular-nums;
+}
+.project-detail .ring-value small { font-size: 0.6em; font-weight: 600; margin-left: 1px; color: var(--d-text-2); }
+.project-detail .ring--lg { width: 92px; height: 92px; }
+.project-detail .ring--lg .ring-value { font-size: 1.35rem; }
+.project-detail .ring--sm { width: 54px; height: 54px; }
+.project-detail .ring--sm .ring-value { font-size: 0.85rem; }
+
+/* ═══ Project header ══════════════════════════════ */
+.project-detail .project-hero {
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  padding: 28px 30px; border-radius: 16px;
+  background: var(--d-card); box-shadow: var(--d-shadow);
+}
+.project-detail .project-hero::before {
+  content: ''; position: absolute; inset: 0 0 auto 0; height: 4px;
+  background: linear-gradient(90deg, var(--brand) 0%, #0fa58f 100%);
+}
+.project-detail .project-hero-info { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.project-detail .project-hero-name {
+  margin: 0; font-size: 1.6rem; font-weight: 750; line-height: 1.25; letter-spacing: -0.02em;
+  color: var(--d-text); overflow-wrap: anywhere;
+}
+.project-detail .project-hero-meta {
+  display: flex; flex-wrap: wrap; gap: 4px 0; margin: 4px 0 0;
+  font-size: 0.88rem; color: var(--d-text-2);
+}
+.project-detail .project-hero-meta span:not(:last-child)::after { content: '·'; margin: 0 10px; opacity: 0.6; }
+.project-detail .project-hero-progress { display: flex; align-items: center; gap: 14px; }
+.project-detail .ring-caption { font-size: 0.78rem; font-weight: 600; line-height: 1.35; color: var(--d-text-2); }
+
+/* ═══ KPI tiles ═══════════════════════════════════ */
+.project-detail .kpi-grid { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 16px; }
+.project-detail .kpi {
+  display: flex; flex-direction: column; gap: 6px; min-width: 0;
+  padding: 20px 22px; border-radius: 14px; background: var(--d-card); box-shadow: var(--d-shadow);
+}
+.project-detail .kpi-label { font-size: 0.8rem; font-weight: 600; color: var(--d-text-2); }
+.project-detail .kpi-value {
+  font-size: 1.9rem; font-weight: 750; line-height: 1.1; letter-spacing: -0.02em;
+  color: var(--d-text); font-variant-numeric: tabular-nums;
+}
+.project-detail .kpi-foot { font-size: 0.78rem; color: var(--d-text-2); }
+.project-detail .kpi--featured {
+  position: relative; overflow: hidden;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-deep) 100%);
+}
+.project-detail .kpi--featured::after {
+  content: ''; position: absolute; right: -40px; bottom: -60px; width: 180px; height: 180px;
+  border-radius: 50%; background: rgba(255, 255, 255, 0.07);
+}
+.project-detail .kpi--featured .kpi-label,
+.project-detail .kpi--featured .kpi-foot { color: rgba(255, 255, 255, 0.88); }
+.project-detail .kpi--featured .kpi-value { color: #fff; font-size: 2.4rem; }
+
+/* ═══ Sections ════════════════════════════════════ */
+.project-detail .block { display: flex; flex-direction: column; gap: 14px; }
+.project-detail .block-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.project-detail .block-title {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--d-text);
+}
+.project-detail .block-count {
+  padding: 2px 9px; font-size: 0.75rem; font-weight: 700; border-radius: 999px;
+  color: var(--brand-text); background: var(--brand-soft);
+}
+.project-detail .block-hint { margin: 4px 0 0; font-size: 0.86rem; color: var(--d-text-2); }
+.project-detail .block-empty {
+  padding: 20px; font-size: 0.88rem; color: var(--d-text-2);
+  background: var(--d-card); border-radius: 12px;
+}
+
+/* ═══ Impact cards ════════════════════════════════ */
+.project-detail .impact-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+.project-detail .impact-card {
+  position: relative; overflow: hidden; isolation: isolate;
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 22px 22px 18px; min-height: 210px; border-radius: 16px;
+  color: inherit; text-decoration: none;
+  background: var(--d-card); box-shadow: var(--d-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+/* Soft brand glow in the corner, brighter on hover. */
+.project-detail .impact-card::before {
+  content: ''; position: absolute; z-index: -1; top: -90px; right: -90px;
+  width: 220px; height: 220px; border-radius: 50%;
+  background: radial-gradient(circle, var(--brand-soft) 0%, transparent 70%);
+  transition: transform 0.35s ease, opacity 0.35s ease; opacity: 0.8;
+}
+.project-detail .impact-card:hover { transform: translateY(-3px); box-shadow: var(--d-shadow-hover); }
+.project-detail .impact-card:hover::before { transform: scale(1.35); opacity: 1; }
+.project-detail .impact-card:focus-visible { outline: 2px solid var(--brand-text); outline-offset: 3px; }
+
+.project-detail .impact-watermark {
+  position: absolute; z-index: -1; left: 14px; bottom: -26px;
+  font-size: 6.5rem; font-weight: 800; line-height: 1; letter-spacing: -0.05em;
+  color: var(--brand-text); opacity: 0.06; pointer-events: none;
+}
+.project-detail .impact-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.project-detail .impact-index {
+  padding: 4px 10px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--brand-text); background: var(--brand-soft); border-radius: 999px;
+}
+.project-detail .impact-pill {
+  padding: 4px 10px; font-size: 0.74rem; font-weight: 600;
+  color: var(--d-text-2); background: var(--d-tile); border-radius: 999px;
+}
+.project-detail .impact-title {
+  margin: 0; font-size: 1.02rem; font-weight: 650; line-height: 1.45; color: var(--d-text);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.project-detail .impact-bar { height: 6px; border-radius: 999px; background: var(--d-track); overflow: hidden; }
+.project-detail .impact-bar-fill {
+  height: 100%; border-radius: inherit;
+  background: linear-gradient(90deg, var(--brand) 0%, #0fa58f 100%);
+  transition: width 0.8s ease;
+}
+.project-detail .impact-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; }
+.project-detail .impact-stats { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.82rem; color: var(--d-text-2); }
+.project-detail .impact-stats strong { font-weight: 700; color: var(--d-text); }
+.project-detail .impact-go {
+  display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px;
+  font-size: 1rem; border-radius: 50%; color: var(--brand-text); background: var(--brand-soft);
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+.project-detail .impact-card:hover .impact-go { transform: translateX(3px); background: var(--brand); color: #fff; }
+
+/* ═══ Activity cards ══════════════════════════════ */
+.project-detail .activity-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+.project-detail .activity-card {
+  display: flex; flex-direction: column; align-items: stretch; gap: 6px; text-align: left;
+  padding: 18px 20px; border: none; border-radius: 14px; cursor: pointer; font: inherit; color: inherit;
+  background: var(--d-card); box-shadow: var(--d-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.project-detail .activity-card:hover { transform: translateY(-2px); box-shadow: var(--d-shadow-hover); }
+.project-detail .activity-card:focus-visible { outline: 2px solid var(--brand-text); outline-offset: 3px; }
+.project-detail .activity-card--inactive { opacity: 0.7; }
+.project-detail .activity-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.project-detail .activity-module {
+  padding: 3px 9px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em;
+  color: var(--d-text); background: var(--d-tile); border-radius: 6px;
+}
+.project-detail .activity-status {
+  display: inline-flex; align-items: center; gap: 6px; margin-left: auto;
+  font-size: 0.76rem; font-weight: 600; color: var(--d-text-2);
+}
+.project-detail .activity-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--d-text-2); opacity: 0.6; }
+.project-detail .activity-status--on { color: var(--brand-text); }
+.project-detail .activity-status--on::before { background: var(--brand-text); opacity: 1; box-shadow: 0 0 0 3px var(--brand-soft); }
+.project-detail .activity-name { font-size: 0.98rem; font-weight: 650; line-height: 1.35; color: var(--d-text); overflow-wrap: anywhere; }
+.project-detail .activity-meta { font-size: 0.8rem; color: var(--d-text-2); }
+.project-detail .activity-foot {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 10px;
+  margin-top: 12px; padding-top: 14px; border-top: 1px dashed var(--d-track);
+}
+.project-detail .activity-count { display: flex; align-items: baseline; gap: 6px; }
+.project-detail .activity-count-value { font-size: 1.5rem; font-weight: 750; color: var(--d-text); font-variant-numeric: tabular-nums; }
+.project-detail .activity-count-label { font-size: 0.8rem; color: var(--d-text-2); }
+.project-detail .activity-links { font-size: 0.78rem; font-weight: 600; color: var(--brand-text); text-align: right; }
+
+
+/* ═══ Responsive ══════════════════════════════════ */
+@media (max-width: 900px) {
+  .project-detail .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .project-detail .kpi--featured { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) {
+  .project-detail .project-hero { flex-direction: column; align-items: flex-start; padding: 22px 18px; }
+  .project-detail .impact-grid,
+.project-detail .activity-grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .project-detail .impact-card,
+.project-detail .activity-card,
+.project-detail .impact-card::before,
+.project-detail .impact-go { transition: none; }
+}

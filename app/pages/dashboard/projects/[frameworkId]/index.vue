@@ -113,6 +113,7 @@
                 <span v-if="card.target > 0"><strong>{{ card.actual.toLocaleString() }}</strong> of {{ card.target.toLocaleString() }}</span>
                 <span><strong>{{ card.indicators }}</strong> indicator{{ card.indicators === 1 ? '' : 's' }}</span>
                 <span><strong>{{ card.activities }}</strong> activit{{ card.activities === 1 ? 'y' : 'ies' }}</span>
+                <span v-if="card.children"><strong>{{ card.children }}</strong> outcome{{ card.children === 1 ? '' : 's' }}/output{{ card.children === 1 ? '' : 's' }}</span>
               </div>
               <span class="impact-go" aria-hidden="true">→</span>
             </div>
@@ -217,7 +218,7 @@ const indicatorTotal = computed(() => logframe.value?.indicators?.length ?? 0)
 
 /** One card per impact, with its progress rolled up from its own indicators. */
 const impactCards = computed(() =>
-  (logframe.value?.levels ?? []).map((level, i) => {
+  (logframe.value?.levels ?? []).filter(level => level.level_type === 'impact').map((level, i) => {
     const indicators = (logframe.value?.indicators ?? []).filter(ind => ind.level_id === level.id)
     const targeted = indicators.filter(ind => ind.target_value != null && ind.target_value > 0)
     const activityIds = new Set(indicators.flatMap(ind => ind.linked_activity_ids ?? []))
@@ -230,6 +231,7 @@ const impactCards = computed(() =>
       actual: targeted.reduce((sum, ind) => sum + (ind.actual_value ?? 0), 0),
       indicators: indicators.length,
       activities: activityIds.size,
+      children: (logframe.value?.levels ?? []).filter(l => l.parent_id === level.id).length,
     }
   }),
 )
@@ -313,213 +315,9 @@ onMounted(() => fetchProjectDetail(frameworkId))
 }
 .btn-retry:hover { background: var(--error-bg); }
 
-/* ═══ Page tokens ═════════════════════════════════
-   Brand teal (#077163) is the single accent. Secondary text is kept dark
-   (light theme) / bright (dark theme) so it stays readable on cards. */
-.project-detail {
-  --brand: #077163;
-  --brand-deep: #054f45;
-  --brand-soft: rgba(7, 113, 99, 0.14);
-  --brand-text: #5cc8b6;
-  --d-card: var(--bg-card);
-  --d-tile: #1f1f26;
-  --d-text: #f4f4f5;
-  --d-text-2: #d4d4d8;
-  --d-track: rgba(255, 255, 255, 0.12);
-  --d-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --d-shadow-hover: 0 14px 34px rgba(0, 0, 0, 0.45);
 
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-  color: var(--d-text);
-}
-:global([data-theme="light"]) .project-detail {
-  --brand-text: #077163;
-  --d-card: #ffffff;
-  --d-tile: #f2f6f5;
-  --d-text: #111827;
-  --d-text-2: #374151;
-  --d-track: rgba(7, 113, 99, 0.14);
-  --d-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
-  --d-shadow-hover: 0 16px 36px rgba(7, 113, 99, 0.16);
-}
+/* Layout and cards: assets/css/project-dashboard.css (.project-detail). */
 
-.eyebrow {
-  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--brand-text);
-}
-
-/* ═══ Progress rings ══════════════════════════════ */
-.ring { position: relative; flex-shrink: 0; display: grid; place-items: center; }
-.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.ring circle { fill: none; stroke-width: 3.2; }
-.ring-bg { stroke: var(--d-track); }
-.ring-fill { stroke: var(--brand-text); stroke-linecap: round; transition: stroke-dasharray 0.8s ease; }
-.ring-value {
-  position: absolute; font-weight: 750; color: var(--d-text); font-variant-numeric: tabular-nums;
-}
-.ring-value small { font-size: 0.6em; font-weight: 600; margin-left: 1px; color: var(--d-text-2); }
-.ring--lg { width: 92px; height: 92px; }
-.ring--lg .ring-value { font-size: 1.35rem; }
-.ring--sm { width: 54px; height: 54px; }
-.ring--sm .ring-value { font-size: 0.85rem; }
-
-/* ═══ Project header ══════════════════════════════ */
-.project-hero {
-  position: relative; overflow: hidden;
-  display: flex; align-items: center; justify-content: space-between; gap: 24px;
-  padding: 28px 30px; border-radius: 16px;
-  background: var(--d-card); box-shadow: var(--d-shadow);
-}
-.project-hero::before {
-  content: ''; position: absolute; inset: 0 0 auto 0; height: 4px;
-  background: linear-gradient(90deg, var(--brand) 0%, #0fa58f 100%);
-}
-.project-hero-info { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.project-hero-name {
-  margin: 0; font-size: 1.6rem; font-weight: 750; line-height: 1.25; letter-spacing: -0.02em;
-  color: var(--d-text); overflow-wrap: anywhere;
-}
-.project-hero-meta {
-  display: flex; flex-wrap: wrap; gap: 4px 0; margin: 4px 0 0;
-  font-size: 0.88rem; color: var(--d-text-2);
-}
-.project-hero-meta span:not(:last-child)::after { content: '·'; margin: 0 10px; opacity: 0.6; }
-.project-hero-progress { display: flex; align-items: center; gap: 14px; }
-.ring-caption { font-size: 0.78rem; font-weight: 600; line-height: 1.35; color: var(--d-text-2); }
-
-/* ═══ KPI tiles ═══════════════════════════════════ */
-.kpi-grid { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 16px; }
-.kpi {
-  display: flex; flex-direction: column; gap: 6px; min-width: 0;
-  padding: 20px 22px; border-radius: 14px; background: var(--d-card); box-shadow: var(--d-shadow);
-}
-.kpi-label { font-size: 0.8rem; font-weight: 600; color: var(--d-text-2); }
-.kpi-value {
-  font-size: 1.9rem; font-weight: 750; line-height: 1.1; letter-spacing: -0.02em;
-  color: var(--d-text); font-variant-numeric: tabular-nums;
-}
-.kpi-foot { font-size: 0.78rem; color: var(--d-text-2); }
-.kpi--featured {
-  position: relative; overflow: hidden;
-  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-deep) 100%);
-}
-.kpi--featured::after {
-  content: ''; position: absolute; right: -40px; bottom: -60px; width: 180px; height: 180px;
-  border-radius: 50%; background: rgba(255, 255, 255, 0.07);
-}
-.kpi--featured .kpi-label,
-.kpi--featured .kpi-foot { color: rgba(255, 255, 255, 0.88); }
-.kpi--featured .kpi-value { color: #fff; font-size: 2.4rem; }
-
-/* ═══ Sections ════════════════════════════════════ */
-.block { display: flex; flex-direction: column; gap: 14px; }
-.block-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
-.block-title {
-  display: flex; align-items: center; gap: 8px;
-  margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--d-text);
-}
-.block-count {
-  padding: 2px 9px; font-size: 0.75rem; font-weight: 700; border-radius: 999px;
-  color: var(--brand-text); background: var(--brand-soft);
-}
-.block-hint { margin: 4px 0 0; font-size: 0.86rem; color: var(--d-text-2); }
-.block-empty {
-  padding: 20px; font-size: 0.88rem; color: var(--d-text-2);
-  background: var(--d-card); border-radius: 12px;
-}
-
-/* ═══ Impact cards ════════════════════════════════ */
-.impact-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
-.impact-card {
-  position: relative; overflow: hidden; isolation: isolate;
-  display: flex; flex-direction: column; gap: 14px;
-  padding: 22px 22px 18px; min-height: 210px; border-radius: 16px;
-  color: inherit; text-decoration: none;
-  background: var(--d-card); box-shadow: var(--d-shadow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-/* Soft brand glow in the corner, brighter on hover. */
-.impact-card::before {
-  content: ''; position: absolute; z-index: -1; top: -90px; right: -90px;
-  width: 220px; height: 220px; border-radius: 50%;
-  background: radial-gradient(circle, var(--brand-soft) 0%, transparent 70%);
-  transition: transform 0.35s ease, opacity 0.35s ease; opacity: 0.8;
-}
-.impact-card:hover { transform: translateY(-3px); box-shadow: var(--d-shadow-hover); }
-.impact-card:hover::before { transform: scale(1.35); opacity: 1; }
-.impact-card:focus-visible { outline: 2px solid var(--brand-text); outline-offset: 3px; }
-
-.impact-watermark {
-  position: absolute; z-index: -1; left: 14px; bottom: -26px;
-  font-size: 6.5rem; font-weight: 800; line-height: 1; letter-spacing: -0.05em;
-  color: var(--brand-text); opacity: 0.06; pointer-events: none;
-}
-.impact-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.impact-index {
-  padding: 4px 10px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-  color: var(--brand-text); background: var(--brand-soft); border-radius: 999px;
-}
-.impact-pill {
-  padding: 4px 10px; font-size: 0.74rem; font-weight: 600;
-  color: var(--d-text-2); background: var(--d-tile); border-radius: 999px;
-}
-.impact-title {
-  margin: 0; font-size: 1.02rem; font-weight: 650; line-height: 1.45; color: var(--d-text);
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-}
-.impact-bar { height: 6px; border-radius: 999px; background: var(--d-track); overflow: hidden; }
-.impact-bar-fill {
-  height: 100%; border-radius: inherit;
-  background: linear-gradient(90deg, var(--brand) 0%, #0fa58f 100%);
-  transition: width 0.8s ease;
-}
-.impact-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; }
-.impact-stats { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.82rem; color: var(--d-text-2); }
-.impact-stats strong { font-weight: 700; color: var(--d-text); }
-.impact-go {
-  display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px;
-  font-size: 1rem; border-radius: 50%; color: var(--brand-text); background: var(--brand-soft);
-  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
-}
-.impact-card:hover .impact-go { transform: translateX(3px); background: var(--brand); color: #fff; }
-
-/* ═══ Activity cards ══════════════════════════════ */
-.activity-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
-.activity-card {
-  display: flex; flex-direction: column; align-items: stretch; gap: 6px; text-align: left;
-  padding: 18px 20px; border: none; border-radius: 14px; cursor: pointer; font: inherit; color: inherit;
-  background: var(--d-card); box-shadow: var(--d-shadow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.activity-card:hover { transform: translateY(-2px); box-shadow: var(--d-shadow-hover); }
-.activity-card:focus-visible { outline: 2px solid var(--brand-text); outline-offset: 3px; }
-.activity-card--inactive { opacity: 0.7; }
-.activity-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-.activity-module {
-  padding: 3px 9px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em;
-  color: var(--d-text); background: var(--d-tile); border-radius: 6px;
-}
-.activity-status {
-  display: inline-flex; align-items: center; gap: 6px; margin-left: auto;
-  font-size: 0.76rem; font-weight: 600; color: var(--d-text-2);
-}
-.activity-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--d-text-2); opacity: 0.6; }
-.activity-status--on { color: var(--brand-text); }
-.activity-status--on::before { background: var(--brand-text); opacity: 1; box-shadow: 0 0 0 3px var(--brand-soft); }
-.activity-name { font-size: 0.98rem; font-weight: 650; line-height: 1.35; color: var(--d-text); overflow-wrap: anywhere; }
-.activity-meta { font-size: 0.8rem; color: var(--d-text-2); }
-.activity-foot {
-  display: flex; align-items: flex-end; justify-content: space-between; gap: 10px;
-  margin-top: 12px; padding-top: 14px; border-top: 1px dashed var(--d-track);
-}
-.activity-count { display: flex; align-items: baseline; gap: 6px; }
-.activity-count-value { font-size: 1.5rem; font-weight: 750; color: var(--d-text); font-variant-numeric: tabular-nums; }
-.activity-count-label { font-size: 0.8rem; color: var(--d-text-2); }
-.activity-links { font-size: 0.78rem; font-weight: 600; color: var(--brand-text); text-align: right; }
-
-/* ═══ Animations ══════════════════════════════════ */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -527,18 +325,5 @@ onMounted(() => fetchProjectDetail(frameworkId))
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
-}
-
-/* ═══ Responsive ══════════════════════════════════ */
-@media (max-width: 900px) {
-  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-  .kpi--featured { grid-column: 1 / -1; }
-}
-@media (max-width: 640px) {
-  .project-hero { flex-direction: column; align-items: flex-start; padding: 22px 18px; }
-  .impact-grid, .activity-grid { grid-template-columns: 1fr; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .impact-card, .activity-card, .impact-card::before, .impact-go { transition: none; }
 }
 </style>

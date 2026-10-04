@@ -9,56 +9,77 @@
       No target fields yet — add one below (e.g. Girls, Boys, Persons with disability).
     </div>
 
-    <div v-for="(row, i) in rows" :key="row.uid" class="tf-row">
-      <input
-        v-model="row.label"
-        type="text"
-        class="tf-input tf-input--name"
-        placeholder="Field name (e.g. Girls)"
-        @input="emitValue"
-      />
+    <div v-for="(row, i) in rows" :key="row.uid" class="tf-item">
+      <div class="tf-row">
+        <input
+          v-model="row.label"
+          type="text"
+          class="tf-input tf-input--name"
+          placeholder="Field name (e.g. Girls)"
+          @input="emitValue"
+        />
 
-      <select v-model="row.type" class="tf-input tf-input--type" @change="onTypeChange(row)">
-        <option v-for="t in fieldTypes" :key="t.value" :value="t.value">{{ t.label }}</option>
-      </select>
+        <select v-model="row.type" class="tf-input tf-input--type" @change="onTypeChange(row)">
+          <option v-for="t in fieldTypes" :key="t.value" :value="t.value">{{ t.label }}</option>
+        </select>
 
-      <select
-        v-if="row.type === 'boolean'"
-        v-model="row.value"
-        class="tf-input tf-input--value"
-        @change="emitValue"
-      >
-        <option value="true">Yes</option>
-        <option value="false">No</option>
-      </select>
-      <input
-        v-else-if="row.type === 'date'"
-        v-model="row.value"
-        type="date"
-        class="tf-input tf-input--value"
-        @input="emitValue"
-      />
-      <input
-        v-else
-        v-model="row.value"
-        :type="isNumeric(row.type) ? 'number' : 'text'"
-        :step="row.type === 'number' ? '1' : 'any'"
-        class="tf-input tf-input--value"
-        placeholder="Value"
-        @input="emitValue"
-      />
+        <select
+          v-if="row.type === 'boolean'"
+          v-model="row.value"
+          class="tf-input tf-input--value"
+          @change="emitValue"
+        >
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+        <input
+          v-else-if="row.type === 'date'"
+          v-model="row.value"
+          type="date"
+          class="tf-input tf-input--value"
+          @input="emitValue"
+        />
+        <input
+          v-else
+          v-model="row.value"
+          :type="isNumeric(row.type) ? 'number' : 'text'"
+          :step="row.type === 'number' ? '1' : 'any'"
+          class="tf-input tf-input--value"
+          placeholder="Value"
+          @input="emitValue"
+        />
 
-      <input
-        v-model="row.unit"
-        type="text"
-        class="tf-input tf-input--unit"
-        placeholder="Unit (e.g. persons)"
-        @input="emitValue"
-      />
+        <input
+          v-model="row.unit"
+          type="text"
+          class="tf-input tf-input--unit"
+          placeholder="Unit (e.g. persons)"
+          @input="emitValue"
+        />
 
-      <button type="button" class="tf-remove" title="Remove field" @click="removeRow(i)">
-        &times;
-      </button>
+        <button type="button" class="tf-remove" title="Remove field" @click="removeRow(i)">
+          &times;
+        </button>
+      </div>
+
+      <!-- Where this field's actual comes from (numeric targets only) -->
+      <div v-if="isNumeric(row.type)" class="tf-actual">
+        <label class="tf-actual-label" :for="`tf-m-${row.uid}`">Actual counts</label>
+        <span v-if="row.type === 'percent'" class="tf-actual-note">Entered manually</span>
+        <select v-else :id="`tf-m-${row.uid}`" v-model="row.measure" class="tf-input tf-input--measure" @change="emitValue">
+          <option value="">Auto (from the field name)</option>
+          <option v-for="m in measures" :key="m.value" :value="m.value">{{ m.label }}</option>
+        </select>
+        <input
+          v-if="row.measure === 'manual' || row.type === 'percent'"
+          v-model="row.actual"
+          type="number"
+          step="any"
+          class="tf-input tf-input--actual"
+          placeholder="Actual achieved"
+          @input="emitValue"
+        />
+      </div>
     </div>
 
     <button type="button" class="tf-add" @click="addRow">
@@ -69,7 +90,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import type { LogframeTargetField, TargetFieldType } from '../../interfaces/logframe'
+import { TARGET_FIELD_MEASURES, type LogframeTargetField, type TargetFieldMeasure, type TargetFieldType } from '../../interfaces/logframe'
 
 const props = defineProps<{
   /** The list of target fields being edited. */
@@ -91,6 +112,8 @@ const fieldTypes: Array<{ value: TargetFieldType; label: string }> = [
   { value: 'boolean', label: 'Yes / No' },
 ]
 
+const measures = TARGET_FIELD_MEASURES
+
 /**
  * A row keeps its value as a string while editing; it is parsed on emit.
  * Note: `v-model` on an `<input type="number">` casts the bound value to a
@@ -102,6 +125,8 @@ interface Row {
   type: TargetFieldType
   value: string | number
   unit: string
+  measure: TargetFieldMeasure | ''
+  actual: string | number
 }
 
 let uid = 0
@@ -120,6 +145,8 @@ function toRows(list: LogframeTargetField[] | null | undefined): Row[] {
     type: (f.type as TargetFieldType) ?? 'number',
     value: f.value === null || f.value === undefined ? '' : String(f.value),
     unit: f.unit ?? '',
+    measure: f.measure ?? '',
+    actual: f.actual === null || f.actual === undefined ? '' : String(f.actual),
   }))
 }
 
@@ -162,6 +189,13 @@ function emitValue() {
       value: parseValue(row),
     }
     if (row.unit.trim()) field.unit = row.unit.trim()
+    if (isNumeric(row.type)) {
+      // Percent targets can't be counted from beneficiaries, so they are manual.
+      const measure = row.type === 'percent' ? 'manual' : row.measure
+      if (measure) field.measure = measure
+      const actual = valueText(row.actual).trim()
+      if (measure === 'manual' && actual !== '' && !Number.isNaN(Number(actual))) field.actual = Number(actual)
+    }
     out.push(field)
   }
   internalUpdate = true
@@ -184,7 +218,7 @@ function isNumericValue(v: string): boolean {
 }
 
 function addRow() {
-  rows.value.push({ uid: uid++, label: '', type: 'number', value: '', unit: '' })
+  rows.value.push({ uid: uid++, label: '', type: 'number', value: '', unit: '', measure: '', actual: '' })
 }
 
 function removeRow(index: number) {
@@ -203,7 +237,16 @@ function removeRow(index: number) {
   background: var(--ps-tile, var(--bg-surface)); border-radius: 8px;
   padding: 10px 12px; margin-bottom: 8px;
 }
-.tf-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.tf-item {
+  margin-bottom: 10px; padding: 12px;
+  background: var(--ps-tile, var(--bg-surface)); border-radius: 10px;
+}
+.tf-row { display: flex; align-items: center; gap: 8px; }
+.tf-actual { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.tf-actual-label { font-size: 0.78rem; font-weight: 600; color: var(--ps-text-2, var(--text-secondary)); }
+.tf-input--measure { flex: 1 1 200px; }
+.tf-actual-note { font-size: 0.84rem; font-weight: 600; color: var(--ps-text, var(--text-primary)); }
+.tf-input--actual { flex: 0 1 160px; }
 .tf-input {
   min-width: 0; padding: 10px 12px; font-size: 0.9rem;
   background: var(--ps-input, var(--bg-input)); border: 1px solid var(--ps-input-border, var(--border-color));

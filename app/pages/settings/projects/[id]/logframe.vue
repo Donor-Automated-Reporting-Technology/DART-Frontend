@@ -168,7 +168,7 @@
               >
                 <span class="list-row-body">
                   <span class="list-row-title">{{ imp.title }}</span>
-                  <span class="list-row-meta">{{ indicatorCountByLevel(imp.id) }} indicator{{ indicatorCountByLevel(imp.id) === 1 ? '' : 's' }}</span>
+                  <span class="list-row-meta">{{ impactMeta(imp.id) }}</span>
                 </span>
                 <span class="list-row-go">Open →</span>
               </NuxtLink>
@@ -419,6 +419,25 @@ const indicatorCount = computed(() => indicators.value.length)
 const impacts = computed(() => levels.value.filter((l) => l.level_type === 'impact'))
 function indicatorCountByLevel(levelId: string): number {
   return indicators.value.filter((i) => i.level_id === levelId).length
+}
+
+/** "1 indicator · 2 outcomes · 3 outputs" for an impact row. */
+function impactMeta(levelId: string): string {
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+  const descendants: string[] = []
+  const queue = [levelId]
+  while (queue.length) {
+    const id = queue.shift()!
+    for (const l of levels.value) {
+      if (l.parent_id === id) { descendants.push(l.level_type); queue.push(l.id) }
+    }
+  }
+  const parts = [plural(indicatorCountByLevel(levelId), 'indicator')]
+  const outcomes = descendants.filter((t) => t === 'outcome').length
+  const outputs = descendants.filter((t) => t === 'output').length
+  if (outcomes) parts.push(plural(outcomes, 'outcome'))
+  if (outputs) parts.push(plural(outputs, 'output'))
+  return parts.join(' · ')
 }
 
 const impactModal = reactive({ open: false })

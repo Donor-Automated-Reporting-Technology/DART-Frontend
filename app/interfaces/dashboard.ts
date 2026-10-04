@@ -135,8 +135,11 @@ export interface ProjectActivity {
 
 export interface ProjectLogframeLevel {
   id: string;
+  /** Parent level; outcomes/outputs sit under an impact (or an outcome). */
+  parent_id?: string | null;
   title: string;
   level_type: string;
+  sort_order?: number;
 }
 
 /**
@@ -157,7 +160,22 @@ export interface ProjectLogframeIndicator {
   actual_value: number;
   percentage: number;
   linked_activity_ids: string[];
+  /** Custom target fields with their actuals (computed or entered). */
+  target_fields?: ProjectTargetFieldProgress[];
   custom_fields?: Record<string, any>;
+}
+
+/** A custom target field of an indicator, compared against its actual. */
+export interface ProjectTargetFieldProgress {
+  label: string;
+  unit?: string;
+  type: string;
+  target?: number;
+  /** What the actual counts; '' when it could not be determined. */
+  measure: string;
+  actual?: number;
+  percentage: number;
+  source: 'computed' | 'manual' | 'none';
 }
 
 export interface ProjectLogframeSummary {

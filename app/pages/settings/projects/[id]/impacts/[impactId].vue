@@ -4,13 +4,14 @@
       <!-- Header -->
       <header class="page-header">
         <div class="page-header-text">
-          <span class="page-eyebrow">Impact</span>
-          <h1 class="page-title">{{ impact?.title ?? 'Impact' }}</h1>
-          <p class="page-subtitle">Indicator, numerical targets and the activities that feed them.</p>
+          <span class="page-eyebrow">{{ levelLabel }}</span>
+          <h1 class="page-title">{{ impact?.title ?? levelLabel }}</h1>
+          <p class="page-subtitle">
+            <template v-if="parentLevel">Part of {{ typeLabel(parentLevel.level_type).toLowerCase() }} “{{ parentLevel.title }}”. </template>
+            Indicator, numerical targets and the activities that feed them.
+          </p>
         </div>
-        <NuxtLink :to="`/settings/projects/${projectId}/logframe`" class="btn-back">
-          &larr; Back to logframe
-        </NuxtLink>
+        <NuxtLink :to="backLink.to" class="btn-back">&larr; {{ backLink.label }}</NuxtLink>
       </header>
 
       <!-- Loading / error -->
@@ -196,6 +197,74 @@
           <div v-if="saveSuccess" class="save-ok">Changes saved</div>
         </Transition>
 
+        <!-- ═══ Outcomes & outputs ═══ -->
+        <section v-if="childTypes.length" class="section-card">
+          <div class="card-head">
+            <div class="card-head-text">
+              <h2 class="card-title">{{ childSectionTitle }}</h2>
+              <p class="card-hint">{{ childSectionHint }}</p>
+            </div>
+            <button v-if="canManage && !showAddChild" class="btn-add" @click="openAddChild">
+              + Add {{ childTypes.length > 1 ? 'outcome or output' : typeLabel(childTypes[0]!).toLowerCase() }}
+            </button>
+          </div>
+
+          <form v-if="showAddChild" class="add-activity" @submit.prevent="saveChild">
+            <div class="form-grid">
+              <div v-if="childTypes.length > 1" class="field">
+                <label class="field-label" for="ch-type">Type *</label>
+                <select id="ch-type" v-model="childForm.level_type" class="field-input">
+                  <option v-for="t in childTypes" :key="t" :value="t">{{ typeLabel(t) }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label" for="ch-title">{{ typeLabel(childForm.level_type) }} statement *</label>
+              <textarea
+                id="ch-title"
+                v-model="childForm.title"
+                rows="2"
+                class="field-input"
+                :placeholder="childForm.level_type === 'output'
+                  ? 'e.g. 1,200 children attend structured PSS sessions'
+                  : 'e.g. Children show improved psychosocial wellbeing'"
+              ></textarea>
+            </div>
+            <div v-if="childError" class="api-err">{{ childError }}</div>
+            <div class="actions">
+              <button type="button" class="btn-ghost" @click="showAddChild = false">Cancel</button>
+              <button type="submit" class="btn-primary" :disabled="childSaving">
+                <span v-if="childSaving" class="btn-spinner" /> Add {{ typeLabel(childForm.level_type).toLowerCase() }}
+              </button>
+            </div>
+          </form>
+
+          <div v-if="children.length" class="list">
+            <div v-for="c in children" :key="c.id" class="child-row">
+              <NuxtLink :to="`/settings/projects/${projectId}/impacts/${c.id}`" class="list-row child-link">
+                <span class="list-row-body">
+                  <span class="child-type" :class="`child-type--${c.level_type}`">{{ typeLabel(c.level_type) }}</span>
+                  <span class="list-row-title">{{ c.title }}</span>
+                  <span class="list-row-meta">{{ childMeta(c.id) }}</span>
+                </span>
+                <span class="list-row-go">Open →</span>
+              </NuxtLink>
+              <button
+                v-if="canManage"
+                type="button"
+                class="icon-btn icon-btn--danger"
+                :title="`Delete ${typeLabel(c.level_type).toLowerCase()}`"
+                :disabled="deletingChild === c.id"
+                @click="deleteChild(c)"
+              >&times;</button>
+            </div>
+          </div>
+          <p v-else-if="!showAddChild" class="view-empty">
+            No {{ childTypes.length > 1 ? 'outcomes or outputs' : 'outputs' }} yet.
+          </p>
+          <div v-if="childListError" class="api-err">{{ childListError }}</div>
+        </section>
+
         <!-- ═══ Activities ═══ -->
         <section class="section-card">
           <div class="card-head">
@@ -295,11 +364,14 @@ import {
   type LogframeIndicator,
   type LogframeIndicatorRequest,
   type LogframeLevel,
+  type LogframeLevelType,
   type LogframeTargetField,
 } from '../../../../../interfaces/logframe'
 
 definePageMeta({
   layout: false,
+  // Remount when moving between levels (impact → outcome → output).
+  key: (r) => r.fullPath,
   middleware: ['auth', 'role-guard'],
   allowedRoles: ['org_admin', 'data_manager', 'program_manager', 'supervisor', 'case_worker', 'facilitator', 'director'],
 })
@@ -315,19 +387,138 @@ const canManage = computed(() => MANAGE_ROLES.includes(authStore.userRole ?? '')
 const project = ref<Framework | null>(null)
 const impact = ref<LogframeLevel | null>(null)
 const indicator = ref<LogframeIndicator | null>(null)
+const allLevels = ref<LogframeLevel[]>([])
+const allIndicators = ref<LogframeIndicator[]>([])
 const activities = ref<any[]>([])
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 
+// ─── Hierarchy (impact → outcome → output) ───
+
+const TYPE_LABELS: Record<string, string> = {
+  goal: 'Goal', impact: 'Impact', outcome: 'Outcome', output: 'Output', result: 'Result', activity: 'Activity',
+}
+function typeLabel(type: string): string {
+  return TYPE_LABELS[type] ?? type
+}
+/** Which child levels each level type can hold. */
+const CHILD_TYPES: Record<string, LogframeLevelType[]> = {
+  impact: ['outcome', 'output'],
+  outcome: ['output'],
+}
+
+const levelLabel = computed(() => typeLabel(impact.value?.level_type ?? 'impact'))
+const parentLevel = computed(() =>
+  allLevels.value.find((l) => l.id === impact.value?.parent_id) ?? null,
+)
+const ancestors = computed(() => {
+  const chain: LogframeLevel[] = []
+  let current = parentLevel.value
+  while (current && chain.length < 10) {
+    chain.unshift(current)
+    current = allLevels.value.find((l) => l.id === current!.parent_id) ?? null
+  }
+  return chain
+})
+const backLink = computed(() =>
+  parentLevel.value
+    ? { to: `/settings/projects/${projectId}/impacts/${parentLevel.value.id}`, label: `Back to ${typeLabel(parentLevel.value.level_type).toLowerCase()}` }
+    : { to: `/settings/projects/${projectId}/logframe`, label: 'Back to logframe' },
+)
+
+const childTypes = computed(() => CHILD_TYPES[impact.value?.level_type ?? ''] ?? [])
+const children = computed(() =>
+  allLevels.value
+    .filter((l) => l.parent_id === impactId)
+    .sort((a, b) =>
+      // Outcomes first, then outputs; each in the order they were added.
+      Number(a.level_type === 'output') - Number(b.level_type === 'output') || a.sort_order - b.sort_order,
+    ),
+)
+const childSectionTitle = computed(() => (childTypes.value.length > 1 ? 'Outcomes & outputs' : 'Outputs'))
+const childSectionHint = computed(() =>
+  childTypes.value.length > 1
+    ? 'Break this impact down into the outcomes and outputs that deliver it. Each one gets its own indicator, targets and activities.'
+    : 'The outputs that deliver this outcome. Each one gets its own indicator, targets and activities.',
+)
+function childMeta(levelId: string): string {
+  const inds = allIndicators.value.filter((i) => i.level_id === levelId)
+  const ind = inds[0]
+  const parts = [`${inds.length} indicator${inds.length === 1 ? '' : 's'}`]
+  if (ind?.target_value != null) parts.push(`target ${ind.target_value}${ind.unit ? ' ' + ind.unit : ''}`)
+  const grandchildren = allLevels.value.filter((l) => l.parent_id === levelId).length
+  if (grandchildren) parts.push(`${grandchildren} output${grandchildren === 1 ? '' : 's'}`)
+  return parts.join(' · ')
+}
+
+const showAddChild = ref(false)
+const childSaving = ref(false)
+const childError = ref('')
+const childListError = ref('')
+const deletingChild = ref<string | null>(null)
+const childForm = reactive({ level_type: 'outcome' as LogframeLevelType, title: '' })
+
+function openAddChild() {
+  childError.value = ''
+  childForm.level_type = childTypes.value[0] ?? 'output'
+  childForm.title = ''
+  showAddChild.value = true
+}
+
+async function refreshLevels() {
+  const data = await logframeApi.getLogframe(projectId)
+  allLevels.value = data.levels ?? []
+  allIndicators.value = data.indicators ?? []
+}
+
+async function saveChild() {
+  childError.value = ''
+  if (!childForm.title.trim()) { childError.value = 'A statement is required'; return }
+  childSaving.value = true
+  try {
+    const siblings = allLevels.value.filter((l) => l.parent_id === impactId)
+    await logframeApi.createLevel(projectId, {
+      level_type: childForm.level_type,
+      parent_id: impactId,
+      title: childForm.title.trim(),
+      sort_order: siblings.reduce((max, l) => Math.max(max, l.sort_order), 0) + 1,
+    })
+    await refreshLevels()
+    showAddChild.value = false
+  } catch (e: any) {
+    childError.value = e instanceof ApiError ? e.message : (e?.message ?? 'Failed to add')
+  } finally {
+    childSaving.value = false
+  }
+}
+
+async function deleteChild(level: LogframeLevel) {
+  const label = typeLabel(level.level_type).toLowerCase()
+  if (!confirm(`Delete this ${label} and its indicator? This cannot be undone.`)) return
+  childListError.value = ''
+  deletingChild.value = level.id
+  try {
+    await logframeApi.deleteLevel(projectId, level.id)
+    await refreshLevels()
+  } catch (e: any) {
+    const msg = e instanceof ApiError ? e.message : (e?.message ?? '')
+    childListError.value = e?.status === 409
+      ? `Remove the outputs under this ${label} first.`
+      : (msg || `Failed to delete ${label}`)
+  } finally {
+    deletingChild.value = null
+  }
+}
+
 const breadcrumbs = computed(() => {
-  let impactTitle = impact.value?.title ?? 'Impact'
-  if (impactTitle.length > 30) impactTitle = impactTitle.substring(0, 30) + '…'
+  const short = (t: string) => (t.length > 30 ? t.substring(0, 30) + '…' : t)
   return [
     { title: 'Settings', href: '/settings' },
     { title: 'Projects', href: '/settings/projects' },
     { title: project.value?.project_name ?? 'Project', href: `/settings/projects/${projectId}` },
     { title: 'Logframe', href: `/settings/projects/${projectId}/logframe` },
-    { title: impactTitle, href: `/settings/projects/${projectId}/impacts/${impactId}`, current: true },
+    ...ancestors.value.map((l) => ({ title: short(l.title), href: `/settings/projects/${projectId}/impacts/${l.id}` })),
+    { title: short(impact.value?.title ?? levelLabel.value), href: `/settings/projects/${projectId}/impacts/${impactId}`, current: true },
   ]
 })
 
@@ -448,8 +639,10 @@ async function fetchAll() {
       frameworkApi.getActivities(projectId).catch(() => null),
     ])
     project.value = (frameworks.frameworks ?? []).find((f) => f.id === projectId) ?? null
-    impact.value = (data.levels ?? []).find((l) => l.id === impactId) ?? null
-    if (!impact.value) { loadError.value = 'Impact not found'; return }
+    allLevels.value = data.levels ?? []
+    allIndicators.value = data.indicators ?? []
+    impact.value = allLevels.value.find((l) => l.id === impactId) ?? null
+    if (!impact.value) { loadError.value = 'Level not found'; return }
     indicator.value = (data.indicators ?? []).find((i) => i.level_id === impactId) ?? null
     activities.value = (activitiesRes as any)?.activities ?? []
     seedForm()
@@ -605,6 +798,16 @@ onMounted(fetchAll)
 
 .add-activity { margin-bottom: 18px; padding: 18px; background: var(--ps-tile); border-radius: 10px; }
 .card-hint--note { margin: 0 0 12px; }
+
+/* Outcomes & outputs */
+.child-row { display: flex; align-items: center; gap: 8px; }
+.child-link { flex: 1; min-width: 0; }
+.child-type {
+  align-self: flex-start; padding: 2px 9px; font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase; border-radius: 999px;
+  color: #fff; background: var(--brand);
+}
+.child-type--output { color: var(--ps-text); background: var(--brand-soft); }
 
 .activity-list { display: flex; flex-direction: column; gap: 10px; }
 .activity-list--disabled { opacity: 0.55; pointer-events: none; }
