@@ -23,163 +23,115 @@
     <!-- Content -->
     <template v-else-if="hasData">
 
-      <!-- ═══ Project header ═══ -->
-      <header class="project-hero">
-        <div class="project-hero-info">
-          <span class="eyebrow">Project dashboard</span>
-          <h1 class="project-hero-name">{{ project.project_name }}</h1>
-          <p class="project-hero-meta">
-            <span>{{ formatType(project.framework_type) }}</span>
-            <span v-if="project.partner_name">{{ project.partner_name }}</span>
-            <span v-if="project.reporting_to">Reporting to {{ project.reporting_to }}</span>
-            <span v-if="project.period_start">{{ formatDate(project.period_start) }} – {{ formatDate(project.period_end) }}</span>
+      <!-- ═══ Header ═══ -->
+      <header class="dash-head">
+        <div class="dash-head-info">
+          <span class="eyebrow">{{ formatType(project.framework_type) }} · Project dashboard</span>
+          <h1 class="dash-title">{{ project.project_name }}</h1>
+          <p class="dash-meta">
+            <span v-if="project.partner_name"><i class="dot" />Partner: {{ project.partner_name }}</span>
+            <span v-if="project.reporting_to"><i class="dot" />Reporting to {{ project.reporting_to }}</span>
+            <span v-if="logframe"><i class="dot" />Logframe: {{ logframe.name }}</span>
           </p>
         </div>
 
-        <div v-if="overallProgress !== null" class="project-hero-progress">
-          <div class="ring ring--lg">
-            <svg viewBox="0 0 36 36">
-              <circle class="ring-bg" cx="18" cy="18" r="15.9155" />
-              <circle class="ring-fill" cx="18" cy="18" r="15.9155" :stroke-dasharray="`${overallProgress} 100`" />
-            </svg>
-            <span class="ring-value">{{ overallProgress }}<small>%</small></span>
+        <div v-if="project.period_start && project.period_end" class="period">
+          <div class="period-head">
+            <span>{{ formatDate(project.period_start) }} – {{ formatDate(project.period_end) }}</span>
+            <strong v-if="expected !== null" class="num">{{ expected }}%</strong>
           </div>
-          <span class="ring-caption">Logframe<br />progress</span>
+          <div class="meter"><i :style="{ width: `${expected ?? 0}%` }" /></div>
+          <span class="period-note">{{ periodNote }}</span>
         </div>
       </header>
 
-      <!-- ═══ Headline numbers ═══ -->
-      <section class="kpi-grid">
+      <!-- ═══ Headline figures ═══ -->
+      <section class="kpis" aria-label="Headline figures">
         <div class="kpi kpi--featured">
           <span class="kpi-label">Unique beneficiaries</span>
-          <span class="kpi-value">{{ summary.unique_beneficiaries.toLocaleString() }}</span>
-          <span class="kpi-foot">Enrolled across the project</span>
+          <span class="kpi-value num">{{ formatNumber(summary.unique_beneficiaries) }}</span>
+          <span class="kpi-foot">Enrolled across all activities</span>
         </div>
         <div class="kpi">
-          <span class="kpi-label">Impacts</span>
-          <span class="kpi-value">{{ impactCards.length }}</span>
-          <span class="kpi-foot">{{ indicatorTotal }} indicator{{ indicatorTotal === 1 ? '' : 's' }}</span>
+          <span class="kpi-label">Logframe progress</span>
+          <span class="kpi-value num">{{ overallProgress === null ? '—' : `${overallProgress}%` }}</span>
+          <div v-if="overallProgress !== null" class="meter"><i :style="{ width: `${overallProgress}%` }" /></div>
+          <span class="kpi-foot">{{ overallProgress === null ? 'No numerical targets yet' : `${formatNumber(totals.actual)} of ${formatNumber(totals.target)} targeted` }}</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">Indicators on track</span>
+          <span class="kpi-value num">{{ onTrack }}<small> of {{ targetedCount }}</small></span>
+          <span class="kpi-foot">{{ expected === null ? 'Set project dates to judge pace' : `Against ${expected}% of the period passed` }}</span>
         </div>
         <div class="kpi">
           <span class="kpi-label">Activities</span>
-          <span class="kpi-value">{{ activeCount }}</span>
-          <span class="kpi-foot">{{ activities.length - activeCount }} inactive</span>
+          <span class="kpi-value num">{{ activeCount }}</span>
+          <span class="kpi-foot">{{ activityFoot }}</span>
         </div>
         <div class="kpi">
           <span class="kpi-label">Locations</span>
-          <span class="kpi-value">{{ summary.total_locations ?? summary.active_locations }}</span>
+          <span class="kpi-value num">{{ summary.total_locations ?? summary.active_locations }}</span>
           <span class="kpi-foot">{{ summary.total_service_points ?? 0 }} service points</span>
         </div>
-      </section>
-
-      <!-- ═══ Impacts ═══ -->
-      <section v-if="impactCards.length" class="block">
-        <div class="block-head">
-          <div>
-            <h2 class="block-title">Impacts</h2>
-            <p class="block-hint">The change this project is working towards. Open an impact to see its targets and activities.</p>
-          </div>
-        </div>
-
-        <div class="impact-grid">
-          <NuxtLink
-            v-for="card in impactCards"
-            :key="card.id"
-            :to="`/dashboard/projects/${frameworkId}/impacts/${card.id}`"
-            class="impact-card"
-          >
-            <div class="impact-top">
-              <span class="impact-index">Impact {{ card.number }}</span>
-              <div v-if="card.progress !== null" class="ring ring--sm" :title="`${card.progress}% of target reached`">
-                <svg viewBox="0 0 36 36">
-                  <circle class="ring-bg" cx="18" cy="18" r="15.9155" />
-                  <circle class="ring-fill" cx="18" cy="18" r="15.9155" :stroke-dasharray="`${card.progress} 100`" />
-                </svg>
-                <span class="ring-value">{{ card.progress }}<small>%</small></span>
-              </div>
-              <span v-else class="impact-pill">No targets yet</span>
-            </div>
-
-            <h3 class="impact-title" :title="card.title">{{ card.title }}</h3>
-
-            <div v-if="card.target > 0" class="impact-bar">
-              <div class="impact-bar-fill" :style="{ width: `${card.progress}%` }" />
-            </div>
-
-            <div class="impact-foot">
-              <div class="impact-stats">
-                <span v-if="card.target > 0"><strong>{{ card.actual.toLocaleString() }}</strong> of {{ card.target.toLocaleString() }}</span>
-                <span><strong>{{ card.indicators }}</strong> indicator{{ card.indicators === 1 ? '' : 's' }}</span>
-                <span><strong>{{ card.activities }}</strong> activit{{ card.activities === 1 ? 'y' : 'ies' }}</span>
-                <span v-if="card.children"><strong>{{ card.children }}</strong> outcome{{ card.children === 1 ? '' : 's' }}/output{{ card.children === 1 ? '' : 's' }}</span>
-              </div>
-              <span class="impact-go" aria-hidden="true">→</span>
-            </div>
-          </NuxtLink>
+        <div class="kpi" :class="{ 'kpi--alert': needsSetup > 0 }">
+          <span class="kpi-label">Needs setup</span>
+          <span class="kpi-value num">{{ needsSetup }}<small> of {{ rows.length }}</small></span>
+          <span class="kpi-foot">{{ needsSetup ? 'Indicators missing a target or link' : 'Every indicator is set up' }}</span>
         </div>
       </section>
 
-      <!-- ═══ Activities ═══ -->
-      <section class="block">
-        <div class="block-head">
-          <div>
-            <h2 class="block-title">Activities <span class="block-count">{{ projectActivities.length }}</span></h2>
-            <p class="block-hint">Everything delivered under this project. Click an activity to explore its data.</p>
-          </div>
-        </div>
-
-        <div v-if="!projectActivities.length" class="block-empty">
-          No activities on this project yet.
-        </div>
-
-        <div v-else class="activity-grid">
-          <button
-            v-for="a in projectActivities"
-            :key="a.id"
-            type="button"
-            class="activity-card"
-            :class="{ 'activity-card--inactive': !a.is_active }"
-            @click="navigateToActivity(a)"
-          >
-            <div class="activity-top">
-              <span v-if="a.module" class="activity-module">{{ a.module.toUpperCase() }}</span>
-              <span class="activity-status" :class="{ 'activity-status--on': a.is_active }">
-                {{ a.is_active ? 'Active' : 'Inactive' }}
-              </span>
-            </div>
-
-            <span class="activity-name">{{ a.name }}</span>
-            <span v-if="a.code || a.pattern_type" class="activity-meta">
-              {{ [a.code, a.pattern_type ? formatPattern(a.pattern_type) : ''].filter(Boolean).join(' · ') }}
-            </span>
-
-            <div class="activity-foot">
-              <div class="activity-count">
-                <span class="activity-count-value">{{ a.actual_count.toLocaleString() }}</span>
-                <span class="activity-count-label">enrolled</span>
-              </div>
-              <span class="activity-links">
-                {{ impactsFedBy(a.id) ? `Feeds ${impactsFedBy(a.id)} impact${impactsFedBy(a.id) === 1 ? '' : 's'}` : 'Not linked yet' }}
-              </span>
-            </div>
-          </button>
-        </div>
+      <!-- ═══ Summary panels ═══ -->
+      <section class="grid2" :class="{ 'grid2--single': !impactColumns.length }">
+        <ProjectReachPanel :disaggregations="disaggregations" :summary="summary" />
+        <ProjectImpactColumns
+          v-if="impactColumns.length"
+          :impacts="impactColumns"
+          :expected="expected"
+          :selected="impactFilter"
+          @select="impactFilter = $event"
+        />
       </section>
+
+      <!-- ═══ Indicators ═══ -->
+      <ProjectIndicatorList
+        :groups="groups"
+        :expected="expected"
+        :impact-filter="impactFilter"
+        @clear-impact="impactFilter = null"
+      />
+
+      <p class="dash-foot">
+        Logframe progress adds indicator targets and actuals together, and the same people can count towards several
+        indicators, so it is not a count of unique people. Status compares each indicator with how much of the project
+        period has passed: at least 90% of the expected pace is on track, 60–89% needs attention and under 60% is behind.
+      </p>
 
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { useProjectDetail } from '~/composables/useProjectDetail'
-import { activityDashboardRoute } from '~/utils/activityConfig'
 import DashboardBreadcrumb from '~/components/dashboard/DashboardBreadcrumb.vue'
+import ProjectReachPanel from '~/components/dashboard/project/ProjectReachPanel.vue'
+import ProjectImpactColumns from '~/components/dashboard/project/ProjectImpactColumns.vue'
+import ProjectIndicatorList from '~/components/dashboard/project/ProjectIndicatorList.vue'
 import AppIcon from '~/components/interfaces/AppIcon.vue'
+import {
+  formatNumber,
+  hasTarget,
+  impactAncestor,
+  indicatorChecks,
+  levelTypeLabel,
+  paceStatus,
+  periodElapsed,
+  type IndicatorGroup,
+  type IndicatorRow,
+} from '~/utils/projectDashboard'
 
 const route = useRoute()
-const router = useRouter()
 const frameworkId = route.params.frameworkId as string
 
 const {
@@ -187,6 +139,7 @@ const {
   error,
   project,
   summary,
+  disaggregations,
   logframe,
   activities,
   hasData,
@@ -195,7 +148,6 @@ const {
   logframeProgress,
   formatDate,
   formatType,
-  formatPattern,
   fetchProjectDetail,
 } = useProjectDetail()
 
@@ -204,55 +156,108 @@ const breadcrumbs = computed(() => [
   { title: project.value.project_name || 'Project', href: route.fullPath, current: true },
 ])
 
-// Every activity on the project, active first. Activities linked to an impact
-// are listed here too so the project dashboard never hides one.
-const projectActivities = computed(() =>
-  [...activities.value].sort(
-    (a, b) => Number(b.is_active) - Number(a.is_active) || a.name.localeCompare(b.name),
-  ),
-)
+const levels = computed(() => logframe.value?.levels ?? [])
+const indicators = computed(() => logframe.value?.indicators ?? [])
 
-const indicatorTotal = computed(() => logframe.value?.indicators?.length ?? 0)
+// ── Pace ──────────────────────────────────────────
+const expected = computed(() => periodElapsed(project.value.period_start, project.value.period_end))
 
-/** One card per impact, with its progress rolled up from its own indicators. */
-const impactCards = computed(() =>
-  (logframe.value?.levels ?? []).filter(level => level.level_type === 'impact').map((level, i) => {
-    const indicators = (logframe.value?.indicators ?? []).filter(ind => ind.level_id === level.id)
-    const targeted = indicators.filter(ind => ind.target_value != null && ind.target_value > 0)
-    const activityIds = new Set(indicators.flatMap(ind => ind.linked_activity_ids ?? []))
+const periodNote = computed(() => {
+  if (expected.value === null) return 'Project dates are not valid'
+  if (expected.value === 0) return 'Not started yet'
+  if (expected.value === 100) return 'Project period has ended'
+  return 'of the project period has passed'
+})
+
+// ── Indicator rows ────────────────────────────────
+const activityById = computed(() => new Map(activities.value.map(a => [a.id, a])))
+
+const rows = computed<IndicatorRow[]>(() =>
+  indicators.value.map((ind) => {
+    const progress = hasTarget(ind.target_value) ? Math.round(ind.percentage) : null
+    const checks = indicatorChecks(ind)
     return {
-      id: level.id,
-      title: level.title,
-      number: String(i + 1).padStart(2, '0'),
-      progress: logframeProgress(level.id),
-      target: targeted.reduce((sum, ind) => sum + (ind.target_value ?? 0), 0),
-      actual: targeted.reduce((sum, ind) => sum + (ind.actual_value ?? 0), 0),
-      indicators: indicators.length,
-      activities: activityIds.size,
-      children: (logframe.value?.levels ?? []).filter(l => l.parent_id === level.id).length,
+      ind,
+      progress,
+      status: paceStatus(progress, expected.value),
+      checks,
+      issues: checks.filter(c => c.level === 'warn').length,
+      levelLabel: ind.level_type === 'impact' ? '' : `${levelTypeLabel(ind.level_type)}: ${ind.level_title}`,
+      fieldCount: ind.target_fields?.length ?? 0,
+      activities: (ind.linked_activity_ids ?? [])
+        .map(id => activityById.value.get(id))
+        .filter((a): a is NonNullable<typeof a> => !!a),
     }
   }),
 )
 
-/** How many impacts an activity feeds through its linked indicators. */
-const impactsByActivity = computed(() => {
-  const map = new Map<string, Set<string>>()
-  for (const ind of logframe.value?.indicators ?? []) {
-    for (const id of ind.linked_activity_ids ?? []) {
-      if (!map.has(id)) map.set(id, new Set())
-      map.get(id)!.add(ind.level_id)
-    }
+const totals = computed(() => {
+  const targeted = indicators.value.filter(ind => hasTarget(ind.target_value))
+  return {
+    target: targeted.reduce((sum, ind) => sum + (ind.target_value ?? 0), 0),
+    actual: targeted.reduce((sum, ind) => sum + (ind.actual_value ?? 0), 0),
   }
-  return map
 })
-function impactsFedBy(activityId: string): number {
-  return impactsByActivity.value.get(activityId)?.size ?? 0
-}
 
-/** Open the activity dashboard for the module that owns the activity. */
-function navigateToActivity(activity: { id: string; module?: string | null }) {
-  router.push(activityDashboardRoute(activity.module, activity.id))
-}
+const targetedCount = computed(() => rows.value.filter(r => r.progress !== null).length)
+const onTrack = computed(() => rows.value.filter(r => r.status === 'good' || r.status === 'achieved').length)
+const needsSetup = computed(() => rows.value.filter(r => r.issues > 0).length)
+
+// ── Activities ────────────────────────────────────
+const linkedActivityIds = computed(() => new Set(indicators.value.flatMap(ind => ind.linked_activity_ids ?? [])))
+const activityFoot = computed(() => {
+  const inactive = activities.value.length - activeCount.value
+  const unlinked = activities.value.filter(a => !linkedActivityIds.value.has(a.id)).length
+  return [
+    inactive ? `${inactive} inactive` : 'All active',
+    unlinked ? `${unlinked} not linked to an indicator` : '',
+  ].filter(Boolean).join(' · ')
+})
+
+// ── Impacts ───────────────────────────────────────
+const impacts = computed(() => levels.value.filter(l => l.level_type === 'impact'))
+
+const impactColumns = computed(() =>
+  impacts.value.map((level, i) => {
+    const progress = logframeProgress(level.id)
+    return {
+      id: level.id,
+      number: String(i + 1).padStart(2, '0'),
+      title: level.title,
+      progress,
+      status: paceStatus(progress, expected.value),
+    }
+  }),
+)
+
+/** Indicators under the impact they roll up to; the rest go last. */
+const groups = computed<IndicatorGroup[]>(() => {
+  const byImpact = new Map<string, IndicatorRow[]>()
+  const loose: IndicatorRow[] = []
+  for (const row of rows.value) {
+    const impact = impactAncestor(row.ind.level_id, levels.value)
+    if (!impact) { loose.push(row); continue }
+    if (!byImpact.has(impact.id)) byImpact.set(impact.id, [])
+    byImpact.get(impact.id)!.push(row)
+  }
+
+  const out: IndicatorGroup[] = impactColumns.value
+    .filter(col => byImpact.has(col.id))
+    .map(col => ({
+      id: col.id,
+      number: col.number,
+      title: col.title,
+      progress: col.progress,
+      link: `/dashboard/projects/${frameworkId}/impacts/${col.id}`,
+      rows: byImpact.get(col.id)!,
+    }))
+  if (loose.length) {
+    out.push({ id: 'other', number: '', title: impacts.value.length ? 'Not under an impact' : 'All indicators', progress: null, link: null, rows: loose })
+  }
+  return out
+})
+
+const impactFilter = ref<string | null>(null)
 
 onMounted(() => fetchProjectDetail(frameworkId))
 </script>

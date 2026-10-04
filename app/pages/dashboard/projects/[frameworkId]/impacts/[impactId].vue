@@ -206,7 +206,8 @@ import { useProjectDetail } from '~/composables/useProjectDetail'
 import { activityDashboardRoute } from '~/utils/activityConfig'
 import DashboardBreadcrumb from '~/components/dashboard/DashboardBreadcrumb.vue'
 import AppIcon from '~/components/interfaces/AppIcon.vue'
-import type { ProjectLogframeLevel, ProjectTargetFieldProgress } from '~/interfaces/dashboard'
+import type { ProjectLogframeLevel } from '~/interfaces/dashboard'
+import { levelTypeLabel as typeLabel, targetFieldSourceLabel as sourceLabel } from '~/utils/projectDashboard'
 
 // Remount when moving between levels (impact → outcome → output).
 definePageMeta({ key: (r) => r.fullPath })
@@ -229,13 +230,6 @@ const {
 } = useProjectDetail()
 
 // ─── Hierarchy ───
-
-const TYPE_LABELS: Record<string, string> = {
-  goal: 'Goal', impact: 'Impact', outcome: 'Outcome', output: 'Output', result: 'Result', activity: 'Activity',
-}
-function typeLabel(type: string): string {
-  return TYPE_LABELS[type] ?? type
-}
 
 const levels = computed<ProjectLogframeLevel[]>(() => logframe.value?.levels ?? [])
 const level = computed(() => levels.value.find(l => l.id === levelId) ?? null)
@@ -307,23 +301,6 @@ function levelMeta(id: string): string {
 
 function hasTarget(v: number | null | undefined): boolean {
   return v != null && v > 0
-}
-
-const MEASURE_LABELS: Record<string, string> = {
-  total: 'all beneficiaries',
-  female: 'girls / female',
-  male: 'boys / male',
-  disability: 'beneficiaries with disability',
-  female_disability: 'girls with disability',
-  male_disability: 'boys with disability',
-}
-
-function sourceLabel(tf: ProjectTargetFieldProgress): string {
-  if (tf.source === 'manual') return 'Entered manually'
-  if (tf.source === 'computed') return `Counted from ${MEASURE_LABELS[tf.measure] ?? 'linked activities'}`
-  if (tf.measure === 'manual') return 'Manual — no actual entered yet'
-  if (tf.target == null) return 'No numeric target'
-  return 'Not tracked — choose what this counts in Settings'
 }
 
 function linkedLabel(n: number): string {
