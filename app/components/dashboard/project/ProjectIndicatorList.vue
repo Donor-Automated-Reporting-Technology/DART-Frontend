@@ -39,7 +39,7 @@
         <button v-if="filteredGroups.length > 1" type="button" class="group-nav" :disabled="index >= filteredGroups.length - 1" aria-label="Next impact" @click="go(1)">›</button>
       </div>
 
-      <template v-for="row in group.rows" :key="row.ind.id">
+      <template v-for="row in group.rows.slice(rowIndex, rowIndex + 1)" :key="row.ind.id">
         <div
           class="row"
           tabindex="0"
@@ -131,12 +131,18 @@
           </div>
         </div>
       </template>
+
+      <div v-if="group.rows.length > 1" class="pager row-pager" role="group" aria-label="Indicators in this impact">
+        <button type="button" class="pager-btn" :disabled="rowIndex === 0" aria-label="Previous indicator" @click="rowIndex--">‹</button>
+        <span class="pager-label num">Indicator {{ rowIndex + 1 }} of {{ group.rows.length }}</span>
+        <button type="button" class="pager-btn" :disabled="rowIndex >= group.rows.length - 1" aria-label="Next indicator" @click="rowIndex++">›</button>
+      </div>
     </template>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { activityDashboardRoute } from '~/utils/activityConfig'
 import {
   STATUS_LABELS,
@@ -195,6 +201,10 @@ const filteredGroups = computed(() =>
 const index = computed(() => Math.max(filteredGroups.value.findIndex(g => g.id === props.active), 0))
 const visibleGroups = computed(() => filteredGroups.value.slice(index.value, index.value + 1))
 const visibleCount = computed(() => filteredGroups.value.reduce((s, g) => s + g.rows.length, 0))
+
+// Within the impact on screen, one indicator (outcome) at a time as well.
+const rowIndex = ref(0)
+watch(() => [visibleGroups.value[0]?.id, filter.value], () => { rowIndex.value = 0 })
 
 function go(step: number) {
   const next = filteredGroups.value[index.value + step]

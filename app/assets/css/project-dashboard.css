@@ -314,6 +314,7 @@
 .project-detail .group-meta { display: flex; align-items: center; gap: 14px; flex: none; }
 .project-detail .group-link { color: inherit; text-decoration: none; font-weight: 600; }
 .project-detail .group-link:hover { text-decoration: underline; }
+.project-detail .row-pager { display: flex; justify-content: center; margin-top: 10px; }
 .project-detail .group-count { font-weight: 600; opacity: 0.8; }
 .project-detail .group-nav {
   flex: none; width: 26px; height: 26px; display: grid; place-items: center; padding: 0;
