@@ -25,6 +25,23 @@
       </div>
 
       <template v-else>
+        <div v-if="frameworkActivityId" class="tu-grid2">
+          <NuxtLink :to="`/activities/${frameworkId}/teamup/reports?fa=${frameworkActivityId}`" class="tu-card tu-card--link">
+            <span class="tu-row" style="justify-content: flex-start">
+              <AppIcon name="file-text" :size="18" />
+              <strong>Reports</strong>
+            </span>
+            <span class="tu-muted">Daily and weekly Word reports</span>
+          </NuxtLink>
+          <NuxtLink :to="`/dashboard/teamup/${frameworkActivityId}`" class="tu-card tu-card--link">
+            <span class="tu-row" style="justify-content: flex-start">
+              <AppIcon name="bar-chart-2" :size="18" />
+              <strong>Dashboard</strong>
+            </span>
+            <span class="tu-muted">Reach, sessions per child, children at risk</span>
+          </NuxtLink>
+        </div>
+
         <p class="tu-label">My groups</p>
         <div v-if="groups.length === 0" class="tu-card">
           <strong>No TeamUp groups yet</strong>
@@ -61,7 +78,7 @@
             <AppIcon name="plus" :size="16" />
             New TeamUp group
           </NuxtLink>
-          <button type="button" class="tu-btn tu-btn--ghost" :disabled="downloading || groups.length === 0" @click="downloadAll">
+          <button v-if="canExport" type="button" class="tu-btn tu-btn--ghost" :disabled="downloading || groups.length === 0" @click="downloadAll">
             <AppIcon name="download" :size="16" />
             {{ downloading ? 'Preparing…' : 'Download Excel (all groups)' }}
           </button>
@@ -80,7 +97,8 @@ import AppIcon from '../../../../components/interfaces/AppIcon.vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { frameworkApi } from '../../../../services/frameworkApi'
-import { isTeamUpActivity, teamupApi, WEEKDAYS } from '../../../../services/teamupApi'
+import { canDownloadData, isTeamUpActivity, teamupApi, WEEKDAYS } from '../../../../services/teamupApi'
+import { useAuthStore } from '../../../../stores/auth'
 import type { TeamUpGroup } from '../../../../interfaces/teamup'
 
 definePageMeta({ layout: false, middleware: ['auth'] })
@@ -99,6 +117,7 @@ const downloading = ref(false)
 const error = ref<string | null>(null)
 const groups = ref<TeamUpGroup[]>([])
 const frameworkActivityId = ref<string | null>(null)
+const canExport = computed(() => canDownloadData(useAuthStore().userRole))
 const activityName = ref('')
 
 function progress(g: TeamUpGroup) {
@@ -114,7 +133,7 @@ async function downloadAll() {
   downloading.value = true
   error.value = null
   try {
-    await teamupApi.downloadExcel()
+    await teamupApi.downloadExcel({ frameworkActivityId: frameworkActivityId.value ?? undefined })
   } catch (e: any) {
     error.value = e?.message ?? 'Download failed'
   } finally {

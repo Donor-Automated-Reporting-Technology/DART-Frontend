@@ -149,6 +149,31 @@
                 </table>
               </div>
             </div>
+
+            <!-- ═══ TeamUp groups at this location ═══ -->
+            <div v-if="teamupGroups.length" class="fac-sessions-section">
+              <div class="section-header">
+                <div class="section-header-left">
+                  <h3 class="section-title">TeamUp groups</h3>
+                  <span class="section-count">{{ teamupGroups.length }}</span>
+                </div>
+              </div>
+              <div class="tu-stack">
+                <NuxtLink
+                  v-for="g in teamupGroups"
+                  :key="g.id"
+                  :to="`/dashboard/teamup/${g.framework_activity_id}`"
+                  class="tu-card tu-card--link"
+                >
+                  <div class="tu-row">
+                    <strong>{{ g.name }}</strong>
+                    <span class="tu-muted">Age {{ g.age_band }} · {{ g.enrolled_count }} children</span>
+                  </div>
+                  <div class="tu-bar"><span :style="{ width: `${g.total_sessions ? (g.sessions_completed / g.total_sessions) * 100 : 0}%` }" /></div>
+                  <span class="tu-muted">{{ g.sessions_completed }} of {{ g.total_sessions }} sessions done · open TeamUp dashboard</span>
+                </NuxtLink>
+              </div>
+            </div>
           </div>
 
           <!-- ── RIGHT: Sidebar ──────────────────────────── -->
@@ -394,6 +419,8 @@ import { useRouter } from 'vue-router'
 import { useDashboard } from '../../composables/useDashboard'
 import DashboardBreadcrumb from '../../components/dashboard/DashboardBreadcrumb.vue'
 import AppIcon from '../../components/interfaces/AppIcon.vue'
+import { teamupApi } from '../../services/teamupApi'
+import type { TeamUpGroup } from '../../interfaces/teamup'
 
 const router = useRouter()
 
@@ -482,6 +509,16 @@ function openSession(id: string) {
 }
 
 onMounted(fetchDashboard)
+
+// TeamUp groups at the facilitator's CFS (the API scopes field staff to their location).
+const teamupGroups = ref<TeamUpGroup[]>([])
+onMounted(async () => {
+  try {
+    teamupGroups.value = (await teamupApi.listGroups()).filter(g => g.status === 'active')
+  } catch {
+    teamupGroups.value = []
+  }
+})
 </script>
 
 <style scoped>

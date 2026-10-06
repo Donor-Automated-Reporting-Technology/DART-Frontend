@@ -27,6 +27,14 @@
       <header class="dash-head">
         <span class="eyebrow">{{ formatType(project.framework_type) }} · Project dashboard</span>
         <h1 class="dash-title">{{ project.project_name }}</h1>
+        <div v-if="canExport" class="dash-head-actions">
+          <button type="button" class="tu-btn tu-btn--ghost" :disabled="exporting" @click="exportProject">
+            <AppIcon name="download" :size="16" />
+            {{ exporting ? 'Preparing…' : 'Download project Excel' }}
+          </button>
+          <span class="tu-muted">All beneficiaries (every location) + one sheet per activity</span>
+          <span v-if="exportError" class="tu-muted" style="color: var(--error)">{{ exportError }}</span>
+        </div>
       </header>
 
       <!-- ═══ Headline figures ═══ -->
@@ -111,6 +119,8 @@ import ProjectImpactColumns from '~/components/dashboard/project/ProjectImpactCo
 import ProjectYearProgress from '~/components/dashboard/project/ProjectYearProgress.vue'
 import ProjectIndicatorList from '~/components/dashboard/project/ProjectIndicatorList.vue'
 import AppIcon from '~/components/interfaces/AppIcon.vue'
+import { useAuthStore } from '~/stores/auth'
+import { canDownloadData, downloadFile } from '~/services/teamupApi'
 import {
   currentYearIndex,
   formatNumber,
@@ -311,6 +321,22 @@ const groups = computed<IndicatorGroup[]>(() => {
 const activeImpact = ref<string | null>(null)
 
 onMounted(() => fetchProjectDetail(frameworkId))
+
+// Project workbook: managers and M&E only (the API enforces the same roles).
+const canExport = computed(() => canDownloadData(useAuthStore().userRole))
+const exporting = ref(false)
+const exportError = ref('')
+async function exportProject() {
+  exporting.value = true
+  exportError.value = ''
+  try {
+    await downloadFile(`/api/v1/frameworks/${frameworkId}/export`, 'project.xlsx')
+  } catch (e: any) {
+    exportError.value = e?.message ?? 'Download failed'
+  } finally {
+    exporting.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -380,4 +406,5 @@ onMounted(() => fetchProjectDetail(frameworkId))
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
+.dash-head-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
 </style>

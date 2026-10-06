@@ -55,6 +55,8 @@ const CSS = `
   p.body { font-size: 11pt; margin: 4pt 0 8pt; line-height: 1.45; }
   p.bullet { font-size: 11pt; margin: 3pt 0 3pt 22pt; text-indent: -14pt; line-height: 1.45; }
   p.signoff { font-size: 10pt; margin: 14pt 0 0; }
+  h3.session { font-size: 12pt; font-weight: 700; margin: 18pt 0 4pt; }
+  p.byline { font-size: 11pt; font-weight: 700; margin: 0 0 8pt; }
   .muted { font-style: italic; color: #555; font-weight: 400; }
   table.grid { border-collapse: collapse; width: 100%; margin: 6pt 0 10pt; }
   table.grid th, table.grid td { border: 1pt solid #999; padding: 4pt 6pt; font-size: 10pt; text-align: left; }
@@ -101,10 +103,18 @@ export function downloadDoc(html: string, filename: string): void {
   URL.revokeObjectURL(url)
 }
 
-/** One completed (or in-progress) session — the TeamUp facilitator report. */
-export function buildSessionReport(detail: TeamUpSessionDetail, header: ReportHeader): string {
+interface SessionParts {
+  present: TeamUpEnrollment[]
+  absent: TeamUpEnrollment[]
+  excused: TeamUpEnrollment[]
+  girls: number
+  attendanceHtml: string
+  conductedHtml: string
+}
+
+/** Attendance + "session conducted" blocks for one session. */
+function sessionParts(detail: TeamUpSessionDetail): SessionParts {
   const s = detail.session
-  const g = detail.group
   const byId = new Map(detail.roster.map(e => [e.beneficiary_id, e]))
   const marks = new Map((s.attendance ?? []).map(a => [a.beneficiary_id, a.status]))
   const present = detail.roster.filter(e => marks.get(e.beneficiary_id) === 'present')
@@ -112,17 +122,6 @@ export function buildSessionReport(detail: TeamUpSessionDetail, header: ReportHe
   const excused = detail.roster.filter(e => marks.get(e.beneficiary_id) === 'excused')
   const girls = present.filter(e => isGirl(e.sex)).length
   const withDisability = present.filter(e => hasDisability(e.disability_status)).length
-  const location = g.service_point_name ?? ''
-  const facilitator = s.facilitator_name ?? 'Facilitator'
-
-  const meta = metaBlock([
-    ['To', 'Programme Officer / Supervisor'],
-    ['From', `${facilitator} (Facilitator)`],
-    ['Date', formatDateLong(s.session_date)],
-    ['Location', location],
-    ['Group', `${g.name}${g.age_band ? ` (age ${g.age_band})` : ''}`],
-    ['Session', `${s.sequence_no} of ${g.total_sessions || 20} — ${s.module_name ?? ''} ${s.session_in_module ?? ''}/${s.module_sessions ?? ''}`],
-  ])
 
   const names = (list: TeamUpEnrollment[]) => list.map(e => esc(e.beneficiary_name)).join(', ')
   const attendance = detail.roster.length === 0
@@ -172,6 +171,35 @@ export function buildSessionReport(detail: TeamUpSessionDetail, header: ReportHe
     ? `<p class="label">Follow-Up Actions</p><p class="body">${nl2br(s.follow_up)}</p>`
     : ''
 
+  const conductedHtml = [objectives, activities, thumbs, observations, protection, followUp].filter(Boolean).join('\n')
+    || '<p class="body">No session details were recorded.</p>'
+  return { present, absent, excused, girls, attendanceHtml: attendance, conductedHtml }
+}
+
+const groupLabel = (d: TeamUpSessionDetail) =>
+  `${d.group.name}${d.group.age_band ? ` (age ${d.group.age_band})` : ''}`
+const sessionLabel = (d: TeamUpSessionDetail) =>
+  `Session ${d.session.sequence_no} — ${d.session.module_name ?? ''} ${d.session.session_in_module ?? ''}/${d.session.module_sessions ?? ''}`
+const unique = (vals: string[]) => [...new Set(vals.filter(Boolean))]
+
+/** One completed (or in-progress) session — the TeamUp facilitator report. */
+export function buildSessionReport(detail: TeamUpSessionDetail, header: ReportHeader): string {
+  const s = detail.session
+  const g = detail.group
+  const location = g.service_point_name ?? ''
+  const facilitator = s.facilitator_name ?? 'Facilitator'
+  const { present, attendanceHtml: attendance, conductedHtml } = sessionParts(detail)
+  const flags = s.flags ?? []
+
+  const meta = metaBlock([
+    ['To', 'Programme Officer / Supervisor'],
+    ['From', `${facilitator} (Facilitator)`],
+    ['Date', formatDateLong(s.session_date)],
+    ['Location', location],
+    ['Group', groupLabel(detail)],
+    ['Session', `${s.sequence_no} of ${g.total_sessions || 20} — ${s.module_name ?? ''} ${s.session_in_module ?? ''}/${s.module_sessions ?? ''}`],
+  ])
+
   const summary = `
     <p class="body">
       Session <b>${s.sequence_no}</b> of the TeamUp cycle was ${s.status === 'completed' ? 'completed' : 'held'} with
@@ -185,7 +213,7 @@ export function buildSessionReport(detail: TeamUpSessionDetail, header: ReportHe
     <h2 class="section">1.&nbsp;&nbsp;Attendance</h2>${attendance}
     <hr class="rule" />
     <h2 class="section">2.&nbsp;&nbsp;Session Conducted</h2>
-    ${[objectives, activities, thumbs, observations, protection, followUp].filter(Boolean).join('\n') || '<p class="body">No session details were recorded.</p>'}
+    ${conductedHtml}
     <hr class="rule" />
     <h2 class="section">3.&nbsp;&nbsp;Summary</h2>${summary}
     <hr class="rule" />
@@ -255,5 +283,148 @@ export function buildGroupReport(report: TeamUpGroupReport, sessions: TeamUpSess
     <h2 class="section">4.&nbsp;&nbsp;Sessions Held</h2>${sessionsTable}
     <hr class="rule" />
     <p class="signoff">Prepared by <b>${esc(facilitators)}</b>&nbsp;&nbsp;on ${esc(formatDateLong(new Date().toISOString().slice(0, 10)))}.</p>
+  `)
+}
+
+export interface PeriodReportOptions {
+  /** Shown in "From" and the sign-off. */
+  preparedBy: string
+  /** True when the report covers only the preparer's own sessions. */
+  mine: boolean
+}
+
+function periodMeta(details: TeamUpSessionDetail[], opts: PeriodReportOptions, dateRows: Array<[string, string]>) {
+  const locations = unique(details.map(d => d.group.service_point_name ?? ''))
+  return metaBlock([
+    ['To', 'Programme Officer / Supervisor'],
+    ['From', `${opts.preparedBy}${opts.mine ? ' (Facilitator)' : ''}`],
+    ...dateRows,
+    ['Location', locations.join(', ') || '—'],
+    ['Groups', unique(details.map(groupLabel)).join(', ') || '—'],
+  ])
+}
+
+/** Every TeamUp session held on one day — the TeamUp daily facilitator report. */
+export function buildDailyReport(details: TeamUpSessionDetail[], date: string, header: ReportHeader, opts: PeriodReportOptions): string {
+  const parts = details.map(sessionParts)
+  const present = parts.reduce((n, p) => n + p.present.length, 0)
+  const girls = parts.reduce((n, p) => n + p.girls, 0)
+  const enrolled = details.reduce((n, d) => n + d.roster.length, 0)
+  const uniquePresent = new Set(parts.flatMap(p => p.present.map(e => e.beneficiary_id))).size
+  const flags = details.reduce((n, d) => n + (d.session.flags?.length ?? 0), 0)
+
+  const overview = details.length === 0
+    ? '<p class="body"><i>No TeamUp sessions were recorded for this date.</i></p>'
+    : `<p class="body">
+         <b>${plural(details.length, 'TeamUp session was', 'TeamUp sessions were')}</b> held today.
+         <b>${present}</b> of <b>${enrolled}</b> enrolled children attended
+         (<b>${girls}</b> ${girls === 1 ? 'girl' : 'girls'}, <b>${present - girls}</b> ${present - girls === 1 ? 'boy' : 'boys'};
+         <b>${uniquePresent}</b> different ${uniquePresent === 1 ? 'child' : 'children'}).
+       </p>`
+
+  const sessionsHtml = details.map((d, i) => `
+    <h3 class="session">${i + 1}.&nbsp;&nbsp;${esc(groupLabel(d))} — ${esc(sessionLabel(d))}</h3>
+    <p class="byline">Facilitated by:&nbsp; ${esc(d.session.facilitator_name ?? '')}</p>
+    ${parts[i]!.attendanceHtml}
+    ${parts[i]!.conductedHtml}
+    ${i < details.length - 1 ? '<hr class="rule" />' : ''}`).join('\n')
+
+  const summary = `<p class="body">
+      ${details.length ? `We delivered <b>${plural(details.length, 'session', 'sessions')}</b> and reached <b>${plural(uniquePresent, 'child', 'children')}</b>.` : ''}
+      ${flags ? `<b>${plural(flags, 'child was', 'children were')}</b> flagged for child-protection follow-up.` : 'No children were flagged for protection follow-up.'}
+    </p>`
+
+  return wrap(`TeamUp Daily Report — ${formatDateLong(date)}`, `
+    ${letterhead('TeamUp Daily Facilitator Report', header)}
+    <hr class="rule" />${periodMeta(details, opts, [['Date', formatDateLong(date)]])}<hr class="rule" />
+    <h2 class="section">1.&nbsp;&nbsp;Attendance</h2>${overview}
+    <hr class="rule" />
+    <h2 class="section">2.&nbsp;&nbsp;Sessions Conducted</h2>
+    ${sessionsHtml || '<p class="body">No sessions were recorded for this date.</p>'}
+    <hr class="rule" />
+    <h2 class="section">3.&nbsp;&nbsp;Day Summary</h2>${summary}
+    <hr class="rule" />
+    <p class="signoff">Submitted by <b>${esc(opts.preparedBy)}</b>&nbsp;&nbsp;on ${esc(formatDateLong(date))}.</p>
+  `)
+}
+
+/** A week of TeamUp sessions — summary tables instead of every session in full. */
+export function buildWeeklyReport(details: TeamUpSessionDetail[], from: string, to: string, header: ReportHeader, opts: PeriodReportOptions): string {
+  const parts = details.map(sessionParts)
+  const present = parts.reduce((n, p) => n + p.present.length, 0)
+  const marked = parts.reduce((n, p) => n + p.present.length + p.absent.length + p.excused.length, 0)
+  const presentIds = new Set(parts.flatMap(p => p.present.map(e => e.beneficiary_id)))
+  const girlsReached = new Set(parts.flatMap(p => p.present.filter(e => isGirl(e.sex)).map(e => e.beneficiary_id))).size
+  const rate = marked ? Math.round((present / marked) * 100) : 0
+  const flags = details.reduce((n, d) => n + (d.session.flags?.length ?? 0), 0)
+  const period = `${formatDateLong(from)} – ${formatDateLong(to)}`
+
+  const glance = details.length === 0
+    ? '<p class="body"><i>No TeamUp sessions were recorded this week.</i></p>'
+    : `<p class="body">
+         <b>${plural(details.length, 'session was', 'sessions were')}</b> held with
+         <b>${plural(unique(details.map(d => d.group.id)).length, 'group', 'groups')}</b>, reaching
+         <b>${plural(presentIds.size, 'child', 'children')}</b> (<b>${girlsReached}</b> ${girlsReached === 1 ? 'girl' : 'girls'},
+         <b>${presentIds.size - girlsReached}</b> ${presentIds.size - girlsReached === 1 ? 'boy' : 'boys'}).
+         Attendance was <b>${rate}%</b> of children expected.
+         ${flags ? `<b>${plural(flags, 'child was', 'children were')}</b> flagged for child-protection follow-up.` : 'No children were flagged for protection follow-up.'}
+       </p>`
+
+  const sessionRows = details.map((d, i) => `<tr>
+      <td>${esc(formatDateLong(d.session.session_date))}</td><td>${esc(groupLabel(d))}</td>
+      <td>${d.session.sequence_no}</td><td>${esc(d.session.module_name ?? '')}</td>
+      <td>${parts[i]!.present.length} / ${d.roster.length}</td><td>${esc(d.session.facilitator_name ?? '')}</td></tr>`).join('')
+  const sessionsTable = details.length
+    ? `<table class="grid"><tr><th>Date</th><th>Group</th><th>#</th><th>Module</th><th>Present</th><th>Facilitator</th></tr>${sessionRows}</table>`
+    : ''
+
+  // Group progress: sessions this week and overall position in the curriculum.
+  const byGroup = new Map<string, { d: TeamUpSessionDetail; count: number; present: number; marked: number }>()
+  details.forEach((d, i) => {
+    const row = byGroup.get(d.group.id) ?? { d, count: 0, present: 0, marked: 0 }
+    row.count++
+    row.present += parts[i]!.present.length
+    row.marked += parts[i]!.present.length + parts[i]!.absent.length + parts[i]!.excused.length
+    if (d.session.sequence_no > row.d.session.sequence_no) row.d = d
+    byGroup.set(d.group.id, row)
+  })
+  const groupRows = [...byGroup.values()].map(r => `<tr>
+      <td>${esc(groupLabel(r.d))}</td><td>${esc(r.d.group.service_point_name ?? '')}</td><td>${r.count}</td>
+      <td>${r.d.session.sequence_no} of ${r.d.group.total_sessions || 20}</td>
+      <td>${r.marked ? Math.round((r.present / r.marked) * 100) : 0}%</td></tr>`).join('')
+  const groupsTable = groupRows
+    ? `<table class="grid"><tr><th>Group</th><th>Location</th><th>Sessions this week</th><th>Reached session</th><th>Attendance</th></tr>${groupRows}</table>`
+    : ''
+
+  // Children enrolled in a group that met this week but who missed every session.
+  const followUps: string[] = []
+  for (const r of byGroup.values()) {
+    const groupSessions = details.filter(d => d.group.id === r.d.group.id)
+    const missedAll = r.d.roster.filter(e => groupSessions.every(gs =>
+      (gs.session.attendance ?? []).find(a => a.beneficiary_id === e.beneficiary_id)?.status !== 'present'))
+    if (missedAll.length) {
+      followUps.push(`<p class="bullet">-&nbsp;&nbsp;<b>${esc(r.d.group.name)}:</b> ${missedAll.map(e => esc(e.beneficiary_name)).join(', ')} — missed every session this week</p>`)
+    }
+  }
+  details.forEach(d => {
+    if (d.session.follow_up) followUps.push(`<p class="bullet">-&nbsp;&nbsp;<b>${esc(d.group.name)}, session ${d.session.sequence_no}:</b> ${esc(d.session.follow_up)}</p>`)
+  })
+  const observations = details.filter(d => d.session.key_observations)
+    .map(d => `<p class="bullet">-&nbsp;&nbsp;<b>${esc(d.group.name)}, session ${d.session.sequence_no}:</b> ${nl2br(d.session.key_observations!)}</p>`).join('')
+
+  return wrap(`TeamUp Weekly Report — ${period}`, `
+    ${letterhead('TeamUp Weekly Facilitator Report', header)}
+    <hr class="rule" />${periodMeta(details, opts, [['Week', period]])}<hr class="rule" />
+    <h2 class="section">1.&nbsp;&nbsp;Week at a Glance</h2>${glance}
+    <hr class="rule" />
+    <h2 class="section">2.&nbsp;&nbsp;Sessions Held</h2>${sessionsTable || '<p class="body">No sessions were recorded this week.</p>'}
+    <hr class="rule" />
+    <h2 class="section">3.&nbsp;&nbsp;Group Progress</h2>${groupsTable || '<p class="body">No group met this week.</p>'}
+    <hr class="rule" />
+    <h2 class="section">4.&nbsp;&nbsp;Children to Follow Up</h2>${followUps.join('') || '<p class="body">No follow-ups this week.</p>'}
+    <hr class="rule" />
+    <h2 class="section">5.&nbsp;&nbsp;Key Observations</h2>${observations || '<p class="body">No observations were recorded.</p>'}
+    <hr class="rule" />
+    <p class="signoff">Submitted by <b>${esc(opts.preparedBy)}</b>&nbsp;&nbsp;for the week ${esc(period)}.</p>
   `)
 }

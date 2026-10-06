@@ -4,6 +4,7 @@ import type {
   CreateTeamUpGroupRequest,
   EligibleBeneficiary,
   StartTeamUpSessionRequest,
+  TeamUpDashboard,
   TeamUpAttendance,
   TeamUpCurriculum,
   TeamUpEnrollResult,
@@ -114,10 +115,23 @@ export const teamupApi = {
   completeSession: (id: string, payload: UpdateTeamUpSessionRequest) =>
     request<TeamUpSession>(`${BASE_URL}/sessions/${id}/complete`, { method: 'PATCH', body: json(payload) }),
 
-  downloadExcel: (params: { groupId?: string; cfsLocationId?: string } = {}) => {
+  listSessions: (params: { from: string; to: string; mine?: boolean; frameworkActivityId?: string }) => {
+    const qs = new URLSearchParams({ from: params.from, to: params.to })
+    if (params.mine) qs.set('mine', '1')
+    if (params.frameworkActivityId) qs.set('framework_activity_id', params.frameworkActivityId)
+    return request<TeamUpSessionDetail[]>(`${BASE_URL}/sessions?${qs.toString()}`)
+  },
+
+  getDashboard: (frameworkActivityId: string, cfsLocationId?: string) =>
+    request<TeamUpDashboard>(
+      `${BASE_URL}/dashboard/${frameworkActivityId}${cfsLocationId ? `?cfs_location_id=${cfsLocationId}` : ''}`,
+    ),
+
+  downloadExcel: (params: { groupId?: string; cfsLocationId?: string; frameworkActivityId?: string } = {}) => {
     const qs = new URLSearchParams()
     if (params.groupId) qs.set('group_id', params.groupId)
     if (params.cfsLocationId) qs.set('cfs_location_id', params.cfsLocationId)
+    if (params.frameworkActivityId) qs.set('framework_activity_id', params.frameworkActivityId)
     const q = qs.toString()
     return download(`${BASE_URL}/export${q ? `?${q}` : ''}`, 'TeamUp_Attendance.xlsx')
   },
@@ -130,6 +144,16 @@ export const teamupApi = {
 export function isTeamUpActivity(a: { module?: string | null; activity_code?: string; code?: string; template?: { code?: string } | null }): boolean {
   return a.module === 'teamup' || (a.template?.code ?? a.activity_code ?? a.code) === 'TEAMUP'
 }
+
+/**
+ * Roles allowed to download activity databases (Excel). Facilitators and other
+ * field roles use Word reports instead. Mirrors dataExportRoles in the API.
+ */
+export const DATA_EXPORT_ROLES = ['org_admin', 'program_manager', 'data_manager']
+export const canDownloadData = (role?: string | null) => !!role && DATA_EXPORT_ROLES.includes(role)
+
+/** Download any authenticated file endpoint (used for the project workbook). */
+export const downloadFile = (url: string, fallbackName: string) => download(url, fallbackName)
 
 export const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 

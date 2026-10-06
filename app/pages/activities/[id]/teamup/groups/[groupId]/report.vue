@@ -63,7 +63,7 @@
         </div>
         <span class="tu-muted">Date = attended · X = absent · E = excused. The Excel register shows E as X (missed).</span>
 
-        <div class="tu-card tu-no-print">
+        <div v-if="canExport" class="tu-card tu-no-print">
           <strong style="font-size: 0.88rem">The Excel attendance register includes</strong>
           <span class="tu-muted">
             Month · Name · Gender · Age · Language · Disability · Caregiver · Contact · Location · Group ·
@@ -76,7 +76,7 @@
             <AppIcon name="file-text" :size="16" />
             {{ preparingWord ? 'Preparing…' : 'Download Word report' }}
           </button>
-          <button type="button" class="tu-btn tu-btn--ghost" :disabled="downloading" @click="download">
+          <button v-if="canExport" type="button" class="tu-btn tu-btn--ghost" :disabled="downloading" @click="download">
             <AppIcon name="download" :size="16" />
             {{ downloading ? 'Preparing…' : 'Download Excel' }}
           </button>
@@ -96,7 +96,8 @@
 import AppIcon from '../../../../../../components/interfaces/AppIcon.vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { teamupApi } from '../../../../../../services/teamupApi'
+import { canDownloadData, teamupApi } from '../../../../../../services/teamupApi'
+import { useAuthStore } from '../../../../../../stores/auth'
 import { loadReportHeader } from '../../../../../../composables/useTeamUpHelpers'
 import { buildGroupReport, downloadDoc } from '../../../../../../utils/teamupWordReport'
 import type { TeamUpGroupReport } from '../../../../../../interfaces/teamup'
@@ -107,6 +108,7 @@ const route = useRoute()
 const frameworkId = route.params.id as string
 const groupId = route.params.groupId as string
 const groupUrl = `/activities/${frameworkId}/teamup/groups/${groupId}`
+const canExport = computed(() => canDownloadData(useAuthStore().userRole))
 const justDone = computed(() => (route.query.done as string) || '')
 
 const report = ref<TeamUpGroupReport | null>(null)

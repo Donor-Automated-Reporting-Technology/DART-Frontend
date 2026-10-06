@@ -236,3 +236,68 @@ export interface EligibleBeneficiary {
   language: string
   disability_status: string
 }
+
+// ─── Activity dashboard — GET /api/v1/teamup/dashboard/:frameworkActivityId ───
+
+export interface TeamUpDashboard {
+  activity: { id: string; framework_id: string; name: string; code: string; target_count: number; target_unit: string }
+  scope_location?: string
+  total_sessions: number
+  min_dosage: number
+  summary: {
+    children: number
+    girls: number
+    boys: number
+    with_disability: number
+    target_percentage: number
+    active_groups: number
+    completed_groups: number
+    sessions_held: number
+    attendance_rate: number
+    avg_sessions_per_child: number
+    reached_min_dosage: number
+    at_risk: number
+    dropped: number
+    flagged_children: number
+  }
+  dosage: { label: string; count: number }[]
+  wellbeing: { sessions_counted: number; checkin_good_pct: number; checkout_good_pct: number; checkin_bad_pct: number; checkout_bad_pct: number }
+  scores: { children_with_both: number; avg_baseline: number; avg_endline: number; avg_change: number; improved: number }
+  by_location: {
+    location_id: string
+    location_name: string
+    groups: number
+    children: number
+    girls: number
+    boys: number
+    sessions_held: number
+    attendance_rate: number
+    reached_min_dosage: number
+  }[]
+  groups: {
+    id: string
+    name: string
+    location_name: string
+    age_band?: string
+    status: string
+    enrolled: number
+    sessions_completed: number
+    total_sessions: number
+    attendance_rate: number
+    at_risk: number
+    dropped: number
+  }[]
+  recent_sessions: {
+    id: string
+    group_id: string
+    group_name: string
+    location_name: string
+    sequence_no: number
+    module_name: string
+    date: string
+    facilitator_name?: string
+    present: number
+    marked: number
+    status: string
+  }[]
+}

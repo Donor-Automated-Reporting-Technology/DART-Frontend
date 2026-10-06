@@ -152,6 +152,7 @@ export const FUTURE_ACTIVITIES: Record<string, ActivityConfigEntry> = {
  */
 export const ACTIVITY_MODULE_DASHBOARD_BASE: Record<string, string> = {
   pss: '/dashboard/activities',
+  teamup: '/dashboard/teamup',
 }
 
 /**
