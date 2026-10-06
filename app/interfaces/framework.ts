@@ -75,7 +75,7 @@ export interface FrameworkActivity {
   created_at: string
   updated_at: string
   template?: ActivityTemplate
-  /** Platform module that owns a hand-entered activity (currently only 'pss'). */
+  /** Platform module that owns a hand-entered activity ('pss' or 'teamup'). */
   module?: string | null
   /** True when the activity was entered by hand rather than from a template. */
   is_custom?: boolean

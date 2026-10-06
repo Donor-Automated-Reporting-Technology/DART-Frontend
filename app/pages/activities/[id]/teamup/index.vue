@@ -4,7 +4,9 @@
       <div class="tu-header">
         <div>
           <h1 class="tu-title">TeamUp Hub</h1>
-          <p class="tu-subtitle">Run TeamUp groups through the 20-session curriculum and report to DRA.</p>
+          <p class="tu-subtitle">
+            <template v-if="activityName">{{ activityName }} · </template>Run TeamUp groups through the 20-session curriculum and report to DRA.
+          </p>
         </div>
         <NuxtLink :to="`/activities/${frameworkId}`" class="tu-btn tu-btn--ghost">
           <AppIcon name="arrow-left" :size="14" />
@@ -65,7 +67,8 @@
           </button>
         </div>
         <p v-if="!frameworkActivityId" class="tu-muted">
-          TeamUp is not switched on for this project. Turn it on in Settings → Framework first.
+          This project has no TeamUp activity yet. In Settings → Projects, open the logframe output and use
+          “Add activity” with the <strong>TeamUp</strong> module.
         </p>
       </template>
     </div>
@@ -76,7 +79,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { frameworkApi } from '../../../../services/frameworkApi'
-import { teamupApi, WEEKDAYS } from '../../../../services/teamupApi'
+import { isTeamUpActivity, teamupApi, WEEKDAYS } from '../../../../services/teamupApi'
 import type { TeamUpGroup } from '../../../../interfaces/teamup'
 
 definePageMeta({ layout: false, middleware: ['auth'] })
@@ -95,6 +98,7 @@ const downloading = ref(false)
 const error = ref<string | null>(null)
 const groups = ref<TeamUpGroup[]>([])
 const frameworkActivityId = ref<string | null>(null)
+const activityName = ref('')
 
 function progress(g: TeamUpGroup) {
   return g.total_sessions ? Math.round((g.sessions_completed / g.total_sessions) * 100) : 0
@@ -119,14 +123,13 @@ async function downloadAll() {
 
 onMounted(async () => {
   try {
-    const [acts, list] = await Promise.all([
-      frameworkApi.getActivities(frameworkId),
-      teamupApi.listGroups(),
-    ])
-    const raw: any[] = (acts as any).activities ?? []
-    const teamup = raw.find(a => (a.template?.code ?? a.activity_code ?? a.code) === 'TEAMUP')
-    frameworkActivityId.value = teamup?.id ?? null
-    groups.value = list ?? []
+    const raw: any[] = ((await frameworkApi.getActivities(frameworkId)) as any).activities ?? []
+    const teamupActs = raw.filter(isTeamUpActivity)
+    // Prefer the activity the user opened (?fa=); otherwise the project's first TeamUp activity.
+    const chosen = teamupActs.find(a => a.id === route.query.fa) ?? teamupActs[0]
+    frameworkActivityId.value = chosen?.id ?? null
+    activityName.value = chosen?.activity_name ?? chosen?.template?.name ?? ''
+    groups.value = chosen ? await teamupApi.listGroups({ frameworkActivityId: chosen.id }) : []
   } catch (e: any) {
     error.value = e?.message ?? 'Failed to load TeamUp groups'
   } finally {

@@ -224,7 +224,7 @@ const session = computed(() => detail.value?.session ?? null)
 const groupUrl = computed(() => `/activities/${frameworkId}/teamup/groups/${detail.value?.group.id ?? ''}`)
 
 const breadcrumbs = computed(() => [
-  { title: 'TeamUp', href: `/activities/${frameworkId}/teamup` },
+  { title: 'TeamUp', href: `/activities/${frameworkId}/teamup${detail.value?.group.framework_activity_id ? `?fa=${detail.value?.group.framework_activity_id}` : ''}` },
   { title: detail.value?.group.name ?? 'Group', href: groupUrl.value },
   { title: `Session ${session.value?.sequence_no ?? ''}`, href: route.fullPath, current: true },
 ])

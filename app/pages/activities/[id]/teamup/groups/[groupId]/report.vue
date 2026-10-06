@@ -108,7 +108,7 @@ const downloading = ref(false)
 const error = ref<string | null>(null)
 
 const breadcrumbs = computed(() => [
-  { title: 'TeamUp', href: `/activities/${frameworkId}/teamup` },
+  { title: 'TeamUp', href: `/activities/${frameworkId}/teamup${report.value?.group.framework_activity_id ? `?fa=${report.value?.group.framework_activity_id}` : ''}` },
   { title: report.value?.group.name ?? 'Group', href: groupUrl },
   { title: 'Report', href: route.fullPath, current: true },
 ])

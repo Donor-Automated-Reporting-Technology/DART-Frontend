@@ -96,7 +96,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../../../stores/auth'
 import { frameworkApi } from '../../../../services/frameworkApi'
 import { locationApi } from '../../../../services/locationApi'
-import { teamupApi, todayISO, WEEKDAYS } from '../../../../services/teamupApi'
+import { isTeamUpActivity, teamupApi, todayISO, WEEKDAYS } from '../../../../services/teamupApi'
 import type { AgeBand, TeamUpCurriculum } from '../../../../interfaces/teamup'
 
 definePageMeta({ layout: false, middleware: ['auth'] })
@@ -111,7 +111,7 @@ const isAdmin = computed(() => auth.userRole === 'org_admin')
 
 const breadcrumbs = computed(() => [
   { title: 'Projects', href: '/activities' },
-  { title: 'TeamUp', href: `/activities/${frameworkId}/teamup` },
+  { title: 'TeamUp', href: `/activities/${frameworkId}/teamup${route.query.fa ? `?fa=${route.query.fa}` : ''}` },
   { title: 'New group', href: route.fullPath, current: true },
 ])
 
@@ -170,7 +170,7 @@ onMounted(async () => {
     curriculum.value = await teamupApi.getCurriculum()
     if (!frameworkActivityId.value) {
       const acts: any[] = ((await frameworkApi.getActivities(frameworkId)) as any).activities ?? []
-      frameworkActivityId.value = acts.find(a => (a.template?.code ?? a.activity_code ?? a.code) === 'TEAMUP')?.id ?? ''
+      frameworkActivityId.value = acts.find(isTeamUpActivity)?.id ?? ''
     }
     if (isAdmin.value) {
       const res = await locationApi.listLocations()

@@ -12,7 +12,7 @@
               {{ activeCount }} enrolled · {{ completedCount }} of {{ curriculumSessions.length }} sessions done
             </p>
           </div>
-          <NuxtLink :to="`/activities/${frameworkId}/teamup`" class="tu-btn tu-btn--ghost">
+          <NuxtLink :to="hubUrl" class="tu-btn tu-btn--ghost">
             <AppIcon name="arrow-left" :size="14" />
             Hub
           </NuxtLink>
@@ -195,8 +195,10 @@ const curriculum = ref<TeamUpCurriculum | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 
+const hubUrl = computed(() => `/activities/${frameworkId}/teamup${detail.value?.group.framework_activity_id ? `?fa=${detail.value?.group.framework_activity_id}` : ''}`)
+
 const breadcrumbs = computed(() => [
-  { title: 'TeamUp', href: `/activities/${frameworkId}/teamup` },
+  { title: 'TeamUp', href: hubUrl.value },
   { title: detail.value?.group.name ?? 'Group', href: groupUrl, current: true },
 ])
 

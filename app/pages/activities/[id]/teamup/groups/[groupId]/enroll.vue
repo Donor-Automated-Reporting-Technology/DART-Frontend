@@ -77,7 +77,7 @@ const groupId = route.params.groupId as string
 const groupUrl = `/activities/${frameworkId}/teamup/groups/${groupId}`
 
 const breadcrumbs = computed(() => [
-  { title: 'TeamUp', href: `/activities/${frameworkId}/teamup` },
+  { title: 'TeamUp', href: `/activities/${frameworkId}/teamup${group.value?.framework_activity_id ? `?fa=${group.value?.framework_activity_id}` : ''}` },
   { title: group.value?.name ?? 'Group', href: groupUrl },
   { title: 'Enroll', href: route.fullPath, current: true },
 ])

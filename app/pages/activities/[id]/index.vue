@@ -81,6 +81,7 @@
 </template>
 
 <script setup lang="ts">
+import { isTeamUpActivity } from '../../../services/teamupApi'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { frameworkApi } from '../../../services/frameworkApi'
@@ -160,9 +161,11 @@ function activityRoute(a: FrameworkActivity): string {
   //   4. Framework-type safety net: in MVP the ONLY active activity for a
   //      child_protection framework is PSS, so route anything in a CP
   //      project straight to /pss instead of the generic detail page.
-  // TeamUp has its own hub (closed groups + 20-session curriculum).
-  if (a.template?.code === 'TEAMUP') {
-    return `/activities/${frameworkId}/teamup`
+  // TeamUp has its own hub (closed groups + 20-session curriculum), whether
+  // the activity came from the TEAMUP template or was added from the logframe
+  // with the TeamUp module.
+  if (isTeamUpActivity({ ...a, activity_code: a.template?.code })) {
+    return `/activities/${frameworkId}/teamup?fa=${a.id}`
   }
   if (
     isPssActivityCode(a.template?.code) ||
@@ -194,6 +197,7 @@ async function fetchProject() {
       target_count: item.target_count ?? 0,
       target_unit: item.target_unit ?? 'children',
       custom_config: item.custom_config ?? item.default_config ?? null,
+      module: item.module ?? null,
       created_at: item.created_at ?? '',
       updated_at: item.updated_at ?? '',
       template: item.template ?? {

@@ -71,8 +71,13 @@ const json = (body: unknown) => JSON.stringify(body)
 export const teamupApi = {
   getCurriculum: () => request<TeamUpCurriculum>(`${BASE_URL}/curriculum`),
 
-  listGroups: (cfsLocationId?: string) =>
-    request<TeamUpGroup[]>(`${BASE_URL}/groups${cfsLocationId ? `?cfs_location_id=${cfsLocationId}` : ''}`),
+  listGroups: (params: { cfsLocationId?: string; frameworkActivityId?: string } = {}) => {
+    const qs = new URLSearchParams()
+    if (params.cfsLocationId) qs.set('cfs_location_id', params.cfsLocationId)
+    if (params.frameworkActivityId) qs.set('framework_activity_id', params.frameworkActivityId)
+    const q = qs.toString()
+    return request<TeamUpGroup[]>(`${BASE_URL}/groups${q ? `?${q}` : ''}`)
+  },
   createGroup: (payload: CreateTeamUpGroupRequest) =>
     request<TeamUpGroup>(`${BASE_URL}/groups`, { method: 'POST', body: json(payload) }),
   getGroup: (id: string) => request<TeamUpGroupDetail>(`${BASE_URL}/groups/${id}`),
@@ -116,6 +121,14 @@ export const teamupApi = {
     const q = qs.toString()
     return download(`${BASE_URL}/export${q ? `?${q}` : ''}`, 'TeamUp_DRA.xlsx')
   },
+}
+
+/**
+ * A project activity is TeamUp when it was added from the logframe with the
+ * TeamUp module, or created from the TEAMUP template.
+ */
+export function isTeamUpActivity(a: { module?: string | null; activity_code?: string; code?: string; template?: { code?: string } | null }): boolean {
+  return a.module === 'teamup' || (a.template?.code ?? a.activity_code ?? a.code) === 'TEAMUP'
 }
 
 export const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
