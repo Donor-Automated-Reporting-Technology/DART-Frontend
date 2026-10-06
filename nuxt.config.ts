@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   ssr: false,
   modules: ['@pinia/nuxt', '@vite-pwa/nuxt'],
-  css: ['~/assets/css/main.css', '~/assets/css/project-settings.css', '~/assets/css/project-dashboard.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/project-settings.css', '~/assets/css/project-dashboard.css', '~/assets/css/teamup.css'],
   nitro: {
     prerender: {
       routes: ['/'],

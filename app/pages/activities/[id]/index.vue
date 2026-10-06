@@ -160,6 +160,10 @@ function activityRoute(a: FrameworkActivity): string {
   //   4. Framework-type safety net: in MVP the ONLY active activity for a
   //      child_protection framework is PSS, so route anything in a CP
   //      project straight to /pss instead of the generic detail page.
+  // TeamUp has its own hub (closed groups + 20-session curriculum).
+  if (a.template?.code === 'TEAMUP') {
+    return `/activities/${frameworkId}/teamup`
+  }
   if (
     isPssActivityCode(a.template?.code) ||
     isPssActivityName(a.template?.name) ||

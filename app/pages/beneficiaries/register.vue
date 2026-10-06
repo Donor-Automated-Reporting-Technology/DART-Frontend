@@ -87,6 +87,7 @@
                   { value: 'English', label: 'English' },
                   { value: 'Dinka', label: 'Dinka' },
                   { value: 'Nuer', label: 'Nuer' },
+                  { value: 'Shilluk', label: 'Shilluk' },
                   { value: 'Other', label: 'Other' },
                 ]"
               />
