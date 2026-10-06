@@ -131,3 +131,7 @@ button.tu-list-item:focus-visible { outline: 2px solid var(--primary); outline-o
   .tu-no-print { display: none !important; }
   .tu-grid-wrap { overflow: visible; border: none; }
 }
+
+/* Pager */
+.tu-pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tu-pager .tu-btn { min-width: 44px; padding: 0 12px; }

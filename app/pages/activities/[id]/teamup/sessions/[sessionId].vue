@@ -36,9 +36,13 @@
             <span v-if="session!.key_observations"><strong>Observations:</strong> {{ session!.key_observations }}</span>
             <span v-if="session!.follow_up"><strong>Follow-up:</strong> {{ session!.follow_up }}</span>
           </div>
+          <button type="button" class="tu-btn tu-btn--block" :disabled="preparingWord" @click="downloadSessionWord">
+            <AppIcon name="file-text" :size="16" />
+            {{ preparingWord ? 'Preparing…' : 'Download Word report' }}
+          </button>
           <div class="tu-actions">
             <NuxtLink :to="groupUrl" class="tu-btn tu-btn--ghost">Back to group</NuxtLink>
-            <NuxtLink :to="`${groupUrl}/report`" class="tu-btn">Group report</NuxtLink>
+            <NuxtLink :to="`${groupUrl}/report`" class="tu-btn tu-btn--ghost">Group report</NuxtLink>
           </div>
         </template>
 
@@ -64,10 +68,11 @@
               <div class="tu-kpi"><strong>{{ counts.unmarked }}</strong>Not marked</div>
             </div>
             <button type="button" class="tu-btn tu-btn--ghost" :disabled="counts.unmarked === 0" @click="markRestPresent">
-              Mark everyone not marked as present
+              Mark everyone not marked as present (all pages)
             </button>
+            <TeamupPager v-model:page="attPage" :page-count="attPageCount" :total="detail.roster.length" label="Attendance pages" />
             <div class="tu-list">
-              <div v-for="e in detail.roster" :key="e.beneficiary_id" class="tu-list-item">
+              <div v-for="e in attPageItems" :key="e.beneficiary_id" class="tu-list-item">
                 <span style="flex: 1; display: flex; flex-direction: column; gap: 2px">
                   <span class="tu-name">{{ e.beneficiary_name }}</span>
                   <span v-if="dosage[e.beneficiary_id]" class="tu-muted">
@@ -84,9 +89,13 @@
                 </div>
               </div>
             </div>
+            <TeamupPager v-model:page="attPage" :page-count="attPageCount" :total="detail.roster.length" label="Attendance pages" />
             <span class="tu-muted">P = present · A = absent · E = excused (sick, moved, school exam…)</span>
-            <button type="button" class="tu-btn tu-btn--block" :disabled="saving || counts.unmarked > 0" @click="saveAttendance">
-              {{ saving ? 'Saving…' : counts.unmarked > 0 ? `Mark ${counts.unmarked} more children` : 'Save attendance · Check-in' }}
+            <button v-if="counts.unmarked > 0" type="button" class="tu-btn tu-btn--block tu-btn--ghost" @click="goToFirstUnmarked">
+              Go to the {{ counts.unmarked }} children not marked yet
+            </button>
+            <button v-else type="button" class="tu-btn tu-btn--block" :disabled="saving" @click="saveAttendance">
+              {{ saving ? 'Saving…' : 'Save attendance · Check-in' }}
             </button>
           </template>
 
@@ -198,10 +207,13 @@
 </template>
 
 <script setup lang="ts">
+import AppIcon from '../../../../../components/interfaces/AppIcon.vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { v4 as uuidv4 } from 'uuid'
 import { BLOCK_LABELS, teamupApi } from '../../../../../services/teamupApi'
+import { loadReportHeader, usePagination } from '../../../../../composables/useTeamUpHelpers'
+import { buildSessionReport, downloadDoc } from '../../../../../utils/teamupWordReport'
 import type {
   AttendanceStatus,
   TeamUpCurriculum,
@@ -251,6 +263,27 @@ const counts = computed(() => {
 })
 
 const thumbTotal = (t: Thumbs) => t.good + t.ok + t.bad
+
+/* ── Attendance pagination ── */
+const roster = computed(() => detail.value?.roster ?? [])
+const { page: attPage, pageCount: attPageCount, pageItems: attPageItems, goToFirst } = usePagination(roster)
+function goToFirstUnmarked() {
+  goToFirst(e => !marks.value[e.beneficiary_id])
+}
+
+/* ── Word report ── */
+const preparingWord = ref(false)
+async function downloadSessionWord() {
+  if (!detail.value) return
+  preparingWord.value = true
+  try {
+    const header = await loadReportHeader(frameworkId, detail.value.group.framework_activity_id)
+    const html = buildSessionReport(detail.value, header)
+    downloadDoc(html, `teamup-${detail.value.group.name}-session-${detail.value.session.sequence_no}.doc`.replace(/\s+/g, '-').toLowerCase())
+  } finally {
+    preparingWord.value = false
+  }
+}
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })

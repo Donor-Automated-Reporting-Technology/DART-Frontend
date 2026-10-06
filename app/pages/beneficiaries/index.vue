@@ -10,7 +10,7 @@
             <p class="page-subtitle">{{ list.total.value }} registered</p>
           </div>
           <div class="header-actions">
-            <button class="btn-secondary" @click="list.exportExcel" title="Export to Excel (includes the DRA TeamUP sheet)">
+            <button class="btn-secondary" @click="list.exportExcel" title="Export to Excel (includes the TeamUp attendance sheet)">
               <AppIcon name="download" :size="14" />
               <span class="btn-text">Export</span>
             </button>

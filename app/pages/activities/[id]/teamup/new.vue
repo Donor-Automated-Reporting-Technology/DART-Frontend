@@ -75,7 +75,7 @@
       <div class="tu-field">
         <span class="tu-field-label">Curriculum</span>
         <div class="tu-card tu-card--accent">
-          <strong>DRA TeamUp · 20 sessions</strong>
+          <strong>{{ curriculum?.name ?? 'TeamUp · 20 sessions' }}</strong>
           <span class="tu-muted">{{ moduleSummary }}</span>
         </div>
       </div>
@@ -91,6 +91,7 @@
 </template>
 
 <script setup lang="ts">
+import AppIcon from '../../../../components/interfaces/AppIcon.vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../../../stores/auth'

@@ -114,12 +114,12 @@ export const teamupApi = {
   completeSession: (id: string, payload: UpdateTeamUpSessionRequest) =>
     request<TeamUpSession>(`${BASE_URL}/sessions/${id}/complete`, { method: 'PATCH', body: json(payload) }),
 
-  downloadDRA: (params: { groupId?: string; cfsLocationId?: string } = {}) => {
+  downloadExcel: (params: { groupId?: string; cfsLocationId?: string } = {}) => {
     const qs = new URLSearchParams()
     if (params.groupId) qs.set('group_id', params.groupId)
     if (params.cfsLocationId) qs.set('cfs_location_id', params.cfsLocationId)
     const q = qs.toString()
-    return download(`${BASE_URL}/export${q ? `?${q}` : ''}`, 'TeamUp_DRA.xlsx')
+    return download(`${BASE_URL}/export${q ? `?${q}` : ''}`, 'TeamUp_Attendance.xlsx')
   },
 }
 

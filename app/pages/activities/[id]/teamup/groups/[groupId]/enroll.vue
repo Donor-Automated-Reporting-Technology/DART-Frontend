@@ -23,7 +23,7 @@
       <div class="tu-row">
         <strong>{{ selected.size }} selected</strong>
         <button type="button" class="tu-btn tu-btn--ghost" :disabled="filtered.length === 0" @click="selectAllInBand">
-          Select all aged {{ group?.age_band ?? '' }}
+          Select all aged {{ group?.age_band ?? '' }} (all pages)
         </button>
       </div>
 
@@ -32,9 +32,10 @@
         <strong>No children available</strong>
         <span class="tu-muted">Register children at this CFS first, or they may already be in a TeamUp group.</span>
       </div>
-      <div v-else class="tu-list">
+      <TeamupPager v-if="eligible.length" v-model:page="page" :page-count="pageCount" :total="filtered.length" label="Children pages" />
+      <div v-if="!loading && eligible.length" class="tu-list">
         <button
-          v-for="b in filtered"
+          v-for="b in pageItems"
           :key="b.id"
           type="button"
           class="tu-list-item"
@@ -52,6 +53,8 @@
         </button>
       </div>
 
+      <TeamupPager v-if="eligible.length" v-model:page="page" :page-count="pageCount" :total="filtered.length" label="Children pages" />
+
       <div class="tu-actions">
         <NuxtLink :to="groupUrl" class="tu-btn tu-btn--ghost">Skip for now</NuxtLink>
         <button type="button" class="tu-btn" :disabled="saving || selected.size === 0" @click="enroll">
@@ -63,9 +66,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import AppIcon from '../../../../../../components/interfaces/AppIcon.vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { teamupApi } from '../../../../../../services/teamupApi'
+import { usePagination } from '../../../../../../composables/useTeamUpHelpers'
 import type { EligibleBeneficiary, TeamUpGroup } from '../../../../../../interfaces/teamup'
 
 definePageMeta({ layout: false, middleware: ['auth'] })
@@ -99,6 +104,9 @@ const filtered = computed(() => {
   const q = search.value.trim().toLowerCase()
   return q ? eligible.value.filter(b => fullName(b).toLowerCase().includes(q)) : eligible.value
 })
+
+const { page, pageCount, pageItems } = usePagination(filtered)
+watch(search, () => { page.value = 1 })
 
 function inBand(age: number) {
   const band = group.value?.age_band

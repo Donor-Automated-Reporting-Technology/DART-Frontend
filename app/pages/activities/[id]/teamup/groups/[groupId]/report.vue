@@ -61,10 +61,10 @@
             </tbody>
           </table>
         </div>
-        <span class="tu-muted">Date = attended · X = absent · E = excused. The DRA sheet shows E as X (missed).</span>
+        <span class="tu-muted">Date = attended · X = absent · E = excused. The Excel register shows E as X (missed).</span>
 
         <div class="tu-card tu-no-print">
-          <strong style="font-size: 0.88rem">The DRA TeamUP sheet includes</strong>
+          <strong style="font-size: 0.88rem">The Excel attendance register includes</strong>
           <span class="tu-muted">
             Month · Name · Gender · Age · Language · Disability · Caregiver · Contact · Location · Group ·
             Sessions 1–20 (date or X) · Totals attended/missed · Baseline · Endline · Facilitators · Drop-out remark
@@ -72,9 +72,13 @@
         </div>
 
         <div class="tu-actions tu-no-print">
-          <button type="button" class="tu-btn" :disabled="downloading" @click="download">
+          <button type="button" class="tu-btn" :disabled="preparingWord" @click="downloadWord">
+            <AppIcon name="file-text" :size="16" />
+            {{ preparingWord ? 'Preparing…' : 'Download Word report' }}
+          </button>
+          <button type="button" class="tu-btn tu-btn--ghost" :disabled="downloading" @click="download">
             <AppIcon name="download" :size="16" />
-            {{ downloading ? 'Preparing…' : 'Download DRA Excel' }}
+            {{ downloading ? 'Preparing…' : 'Download Excel' }}
           </button>
           <button type="button" class="tu-btn tu-btn--ghost" @click="printPage">
             <AppIcon name="printer" :size="16" />
@@ -89,9 +93,12 @@
 </template>
 
 <script setup lang="ts">
+import AppIcon from '../../../../../../components/interfaces/AppIcon.vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { teamupApi } from '../../../../../../services/teamupApi'
+import { loadReportHeader } from '../../../../../../composables/useTeamUpHelpers'
+import { buildGroupReport, downloadDoc } from '../../../../../../utils/teamupWordReport'
 import type { TeamUpGroupReport } from '../../../../../../interfaces/teamup'
 
 definePageMeta({ layout: false, middleware: ['auth'] })
@@ -118,6 +125,25 @@ function shortDate(d?: string) {
   return d ? d.split('/').slice(0, 2).join('/') : ''
 }
 
+const preparingWord = ref(false)
+async function downloadWord() {
+  if (!report.value) return
+  preparingWord.value = true
+  error.value = null
+  try {
+    const [detail, header] = await Promise.all([
+      teamupApi.getGroup(groupId),
+      loadReportHeader(frameworkId, report.value.group.framework_activity_id),
+    ])
+    const html = buildGroupReport(report.value, detail.sessions, header)
+    downloadDoc(html, `teamup-${report.value.group.name}-progress-report.doc`.replace(/\s+/g, '-').toLowerCase())
+  } catch (e: any) {
+    error.value = e?.message ?? 'Could not prepare the Word report'
+  } finally {
+    preparingWord.value = false
+  }
+}
+
 function printPage() {
   window.print()
 }
@@ -126,7 +152,7 @@ async function download() {
   downloading.value = true
   error.value = null
   try {
-    await teamupApi.downloadDRA({ groupId })
+    await teamupApi.downloadExcel({ groupId })
   } catch (e: any) {
     error.value = e?.message ?? 'Download failed'
   } finally {

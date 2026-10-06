@@ -5,7 +5,7 @@
         <div>
           <h1 class="tu-title">TeamUp Hub</h1>
           <p class="tu-subtitle">
-            <template v-if="activityName">{{ activityName }} · </template>Run TeamUp groups through the 20-session curriculum and report to DRA.
+            <template v-if="activityName">{{ activityName }} · </template>Run TeamUp groups through the 20-session curriculum and report on them.
           </p>
         </div>
         <NuxtLink :to="`/activities/${frameworkId}`" class="tu-btn tu-btn--ghost">
@@ -63,7 +63,7 @@
           </NuxtLink>
           <button type="button" class="tu-btn tu-btn--ghost" :disabled="downloading || groups.length === 0" @click="downloadAll">
             <AppIcon name="download" :size="16" />
-            {{ downloading ? 'Preparing…' : 'Download DRA Excel (all groups)' }}
+            {{ downloading ? 'Preparing…' : 'Download Excel (all groups)' }}
           </button>
         </div>
         <p v-if="!frameworkActivityId" class="tu-muted">
@@ -76,6 +76,7 @@
 </template>
 
 <script setup lang="ts">
+import AppIcon from '../../../../components/interfaces/AppIcon.vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { frameworkApi } from '../../../../services/frameworkApi'
@@ -113,7 +114,7 @@ async function downloadAll() {
   downloading.value = true
   error.value = null
   try {
-    await teamupApi.downloadDRA()
+    await teamupApi.downloadExcel()
   } catch (e: any) {
     error.value = e?.message ?? 'Download failed'
   } finally {

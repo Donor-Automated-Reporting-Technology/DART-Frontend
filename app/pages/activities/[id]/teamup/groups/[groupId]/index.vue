@@ -74,8 +74,9 @@
             Enroll more
           </NuxtLink>
         </div>
+        <TeamupPager v-model:page="childPage" :page-count="childPageCount" :total="detail.enrollments.length" label="Children pages" />
         <div class="tu-list">
-          <div v-for="e in detail.enrollments" :key="e.id" class="tu-list-item">
+          <div v-for="e in childPageItems" :key="e.id" class="tu-list-item">
             <span style="flex: 1; display: flex; flex-direction: column">
               <span class="tu-name">{{ e.beneficiary_name }}</span>
               <span class="tu-muted">
@@ -95,7 +96,7 @@
         <div class="tu-actions">
           <NuxtLink :to="`${groupUrl}/report`" class="tu-btn tu-btn--ghost">
             <AppIcon name="bar-chart-2" :size="16" />
-            Group report &amp; DRA Excel
+            Group report · Word &amp; Excel
           </NuxtLink>
         </div>
       </template>
@@ -169,10 +170,12 @@
 </template>
 
 <script setup lang="ts">
+import AppIcon from '../../../../../../components/interfaces/AppIcon.vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { v4 as uuidv4 } from 'uuid'
 import { teamupApi, todayISO, WEEKDAYS } from '../../../../../../services/teamupApi'
+import { usePagination } from '../../../../../../composables/useTeamUpHelpers'
 import type {
   TeamUpCurriculum,
   TeamUpEnrollment,
@@ -209,6 +212,9 @@ const inProgress = computed(() => detail.value?.sessions.find(s => s.status === 
 const nextSession = computed(() =>
   detail.value?.next_session ? curriculumSessions.value[detail.value.next_session - 1] ?? null : null,
 )
+
+const enrollments = computed(() => detail.value?.enrollments ?? [])
+const { page: childPage, pageCount: childPageCount, pageItems: childPageItems } = usePagination(enrollments)
 
 const sessionsOfModule = (order: number) => curriculumSessions.value.filter(s => s.module_order === order)
 const sessionBySeq = (seq: number): TeamUpSession | undefined => detail.value?.sessions.find(s => s.sequence_no === seq)
