@@ -110,6 +110,12 @@ export const useSyncQueue = () => {
               known_learning_difficulties: b.knownLearningDifficulties || undefined,
               additional_notes: b.additionalNotes || undefined,
               primero_case_id: b.primeroCaseId || undefined,
+              beneficiary_type: b.beneficiaryType,
+              cfs_location_id: b.cfsLocationId || undefined,
+              mailing_address: b.mailingAddress || undefined,
+              immunisation_records: b.immunisationRecords,
+              other_children_count: b.otherChildrenCount,
+              adults_at_home: b.adultsAtHome || undefined,
             }, token);
 
             const serverId = response.beneficiary.id;

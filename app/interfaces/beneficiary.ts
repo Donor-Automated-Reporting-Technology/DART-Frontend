@@ -39,6 +39,16 @@ export interface RegisterBeneficiaryRequest {
   guardian_phone?: string
   known_medical_issues?: string
   additional_notes?: string
+  /** "child" (default) or "adult" (caregiver / community member). */
+  beneficiary_type?: 'child' | 'adult'
+  /** Where the person is registered; defaults to the user's assigned location. */
+  cfs_location_id?: string
+  /** DRA "Child Friendly Spaces" household fields. */
+  mailing_address?: string
+  immunisation_records?: 'yes' | 'no' | 'partial'
+  other_children_count?: number
+  adults_at_home?: string
+  known_learning_difficulties?: string
 }
 
 export interface BeneficiaryFilter {

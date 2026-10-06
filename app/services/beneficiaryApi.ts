@@ -34,7 +34,19 @@ async function request<T>(url: string, options: RequestInit = {}, token?: string
   return (data?.data !== undefined ? data.data : data) as T
 }
 
+export interface OrgLocation {
+  id: string
+  name: string
+  sector?: string | null
+  geographic_area?: string | null
+}
+
 export const beneficiaryApi = {
+  /** Every location (CFS or other site) in the organisation — any role may read it. */
+  async listLocations(token?: string): Promise<OrgLocation[]> {
+    return request<OrgLocation[]>(`${BASE_URL}/cfs/org-locations`, { method: 'GET' }, token)
+  },
+
   async register(payload: RegisterBeneficiaryRequest, token?: string) {
     return request(`${BASE_URL}/beneficiaries`, {
       method: 'POST',

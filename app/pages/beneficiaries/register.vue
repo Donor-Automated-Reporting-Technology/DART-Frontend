@@ -28,6 +28,14 @@
           <Transition :name="slideDir" mode="out-in">
             <!-- Stage 0: Identity -->
             <div v-if="step === 0" key="identity" class="stage">
+              <BeneficiariesSelectionTiles
+                v-model="form.beneficiary_type"
+                label="Registering a"
+                :options="[
+                  { value: 'child', label: 'Child' },
+                  { value: 'adult', label: 'Adult (caregiver / community member)' },
+                ]"
+              />
               <div class="stage__grid">
                 <BeneficiariesFloatingInput
                   v-model="form.personal_name"
@@ -79,6 +87,20 @@
 
             <!-- Stage 1: Background -->
             <div v-else-if="step === 1" key="background" class="stage">
+              <div class="loc-field">
+                <label class="loc-label" for="reg-location">Registered at <span class="loc-req">*</span></label>
+                <select id="reg-location" v-model="form.cfs_location_id" class="loc-select" :class="{ 'loc-select--error': errors.cfs_location_id }">
+                  <option value="" disabled>Choose a location</option>
+                  <option v-for="l in locations" :key="l.id" :value="l.id">{{ l.name }}{{ l.id === auth.cfsLocationId ? ' (your location)' : '' }}</option>
+                </select>
+                <p v-if="errors.cfs_location_id" class="loc-error">{{ errors.cfs_location_id }}</p>
+                <p v-else class="loc-hint">
+                  {{ auth.cfsLocationId
+                    ? 'Defaults to your location. Change it if this person joins an activity somewhere else, such as in town.'
+                    : 'Choose the CFS or site where this person takes part in activities.' }}
+                </p>
+              </div>
+
               <BeneficiariesSelectionTiles
                 v-model="form.language"
                 label="Primary Language"
@@ -110,27 +132,66 @@
             <div v-else-if="step === 2" key="guardian" class="stage">
               <div class="stage__grid">
                 <BeneficiariesFloatingInput
+                  v-if="isChild"
                   v-model="form.guardian_name"
-                  label="Guardian Full Name"
+                  label="Guardian / Mother / Father Name"
                   :required="true"
                   :error="errors.guardian_name"
                   :success="!!form.guardian_name.trim() && !errors.guardian_name"
                 />
                 <BeneficiariesFloatingInput
                   v-model="form.guardian_phone"
-                  label="Guardian Phone"
+                  :label="isChild ? 'Home Phone Number' : 'Phone Number'"
                   type="tel"
+                  :optional="true"
+                />
+                <BeneficiariesFloatingInput
+                  v-model="form.mailing_address"
+                  label="Residential Address"
                   :optional="true"
                 />
               </div>
 
-              <BeneficiariesFloatingInput
-                v-model="form.known_medical_issues"
-                label="Known Medical Issues"
-                :textarea="true"
-                :rows="2"
-                :optional="true"
-              />
+              <template v-if="isChild">
+                <BeneficiariesSelectionTiles
+                  v-model="form.immunisation_records"
+                  label="Immunisation records provided"
+                  :options="[
+                    { value: 'yes', label: 'Yes' },
+                    { value: 'partial', label: 'Partly' },
+                    { value: 'no', label: 'No' },
+                  ]"
+                />
+                <div class="stage__grid">
+                  <BeneficiariesFloatingInput
+                    v-model="form.other_children_count"
+                    label="Other children at home (under 18)"
+                    type="number"
+                    :min="0"
+                    :max="50"
+                    :optional="true"
+                  />
+                  <BeneficiariesFloatingInput
+                    v-model="form.adults_at_home"
+                    label="Adults at home (e.g. father, aunt)"
+                    :optional="true"
+                  />
+                </div>
+                <BeneficiariesFloatingInput
+                  v-model="form.known_medical_issues"
+                  label="Known Medical Issues"
+                  :textarea="true"
+                  :rows="2"
+                  :optional="true"
+                />
+                <BeneficiariesFloatingInput
+                  v-model="form.known_learning_difficulties"
+                  label="Known Learning Difficulties"
+                  :textarea="true"
+                  :rows="2"
+                  :optional="true"
+                />
+              </template>
 
               <BeneficiariesFloatingInput
                 v-model="form.additional_notes"
@@ -196,9 +257,10 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed } from 'vue'
+import { reactive, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { beneficiaryApi } from '../../services/beneficiaryApi'
+import { beneficiaryApi, type OrgLocation } from '../../services/beneficiaryApi'
+import { useAuthStore } from '../../stores/auth'
 import { ApiError } from '../../services/api'
 import { saveBeneficiaryOffline } from '../../services/offlineDb'
 import { v4 as uuidv4 } from 'uuid'
@@ -210,15 +272,16 @@ definePageMeta({
 })
 
 const router = useRouter()
+const auth = useAuthStore()
 
 /* ── Steps ── */
-const stepLabels = ['Identity', 'Background', 'Guardian', 'Review']
-const stepDescriptions = [
-  'Enter the beneficiary\'s personal details.',
-  'Select language and disability status.',
-  'Provide guardian contact and medical info.',
+const stepLabels = computed(() => ['Identity', 'Location & Background', isChild.value ? 'Household' : 'Contact', 'Review'])
+const stepDescriptions = computed(() => [
+  'Enter the person\'s details.',
+  'Where they are registered, language and disability status.',
+  isChild.value ? 'Guardian, household and medical information.' : 'How to reach this person.',
   'Review everything before submitting.',
-]
+])
 const step = ref(0)
 const slideDir = ref<'slide-left' | 'slide-right'>('slide-left')
 
@@ -240,7 +303,30 @@ const form = reactive({
   guardian_phone: '',
   known_medical_issues: '',
   additional_notes: '',
+  beneficiary_type: 'child' as 'child' | 'adult',
+  cfs_location_id: '',
+  mailing_address: '',
+  immunisation_records: '' as '' | 'yes' | 'no' | 'partial',
+  other_children_count: null as number | null,
+  adults_at_home: '',
+  known_learning_difficulties: '',
 })
+
+const isChild = computed(() => form.beneficiary_type === 'child')
+
+/* ── Locations: default to the user's own location ── */
+const locations = ref<OrgLocation[]>([])
+onMounted(async () => {
+  try {
+    locations.value = await beneficiaryApi.listLocations()
+  } catch {
+    locations.value = auth.cfsLocationId ? [{ id: auth.cfsLocationId, name: auth.cfsLocationName ?? 'Your location' }] : []
+  }
+  if (!form.cfs_location_id) {
+    form.cfs_location_id = auth.cfsLocationId ?? (locations.value.length === 1 ? locations.value[0]!.id : '')
+  }
+})
+const locationName = computed(() => locations.value.find(l => l.id === form.cfs_location_id)?.name ?? '—')
 
 /* ── Stage validation ── */
 function clearErrors() {
@@ -258,7 +344,11 @@ function validateStep(s: number): boolean {
     if (!form.sex) { errors.sex = 'Please select a gender'; ok = false }
   }
 
-  if (s === 2) {
+  if (s === 1) {
+    if (!form.cfs_location_id) { errors.cfs_location_id = 'Choose where this person is registered'; ok = false }
+  }
+
+  if (s === 2 && isChild.value) {
     if (!form.guardian_name.trim()) { errors.guardian_name = 'Guardian name is required'; ok = false }
   }
 
@@ -307,15 +397,25 @@ const summaryGroups = computed<BentoGroup[]>(() => [
   {
     title: 'Background',
     items: [
+      { label: 'Registering', value: isChild.value ? 'Child' : 'Adult' },
+      { label: 'Registered at', value: locationName.value },
       { label: 'Language', value: form.language || 'Arabic' },
       { label: 'Disability', value: form.disability_status === 'none' ? 'None' : form.disability_status },
     ],
   },
   {
-    title: 'Guardian',
+    title: isChild.value ? 'Household' : 'Contact',
     items: [
-      { label: 'Guardian Name', value: form.guardian_name },
+      ...(isChild.value ? [{ label: 'Guardian Name', value: form.guardian_name }] : []),
       { label: 'Phone', value: form.guardian_phone || '—' },
+      { label: 'Address', value: form.mailing_address || '—' },
+      ...(isChild.value
+        ? [
+            { label: 'Immunisation records', value: { yes: 'Yes', partial: 'Partly', no: 'No', '': '—' }[form.immunisation_records] },
+            { label: 'Other children at home', value: form.other_children_count != null ? String(form.other_children_count) : '—' },
+            { label: 'Adults at home', value: form.adults_at_home || '—' },
+          ]
+        : []),
     ],
   },
   {
@@ -323,15 +423,21 @@ const summaryGroups = computed<BentoGroup[]>(() => [
     wide: true,
     items: [
       { label: 'Medical Issues', value: form.known_medical_issues || '—' },
+      { label: 'Learning Difficulties', value: form.known_learning_difficulties || '—' },
       { label: 'Notes', value: form.additional_notes || '—' },
     ],
   },
 ])
 
 /* ── Submit ── */
+const countOrUndefined = () => {
+  const n = form.other_children_count
+  return n === null || (n as unknown) === '' ? undefined : Number(n)
+}
+
 async function onSubmit() {
   apiError.value = ''
-  if (!validateStep(0) || !validateStep(2)) {
+  if (!validateStep(0) || !validateStep(1) || !validateStep(2)) {
     apiError.value = 'Some required fields are missing. Go back and check.'
     return
   }
@@ -351,10 +457,16 @@ async function onSubmit() {
         sex: form.sex,
         language: form.language.trim() || 'Arabic',
         disabilityStatus: form.disability_status,
-        guardianName: form.guardian_name.trim(),
+        guardianName: isChild.value ? form.guardian_name.trim() : '',
         guardianPhone: form.guardian_phone.trim(),
         knownMedicalIssues: form.known_medical_issues.trim(),
-        knownLearningDifficulties: '',
+        knownLearningDifficulties: form.known_learning_difficulties.trim(),
+        beneficiaryType: form.beneficiary_type,
+        cfsLocationId: form.cfs_location_id,
+        mailingAddress: form.mailing_address.trim(),
+        immunisationRecords: form.immunisation_records || undefined,
+        otherChildrenCount: countOrUndefined(),
+        adultsAtHome: form.adults_at_home.trim(),
         additionalNotes: form.additional_notes.trim(),
         primeroCaseId: '',
         syncStatus: 'pending',
@@ -373,15 +485,22 @@ async function onSubmit() {
       sex: form.sex,
       language: form.language.trim() || 'Arabic',
       disability_status: form.disability_status,
-      guardian_name: form.guardian_name.trim(),
+      guardian_name: isChild.value ? form.guardian_name.trim() : '',
       guardian_phone: form.guardian_phone.trim() || undefined,
       known_medical_issues: form.known_medical_issues.trim() || undefined,
       additional_notes: form.additional_notes.trim() || undefined,
+      beneficiary_type: form.beneficiary_type,
+      cfs_location_id: form.cfs_location_id,
+      mailing_address: form.mailing_address.trim() || undefined,
+      immunisation_records: form.immunisation_records || undefined,
+      other_children_count: countOrUndefined(),
+      adults_at_home: form.adults_at_home.trim() || undefined,
+      known_learning_difficulties: form.known_learning_difficulties.trim() || undefined,
     })
 
-    // Land on the project picker so the facilitator can step straight
-    // into the PSS hub to enroll the child they just registered.
-    router.push({ path: '/activities', query: { enrolled: '1' } })
+    // The person is already registered at their location, so every activity
+    // module (PSS, TeamUp, …) can enroll them straight away.
+    router.push({ path: '/beneficiaries', query: { registered: '1' } })
   } catch (e: any) {
     if (e instanceof ApiError && e.data?.errors) Object.assign(errors, e.data.errors)
     else apiError.value = e?.message ?? 'Registration failed. Please try again.'
@@ -592,4 +711,14 @@ async function onSubmit() {
     justify-content: center;
   }
 }
+
+/* ── Location picker ── */
+.loc-field { display: flex; flex-direction: column; gap: 6px; }
+.loc-label { font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); }
+.loc-req { color: var(--error); }
+.loc-select { min-height: 48px; padding: 0 12px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-input); color: var(--text-primary); font: inherit; font-size: 0.92rem; }
+.loc-select:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
+.loc-select--error { border-color: var(--error); }
+.loc-hint { font-size: 0.76rem; color: var(--text-muted); margin: 0; }
+.loc-error { font-size: 0.76rem; color: var(--error); margin: 0; }
 </style>

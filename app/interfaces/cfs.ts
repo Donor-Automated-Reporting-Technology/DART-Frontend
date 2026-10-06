@@ -99,6 +99,12 @@ export interface RegisterBeneficiaryPayload {
   known_learning_difficulties?: string;
   additional_notes?: string;
   primero_case_id?: string;
+  beneficiary_type?: 'child' | 'adult';
+  cfs_location_id?: string;
+  mailing_address?: string;
+  immunisation_records?: 'yes' | 'no' | 'partial';
+  other_children_count?: number;
+  adults_at_home?: string;
 }
 
 export interface BeneficiaryResponse {
@@ -345,6 +351,13 @@ export interface OfflineBeneficiary extends OfflineBase {
   knownLearningDifficulties: string;
   additionalNotes: string;
   primeroCaseId: string;
+  // Added with location-on-registration (optional so older queued records still sync).
+  beneficiaryType?: 'child' | 'adult';
+  cfsLocationId?: string;
+  mailingAddress?: string;
+  immunisationRecords?: 'yes' | 'no' | 'partial';
+  otherChildrenCount?: number;
+  adultsAtHome?: string;
 }
 
 export interface OfflineCfsRegistration extends OfflineBase {
