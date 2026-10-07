@@ -2,6 +2,12 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
+  app: {
+    head: {
+      title: 'WellReach',
+      meta: [{ name: 'description', content: 'Offline-first activity tracking and donor reporting for NGOs' }],
+    },
+  },
   ssr: false,
   modules: ['@pinia/nuxt', '@vite-pwa/nuxt'],
   // <AppIcon> works in every page and component without an import.
@@ -18,9 +24,9 @@ export default defineNuxtConfig({
   pwa: {
     registerType: 'autoUpdate',
     manifest: {
-      name: 'DART — Donor Automated Report Technology',
-      short_name: 'DART',
-      description: 'Offline-first CFS management for SSWOCO',
+      name: 'WellReach — trusted data for children\'s wellbeing',
+      short_name: 'WellReach',
+      description: 'Offline-first activity tracking and donor reporting for NGOs',
       theme_color: '#818cf8',
       background_color: '#0f0f1a',
       display: 'standalone',

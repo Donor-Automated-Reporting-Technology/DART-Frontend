@@ -27,7 +27,7 @@
       <div v-if="showCompletion" class="banner-complete">
         <AppIcon name="check-circle" :size="18" class="complete-icon" />
         <div class="complete-content">
-          <span class="complete-title">DART is ready — your organisation is set up!</span>
+          <span class="complete-title">WellReach is ready — your organisation is set up!</span>
           <div class="checklist">
             <p class="checklist-title">Get started:</p>
             <NuxtLink to="/settings/projects" class="checklist-item" @click="showCompletion = false">

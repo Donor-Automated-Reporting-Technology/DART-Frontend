@@ -4,7 +4,7 @@
       <div class="form-container">
 
         <div class="brand-header">
-          <h1 class="logo">DART</h1>
+          <h1 class="logo">WellReach</h1>
           <h2 class="tagline">Welcome Back!</h2>
         </div>
 
@@ -57,7 +57,7 @@
         </div>
 
         <div class="footer-copy">
-          &copy; 2026 DART Inc., All rights reserved.
+          &copy; 2026 WellReach. All rights reserved.
         </div>
       </div>
     </div>

@@ -4,7 +4,7 @@
     <!-- ── Navbar ──────────────────────────────────────────────────────────── -->
     <nav class="landing-nav">
       <div class="nav-inner">
-        <NuxtLink to="/" class="nav-logo">DART</NuxtLink>
+        <NuxtLink to="/" class="nav-logo">WellReach</NuxtLink>
         <div class="nav-links">
           <a href="#features" class="nav-link">Features</a>
           <a href="#how-it-works" class="nav-link">How It Works</a>
@@ -20,8 +20,8 @@
       <div class="hero-content">
         <span class="hero-badge">Offline-First &middot; Real-Time Sync</span>
         <h1 class="hero-title">
-          Donor Automated<br />Report
-          <span class="hero-highlight">Technology</span>
+          Trusted reports.<br />More children
+          <span class="hero-highlight">reached.</span>
         </h1>
         <p class="hero-sub">
           Streamline beneficiary registration, attendance tracking, and donor
@@ -95,7 +95,7 @@
     <section class="cta-section">
       <div class="cta-inner">
         <h2>Ready to streamline your CFS operations?</h2>
-        <p>Join organizations already using DART to deliver better outcomes.</p>
+        <p>Join organizations already using WellReach to deliver better outcomes.</p>
         <NuxtLink to="/register" class="btn-primary btn-lg">Get Started — It's Free</NuxtLink>
       </div>
     </section>
@@ -103,8 +103,8 @@
     <!-- ── Footer ──────────────────────────────────────────────────────────── -->
     <footer class="landing-footer">
       <div class="footer-inner">
-        <span class="footer-logo">DART</span>
-        <span class="footer-copy">&copy; {{ new Date().getFullYear() }} DART Inc. All rights reserved.</span>
+        <span class="footer-logo">WellReach</span>
+        <span class="footer-copy">&copy; {{ new Date().getFullYear() }} WellReach. All rights reserved.</span>
       </div>
     </footer>
   </div>
@@ -155,7 +155,7 @@ const features = [
 const steps = [
   { title: 'Register Your Organization', desc: 'Create an account, set up your org profile, and select your donors and activities.' },
   { title: 'Configure Your CFS', desc: 'Add locations, assign staff, define session types, and set grant targets.' },
-  { title: 'Start Tracking', desc: 'Register beneficiaries, record attendance, and let DART generate donor reports automatically.' },
+  { title: 'Start Tracking', desc: 'Register beneficiaries, record attendance, and let WellReach generate donor reports automatically.' },
 ];
 </script>
 

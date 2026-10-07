@@ -4,8 +4,8 @@
       <div class="form-container">
         
         <div class="brand-header">
-          <h1 class="logo">DART</h1>
-          <h2 class="tagline">Donor Automated Reporting Technology</h2>
+          <h1 class="logo">WellReach</h1>
+          <h2 class="tagline">Trusted data for children&apos;s wellbeing</h2>
         </div>
 
         <div class="form-box">
@@ -114,7 +114,7 @@
         </div>
         
         <div class="footer-copy">
-          &copy; 2026 DART Inc., All rights reserved.
+          &copy; 2026 WellReach. All rights reserved.
         </div>
       </div>
     </div>
@@ -136,7 +136,7 @@ const { form, errors, apiError, isSubmitting, submit } = useRegistration();
 const handleRegister = async () => {
   const success = await submit();
   if (success) {
-    alert('Welcome to DART — complete your organisation profile');
+    alert('Welcome to WellReach — complete your organisation profile');
     router.push('/dashboard');
   }
 };

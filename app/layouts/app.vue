@@ -26,11 +26,11 @@
       <!-- ── Brand / Logo block ─────────────────────────────────────────────── -->
       <div class="sidebar-brand">
         <!-- Square logo mark -->
-        <div class="brand-mark" aria-hidden="true">D</div>
+        <div class="brand-mark" aria-hidden="true">W</div>
 
         <!-- Brand text: app name + org (hidden when collapsed) -->
         <div class="brand-copy">
-          <span class="brand-name">DART</span>
+          <span class="brand-name">WellReach</span>
           <span class="brand-org truncate">{{ displayOrg }}</span>
         </div>
 
@@ -322,7 +322,7 @@ const authStore = useAuthStore();
 const displayName = computed(() => authStore.userName ?? 'User');
 
 /** Organisation name — falls back to 'DART' before auth hydrates */
-const displayOrg = computed(() => authStore.orgName ?? 'DART');
+const displayOrg = computed(() => authStore.orgName ?? 'WellReach');
 
 /**
  * Secondary line in the user chip.
@@ -330,7 +330,7 @@ const displayOrg = computed(() => authStore.orgName ?? 'DART');
  * then a generic placeholder.
  */
 const displaySub = computed(
-  () => authStore.userEmail ?? authStore.orgName ?? 'DART',
+  () => authStore.userEmail ?? authStore.orgName ?? 'WellReach',
 );
 
 // ─── Role-based access control ────────────────────────────────────────────────

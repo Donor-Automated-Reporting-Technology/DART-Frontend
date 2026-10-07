@@ -4,7 +4,7 @@
       <div class="tu-header">
         <div>
           <h1 class="tu-title">Reports</h1>
-          <p class="tu-subtitle">Every report DART can produce: Word reports for facilitators and supervisors, and Excel data for managers and M&amp;E.</p>
+          <p class="tu-subtitle">Every report WellReach can produce: Word reports for facilitators and supervisors, and Excel data for managers and M&amp;E.</p>
         </div>
       </div>
 

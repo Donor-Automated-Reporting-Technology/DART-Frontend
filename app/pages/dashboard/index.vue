@@ -45,7 +45,7 @@
       <div class="empty-icon">
         <AppIcon name="layout" :size="32" />
       </div>
-      <h2 class="empty-title">Welcome to DART</h2>
+      <h2 class="empty-title">Welcome to WellReach</h2>
       <p class="empty-sub">Complete these steps to start tracking your programme.</p>
       <div class="checklist">
         <NuxtLink to="/settings/projects" class="check-item">

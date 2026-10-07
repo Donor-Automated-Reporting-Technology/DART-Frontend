@@ -65,7 +65,7 @@ definePageMeta({
   layout: false,
 })
 
-useHead({ title: 'Dashboard \u2014 DART' })
+useHead({ title: 'Dashboard \u2014 WellReach' })
 
 const authStore = useAuthStore()
 const { isOnline, pendingCount } = useOfflineStatus()
