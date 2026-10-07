@@ -19,7 +19,7 @@ export default defineNuxtConfig({
     },
   },
   routeRules: {
-    '/api/**': {      proxy: process.env.API_BASE_URL ? `${process.env.API_BASE_URL}/**` : (process.env.NODE_ENV === 'production' ? 'http://129.121.140.176:8090/api/**' : 'http://localhost:8090/api/**') }
+    '/api/**': {      proxy: process.env.API_BASE_URL ? `${process.env.API_BASE_URL}/**` : (process.env.NODE_ENV === 'production' ? 'https://api.wellreach.sswoco.org/api/**' : 'http://localhost:8090/api/**') }
   },
   pwa: {
     registerType: 'autoUpdate',
