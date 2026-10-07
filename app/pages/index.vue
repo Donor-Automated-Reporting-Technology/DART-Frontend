@@ -27,7 +27,7 @@
       <section id="top" class="wrap hero-body">
         <div class="hero-copy">
           <span class="pill glass-light"><span class="pill-tag">Free</span>Now testing with NGOs in South Sudan</span>
-          <h1>From field register to donor report — <span class="hl">in minutes,</span> not days.</h1>
+          <h1>From field register to donor report <span class="hl">in minutes,</span> not days.</h1>
           <p class="lead">
             WellReach is the offline-first platform for child protection and psychosocial support programmes. Facilitators
             record every session on a phone, even with no signal. Managers and donors see trusted, logframe-ready results
@@ -40,7 +40,12 @@
             </a>
             <a href="#how" class="btn glass-light">See how it works</a>
           </div>
-          <p class="proof">Works offline <b>·</b> Donor-ready Excel &amp; Word <b>·</b> Every figure traces to a child's record</p>
+          <ul class="proof">
+            <li v-for="point in proofPoints" :key="point">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+              {{ point }}
+            </li>
+          </ul>
         </div>
 
         <div class="hero-visual" aria-hidden="true">
@@ -48,7 +53,7 @@
             <div class="dash-head">
               <div>
                 <div class="muted-sm">Project dashboard · demo data</div>
-                <div class="dash-title">Child Protection — Year 2</div>
+                <div class="dash-title">Child Protection, Year 2</div>
               </div>
               <span class="live-dot" />
             </div>
@@ -118,7 +123,7 @@
             <span class="node node-fix"><WellReachMark :size="22" bare /></span>
             <span>
               <span class="step-title fix">With WellReach: one entry, in the field.</span>
-              <span class="step-text">Everything after it — counting, targets, reports — is automatic.</span>
+              <span class="step-text">Everything after it is automatic: counting, targets and reports.</span>
             </span>
           </div>
         </div>
@@ -191,7 +196,7 @@
         <h2 class="wide">Other tools do one piece. WellReach does the whole chain.</h2>
         <p class="lead dark">
           Built for Child-Friendly Spaces and psychosocial support, from offline field capture to donor-ready evidence. We
-          connect to case management — we don't replace it.
+          connect to case management rather than replace it.
         </p>
         <div class="table-scroll">
           <table>
@@ -293,7 +298,7 @@
         <div class="col">
           <div v-if="contact.sent" role="status" class="contact-sent">
             <h3>Message sent.</h3>
-            <p>Thank you — we'll reply to your email soon.</p>
+            <p>Thank you. We'll reply to your email soon.</p>
           </div>
           <form v-else class="form light" @submit.prevent="sendContact">
             <div class="grid2">
@@ -360,7 +365,7 @@ definePageMeta({ layout: false })
 useHead({
   // In-page links (Why, Contact…) scroll smoothly; see main.css.
   htmlAttrs: { class: 'smooth-scroll' },
-  title: 'WellReach — from field register to donor report',
+  title: 'WellReach: from field register to donor report',
   meta: [{ name: 'description', content: 'The offline-first platform for child protection and psychosocial support programmes. Field data to donor-ready reports in minutes.' }],
   link: [
     { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -374,10 +379,11 @@ const CONTACT_PHONE = '+250792574679'
 const CONTACT_PHONE_DISPLAY = '+250 792 574 679'
 const year = new Date().getFullYear()
 
+const proofPoints = ['Works offline', 'Donor-ready Excel & Word', "Every figure traces to a child's record"]
 const bars = [
-  { label: 'PSS — children attending', value: 82, color: '#0E7C66' },
-  { label: 'TeamUp — curriculum completed', value: 64, color: '#0E7C66' },
-  { label: 'Parenting — caregivers reached', value: 41, color: '#F2A541' },
+  { label: 'Children attending PSS', value: 82, color: '#0E7C66' },
+  { label: 'Completed the TeamUp curriculum', value: 64, color: '#0E7C66' },
+  { label: 'Caregivers reached by Parenting', value: 41, color: '#F2A541' },
 ]
 const attendance = [
   { name: 'Achol D.', status: 'Present' },
@@ -395,17 +401,17 @@ const chain = [
   { title: 'Supervisor tally', text: 'Registers are re-counted at the end of the day.', copy: 1 },
   { title: 'Excel database', text: 'A data manager types the tallies into a spreadsheet.', copy: 2 },
   { title: 'Word report', text: 'Figures are filtered, counted and pasted into the donor template.', copy: 3 },
-  { title: 'Donor re-types it', text: 'Into their own system — weeks after the session happened.', copy: 4 },
+  { title: 'Donor re-types it', text: 'Into their own system, weeks after the session happened.', copy: 4 },
 ]
 const steps = [
-  { who: '01 · Facilitators', title: 'The field', color: '#0E7C66', text: "Run today's session, mark attendance in a few taps and register children — offline. It syncs when signal returns." },
-  { who: '02 · M&E officers', title: 'The programme', color: '#9FD2C4', text: "Set up each donor's logframe — outcomes, indicators, yearly targets — and link the activities that count." },
-  { who: '03 · Directors & donors', title: 'The evidence', color: '#CDE6DF', text: 'See who is reached — by sex, age, disability and location — and whether every target is on track.' },
+  { who: '01 · Facilitators', title: 'The field', color: '#0E7C66', text: "Run today's session, mark attendance in a few taps and register children, all offline. It syncs when signal returns." },
+  { who: '02 · M&E officers', title: 'The programme', color: '#9FD2C4', text: "Set up each donor's logframe with outcomes, indicators and yearly targets, then link the activities that count." },
+  { who: '03 · Directors & donors', title: 'The evidence', color: '#CDE6DF', text: 'See who is reached by sex, age, disability and location, and whether every target is on track.' },
   { who: '04 · Data managers', title: 'The report', color: '#F2A541', text: 'Export donor-format Excel and Word reports in one click. Days of compiling become minutes.' },
 ]
 const features = [
   { title: 'Offline-first app', text: 'Installs on any phone; keeps working with no signal.', icon: '<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M10 18h4"/>' },
-  { title: 'One record per child', text: 'A unique ID across every activity — no double counting.', icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/>' },
+  { title: 'One record per child', text: 'A unique ID across every activity, so nothing is counted twice.', icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/>' },
   { title: 'Psychosocial support', text: 'Daily schedules, session steps, smiley evaluations.', icon: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.3 1.8 3.5 1.8 3.5-1.8 3.5-1.8M9 9.5h.01M15 9.5h.01"/>' },
   { title: 'Group programmes', text: 'TeamUp, Parenting and Community Dialogue, with curricula.', icon: '<circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M2 20c0-3 2.7-5 6-5s6 2 6 5M12 20c0-3 2.7-5 6-5"/>' },
   { title: "Your donor's logframe", text: 'Outcomes, indicators and yearly targets, per donor.', icon: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>' },
@@ -430,7 +436,7 @@ const tools = [
 ]
 const safeguards = [
   "No child's record is ever shown outside the organisation that owns it.",
-  'Seven roles, facilitator to director — each sees only what the job needs.',
+  'Seven roles from facilitator to director. Each sees only what the job needs.',
   'Raw data downloads are limited to managers and M&E staff.',
 ]
 const perks = [
@@ -609,17 +615,18 @@ section[id] { scroll-margin-top: 16px; }
 .nav-links a { text-decoration: none; color: var(--text); }
 .nav-links a:hover { color: var(--ink); }
 .nav-actions { display: flex; gap: 8px; align-items: center; }
-.hero-body { display: flex; flex-wrap: wrap; gap: 48px 72px; align-items: center; padding-top: 72px; padding-bottom: 104px; z-index: 1; }
-.hero-copy { flex: 1 1 440px; min-width: 0; max-width: 540px; }
+.hero-body { display: flex; flex-wrap: wrap; gap: 48px 120px; align-items: center; padding-top: 72px; padding-bottom: 104px; z-index: 1; }
+.hero-copy { flex: 1 1 420px; min-width: 0; max-width: 520px; }
 .pill { display: inline-flex; align-items: center; gap: 10px; padding: 6px 14px 6px 7px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--text); }
 .pill-tag { background: var(--amber); color: #0B2A27; font-weight: 800; font-size: 11px; padding: 3px 9px; border-radius: 999px; }
 .hero h1 { font-weight: 800; font-size: clamp(30px, 3.3vw, 44px); line-height: 1.14; letter-spacing: -0.025em; margin-top: 20px; text-wrap: balance; }
 .hl { color: var(--hl); }
 .hero h1 .hl { white-space: nowrap; }
-.lead { font-size: 17px; line-height: 1.65; color: var(--text-2); margin: 18px 0 0; max-width: 500px; }
+.lead { font-size: 17px; line-height: 1.65; color: var(--text-2); margin: 18px 0 0; max-width: 500px; text-wrap: pretty; }
 .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
-.proof { margin: 26px 0 0; font-size: 13px; color: var(--muted); }
-.proof b { color: var(--amber-text); }
+.proof { list-style: none; margin: 26px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 13px; color: var(--muted); }
+.proof li { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.proof svg { color: var(--teal-text); }
 .hero-visual { flex: 1 1 480px; min-width: 0; position: relative; min-height: 440px; }
 .dash { position: absolute; right: 0; top: 0; left: 156px; padding: 22px; box-sizing: border-box; border-radius: 20px; }
 .dash-head { display: flex; justify-content: space-between; align-items: center; }
@@ -793,4 +800,5 @@ td.tool { font-weight: 700; color: var(--ink); width: 26%; }
   .label-short { display: inline; }
   .wordmark { font-size: 18px; }
 }
+
 </style>
