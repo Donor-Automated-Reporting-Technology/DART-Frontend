@@ -71,8 +71,9 @@
           </div>
           <div class="phone glass-light">
             <div class="phone-screen">
-              <div class="phone-head"><span>Today's session</span><span class="offline">Offline · saved</span></div>
-              <div class="muted-xs">Safe space · Sector 4</div>
+              <span class="phone-status"><span class="status-dot" />Saved offline</span>
+              <div class="phone-head">Today's session</div>
+              <div class="muted-xs">Safe space, Sector 4</div>
               <div v-for="row in attendance" :key="row.name" class="phone-row">
                 <span>{{ row.name }}</span><span :class="row.status === 'Present' ? 'present' : 'excused'">{{ row.status }}</span>
               </div>
@@ -646,13 +647,14 @@ section[id] { scroll-margin-top: 16px; }
 .dash-foot .link { color: var(--teal-text); }
 .phone { position: absolute; left: 0; bottom: 0; width: 178px; border-radius: 30px; padding: 8px; }
 .phone-screen { background: var(--surface); border-radius: 23px; padding: 15px 13px; min-height: 290px; box-sizing: border-box; color: var(--ink); font-size: 12px; box-shadow: inset 0 0 0 1px var(--track); }
-.phone-head { display: flex; justify-content: space-between; align-items: center; font-weight: 800; }
-.offline { font-size: 10px; font-weight: 700; color: var(--chip-text); background: var(--chip-bg); padding: 2px 8px; border-radius: 99px; }
+.phone-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 8px; border-radius: 999px; background: var(--chip-bg); color: var(--chip-text); font-size: 10px; font-weight: 700; line-height: 1; white-space: nowrap; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); }
+.phone-head { margin-top: 10px; font-weight: 800; font-size: 13px; }
 .muted-xs { font-size: 11px; color: var(--muted); margin: 2px 0 6px; }
 .phone-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--row-line); }
 .present { font-weight: 800; color: var(--teal-text); }
 .excused { font-weight: 800; color: var(--faint); }
-.phone-btn { margin-top: 12px; background: var(--teal); color: #fff; text-align: center; border-radius: 10px; padding: 9px; font-weight: 700; }
+.phone-btn { margin-top: 14px; background: var(--teal); color: #fff; text-align: center; border-radius: 999px; padding: 10px 14px; font-weight: 700; line-height: 1; }
 .pilot { border-top: 1px solid var(--track); position: relative; z-index: 1; }
 .pilot-row { display: flex; flex-wrap: wrap; gap: 8px 32px; justify-content: center; padding-top: 18px; padding-bottom: 18px; font-size: 14px; color: var(--muted); }
 .pilot-row strong { color: var(--ink); }
