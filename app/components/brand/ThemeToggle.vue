@@ -1,16 +1,21 @@
 <template>
-  <!-- Light/dark switch shared by the app, landing and auth pages.
-       The choice is stored once (useTheme → localStorage "dart-theme"). -->
+  <!-- Light/dark switch shared by the app, landing and auth pages. The choice
+       is stored once (useTheme → localStorage "dart-theme"). Shows a moon in
+       light mode and a sun in dark mode; the icons swap with a small turn. -->
   <button
-    class="theme-pill"
+    class="theme-btn"
     type="button"
-    :class="{ 'theme-pill--dark': isDark }"
     :title="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
     :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
     @click="toggleTheme"
   >
-    <span class="theme-pill__icon"><AppIcon name="sun" :size="13" /></span>
-    <span class="theme-pill__icon"><AppIcon name="moon" :size="13" /></span>
+    <svg class="icon icon-moon" :class="{ hidden: isDark }" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z" />
+    </svg>
+    <svg class="icon icon-sun" :class="{ hidden: !isDark }" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </svg>
   </button>
 </template>
 
@@ -21,37 +26,42 @@ const { isDark, toggleTheme } = useTheme()
 </script>
 
 <style scoped>
-.theme-pill {
+.theme-btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  padding: 3px;
-  background: var(--hover-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
-  flex-shrink: 0;
-}
-.theme-pill__icon {
-  display: flex;
-  align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 999px;
-  color: var(--text-muted);
-  transition: color 0.2s;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.12));
+  background: var(--bg-panel, transparent);
+  color: var(--text-primary, currentColor);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
 }
-/* Light mode lights the sun; dark mode lights the moon. */
-.theme-pill:not(.theme-pill--dark) .theme-pill__icon:first-child,
-.theme-pill.theme-pill--dark .theme-pill__icon:last-child {
-  color: var(--primary);
+.theme-btn:hover {
+  border-color: var(--primary, #0E7C66);
+  color: var(--primary, #0E7C66);
 }
-.theme-pill:not(.theme-pill--dark) {
-  background: var(--primary-dim);
-  border-color: var(--primary-hover);
+.theme-btn:active {
+  transform: scale(0.94);
 }
-.theme-pill:hover {
-  border-color: var(--primary);
+.theme-btn:focus-visible {
+  outline: 2px solid var(--primary, #0E7C66);
+  outline-offset: 2px;
+}
+.icon {
+  position: absolute;
+  transition: opacity 0.25s ease, transform 0.35s ease;
+}
+.icon.hidden {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.6);
+}
+@media (prefers-reduced-motion: reduce) {
+  .icon { transition: none; }
 }
 </style>

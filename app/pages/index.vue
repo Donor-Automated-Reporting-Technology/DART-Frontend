@@ -18,9 +18,8 @@
           <a href="#contact">Contact</a>
         </nav>
         <div class="nav-actions">
-          <ThemeToggle />
-          <NuxtLink to="/login" class="btn btn-quiet">Sign in</NuxtLink>
-          <a href="#waitlist" class="btn btn-ink"><span class="label-long">Join the waitlist</span><span class="label-short">Join</span></a>
+          <ThemeToggle class="nav-theme" />
+          <NuxtLink to="/login" class="btn btn-ink">Sign in</NuxtLink>
         </div>
       </header>
 
@@ -599,8 +598,6 @@ section[id] { scroll-margin-top: 16px; }
 .btn:disabled { opacity: 0.7; cursor: wait; }
 .btn-primary { background: var(--teal); color: #fff !important; box-shadow: 0 8px 24px rgba(14, 124, 102, 0.22); }
 .btn-ink { background: var(--btn-ink-bg); color: var(--btn-ink-text) !important; }
-.btn-quiet { padding: 0 12px; color: var(--ink) !important; }
-.label-short { display: none; }
 .btn { white-space: nowrap; }
 
 /* Hero */
@@ -614,7 +611,11 @@ section[id] { scroll-margin-top: 16px; }
 .nav-links { display: flex; gap: 26px; font-weight: 600; font-size: 14px; padding: 9px 22px; border-radius: 999px; }
 .nav-links a { text-decoration: none; color: var(--text); }
 .nav-links a:hover { color: var(--ink); }
-.nav-actions { display: flex; gap: 8px; align-items: center; }
+.nav-actions { display: flex; gap: 10px; align-items: center; }
+/* The theme button matches the frosted menu pill. */
+.nav-theme { background: var(--glass-bg); border-color: var(--glass-border); color: var(--ink); box-shadow: var(--glass-shadow); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+.nav-theme:hover { color: var(--teal-text); border-color: var(--teal); }
+.nav-actions .btn-ink { min-height: 40px; padding: 0 18px; }
 .hero-body { display: flex; flex-wrap: wrap; gap: 48px 120px; align-items: center; padding-top: 72px; padding-bottom: 104px; z-index: 1; }
 .hero-copy { flex: 1 1 420px; min-width: 0; max-width: 520px; }
 .pill { display: inline-flex; align-items: center; gap: 10px; padding: 6px 14px 6px 7px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--text); }
@@ -794,10 +795,7 @@ td.tool { font-weight: 700; color: var(--ink); width: 26%; }
 }
 
 @media (max-width: 520px) {
-  .btn-quiet { display: none; }
-  .nav-actions .btn-ink { padding: 0 18px; }
-  .label-long { display: none; }
-  .label-short { display: inline; }
+  .nav-actions .btn-ink { padding: 0 16px; }
   .wordmark { font-size: 18px; }
 }
 

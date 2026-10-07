@@ -819,58 +819,6 @@ async function handleLogout(): Promise<void> {
 
 /* ── Theme pill toggle ─────────────────────────────────────────────────────── */
 
-.theme-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0;
-  padding: 3px;
-  background: var(--hover-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 999px;
-  cursor: pointer;
-  position: relative;
-  transition: background 0.2s, border-color 0.2s;
-  flex-shrink: 0;
-}
-
-.theme-pill__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 999px;
-  color: var(--text-muted);
-  transition: color 0.2s;
-  position: relative;
-  z-index: 1;
-}
-
-/* Sliding thumb indicator */
-.theme-pill__thumb {
-  display: none; /* positioned via JS-less CSS trick below */
-}
-
-/* Light mode: sun icon is active (left side lit up) */
-.theme-pill:not(.theme-pill--dark) .theme-pill__icon:first-child {
-  color: var(--primary);
-}
-
-/* Dark mode: moon icon is active (right side lit up) */
-.theme-pill.theme-pill--dark .theme-pill__icon:last-child {
-  color: var(--primary);
-}
-
-/* Highlight pill background based on mode */
-.theme-pill:not(.theme-pill--dark) {
-  background: var(--primary-dim);
-  border-color: var(--primary-hover);
-}
-
-.theme-pill:hover {
-  border-color: var(--primary);
-}
-
 /* ── Mobile overlay backdrop ───────────────────────────────────────────────── */
 
 .sidebar-overlay {
