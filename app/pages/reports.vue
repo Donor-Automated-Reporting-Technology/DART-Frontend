@@ -1,402 +1,262 @@
 <template>
   <NuxtLayout name="app" :breadcrumbs="[{ title: 'Reports', href: '/reports', current: true }]">
-    <div class="reports-page">
-
-      <!-- Page header -->
-      <div class="page-header">
+    <div class="tu-page rp-page">
+      <div class="tu-header">
         <div>
-          <h1 class="page-title">Reports</h1>
-          <p class="page-subtitle">Generate and download programme data exports.</p>
+          <h1 class="tu-title">Reports</h1>
+          <p class="tu-subtitle">Every report DART can produce: Word reports for facilitators and supervisors, and Excel data for managers and M&amp;E.</p>
         </div>
       </div>
 
-      <!-- Error banner -->
-      <Transition name="rp-fade">
-        <div v-if="error" class="rp-error">
-          <AppIcon name="alert-circle" :size="16" />
-          <span>{{ error }}</span>
-          <button class="rp-error-dismiss" @click="error = null">
-            <AppIcon name="x" :size="14" />
-          </button>
-        </div>
-      </Transition>
-
-      <!-- Data Exports section -->
-      <div class="rp-section">
-        <div class="rp-section-header">
-          <h3 class="rp-section-title">Data Exports</h3>
-          <span class="rp-section-badge">Excel</span>
-        </div>
-        <p class="rp-section-desc">Download structured spreadsheets for donor reporting, analysis, and record-keeping.</p>
-
-        <div class="rp-card-grid">
-
-          <!-- Beneficiaries export -->
-          <button
-            class="rp-card"
-            :class="{ 'rp-card--loading': exporting }"
-            :disabled="exporting"
-            @click="exportBeneficiaries"
-          >
-            <div class="rp-card-icon rp-card-icon--primary">
-              <AppIcon name="users" :size="20" />
-            </div>
-            <div class="rp-card-body">
-              <span class="rp-card-title">Beneficiaries</span>
-              <span class="rp-card-desc">Full beneficiary register with demographics, status, and enrolment details.</span>
-            </div>
-            <div class="rp-card-action">
-              <span v-if="exporting" class="rp-spinner" />
-              <AppIcon v-else name="download" :size="16" />
-            </div>
-          </button>
-
-          <!-- Attendance export (placeholder) -->
-          <button class="rp-card rp-card--disabled" disabled>
-            <div class="rp-card-icon rp-card-icon--success">
-              <AppIcon name="check-square" :size="20" />
-            </div>
-            <div class="rp-card-body">
-              <span class="rp-card-title">Attendance Records</span>
-              <span class="rp-card-desc">Session-level attendance logs across all activities and cohorts.</span>
-            </div>
-            <div class="rp-card-action">
-              <span class="rp-card-soon">Soon</span>
-            </div>
-          </button>
-
-          <!-- Activity Summary export (placeholder) -->
-          <button class="rp-card rp-card--disabled" disabled>
-            <div class="rp-card-icon rp-card-icon--accent">
-              <AppIcon name="bar-chart" :size="20" />
-            </div>
-            <div class="rp-card-body">
-              <span class="rp-card-title">Activity Summary</span>
-              <span class="rp-card-desc">Aggregated actuals vs targets with disaggregation by gender and age.</span>
-            </div>
-            <div class="rp-card-action">
-              <span class="rp-card-soon">Soon</span>
-            </div>
-          </button>
-
-          <!-- Disaggregation export (placeholder) -->
-          <button class="rp-card rp-card--disabled" disabled>
-            <div class="rp-card-icon rp-card-icon--warning">
-              <AppIcon name="target" :size="20" />
-            </div>
-            <div class="rp-card-body">
-              <span class="rp-card-title">Disaggregation Report</span>
-              <span class="rp-card-desc">Breakdown by girls, boys, women, men, and disability status per activity.</span>
-            </div>
-            <div class="rp-card-action">
-              <span class="rp-card-soon">Soon</span>
-            </div>
-          </button>
-
-        </div>
+      <div v-if="error" class="tu-alert tu-alert--error">
+        <AppIcon name="alert-circle" :size="14" />
+        {{ error }}
       </div>
 
+      <div v-if="loading" class="tu-stack"><div class="tu-skeleton" /><div class="tu-skeleton" /></div>
+
+      <div v-else-if="projects.length === 0" class="tu-card">
+        <strong>No projects yet</strong>
+        <span class="tu-muted">Set up a project and its activities in Settings → Projects to see its reports here.</span>
+      </div>
+
+      <template v-else>
+        <div v-if="projects.length > 1" class="tu-field">
+          <label for="rp-project">Project</label>
+          <select id="rp-project" v-model="projectId" class="tu-select">
+            <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }}</option>
+          </select>
+        </div>
+
+        <!-- ═══ Word reports ═══ -->
+        <section class="tu-stack">
+          <p class="tu-label">Word reports</p>
+          <div class="tu-grid2">
+            <NuxtLink
+              v-for="r in wordReports"
+              :key="r.key"
+              :to="r.to"
+              class="tu-card tu-card--link rp-card"
+            >
+              <span class="rp-icon"><AppIcon :name="r.icon" :size="18" /></span>
+              <span class="rp-body">
+                <strong>{{ r.title }}</strong>
+                <span class="tu-muted">{{ r.description }}</span>
+              </span>
+              <AppIcon name="chevron-right" :size="16" />
+            </NuxtLink>
+          </div>
+          <span v-if="wordReports.length === 0" class="tu-muted">
+            This project has no PSS, TeamUp, Parenting or Community Dialogue activity yet.
+          </span>
+          <span class="tu-muted">Session and group progress reports are on each group's page (open the activity's hub).</span>
+        </section>
+
+        <!-- ═══ Excel data ═══ -->
+        <section class="tu-stack">
+          <p class="tu-label">Excel data</p>
+          <template v-if="canExport">
+            <div class="tu-grid2">
+              <button type="button" class="tu-card tu-card--link rp-card" :disabled="busy === 'project'" @click="download('project', `/api/v1/frameworks/${projectId}/export`, 'project.xlsx')">
+                <span class="rp-icon rp-icon--excel"><AppIcon name="file-spreadsheet" :size="18" /></span>
+                <span class="rp-body">
+                  <strong>{{ busy === 'project' ? 'Preparing…' : 'Project database (DRA format)' }}</strong>
+                  <span class="tu-muted">One workbook: activities, beneficiaries from every location, and a sheet per activity (PSS, TeamUP, Parenting, Community Dialogue).</span>
+                </span>
+                <AppIcon name="download" :size="16" />
+              </button>
+
+              <div class="tu-card rp-card rp-card--stack">
+                <span class="rp-row">
+                  <span class="rp-icon rp-icon--excel"><AppIcon name="users" :size="18" /></span>
+                  <span class="rp-body">
+                    <strong>Beneficiaries</strong>
+                    <span class="tu-muted">Everyone registered, with location and attendance.</span>
+                  </span>
+                </span>
+                <div class="rp-row">
+                  <label for="rp-loc" class="sr-only">Location</label>
+                  <select id="rp-loc" v-model="locationId" class="tu-select">
+                    <option value="">All locations</option>
+                    <option v-for="l in locations" :key="l.id" :value="l.id">{{ l.name }}</option>
+                  </select>
+                  <button type="button" class="tu-btn tu-btn--ghost" :disabled="busy === 'beneficiaries'" @click="downloadBeneficiaries">
+                    <AppIcon name="download" :size="16" />
+                    {{ busy === 'beneficiaries' ? 'Preparing…' : 'Download' }}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                v-for="r in registerReports"
+                :key="r.key"
+                type="button"
+                class="tu-card tu-card--link rp-card"
+                :disabled="busy === r.key"
+                @click="download(r.key, r.url, r.filename)"
+              >
+                <span class="rp-icon rp-icon--excel"><AppIcon name="file-spreadsheet" :size="18" /></span>
+                <span class="rp-body">
+                  <strong>{{ busy === r.key ? 'Preparing…' : r.title }}</strong>
+                  <span class="tu-muted">{{ r.description }}</span>
+                </span>
+                <AppIcon name="download" :size="16" />
+              </button>
+            </div>
+          </template>
+          <div v-else class="tu-card">
+            <span class="tu-muted">Excel data downloads are for admins, programme managers and M&amp;E. Use the Word reports above.</span>
+          </div>
+        </section>
+      </template>
     </div>
   </NuxtLayout>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { getActivePinia } from 'pinia'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useAuthStore } from '../stores/auth'
+import { frameworkApi } from '../services/frameworkApi'
+import { beneficiaryApi, type OrgLocation } from '../services/beneficiaryApi'
+import { canDownloadData, downloadFile } from '../services/teamupApi'
+import { cohortProgramOf } from '../utils/cohortPrograms'
+import { isPssActivityCode, isPssActivityName } from '../utils/activityConfig'
 
 definePageMeta({ layout: false, middleware: ['auth'] })
 
-const BASE_URL = '/api/v1'
+interface ProjectActivity { id: string; name: string; code: string; module: string | null; templateCode: string; isActive: boolean }
+interface Project { id: string; name: string; activities: ProjectActivity[] }
 
-function resolveToken(): string | undefined {
-  try {
-    const pinia = getActivePinia()
-    const authState = pinia?.state.value?.['auth'] as { accessToken?: string | null } | undefined
-    return authState?.accessToken ?? undefined
-  } catch { return undefined }
-}
+const auth = useAuthStore()
+const canExport = computed(() => canDownloadData(auth.userRole))
 
+const projects = ref<Project[]>([])
+const projectId = ref('')
+const locations = ref<OrgLocation[]>([])
+const locationId = ref('')
+const loading = ref(true)
+const busy = ref('')
 const error = ref<string | null>(null)
-const exporting = ref(false)
 
-async function exportBeneficiaries() {
-  exporting.value = true
+const project = computed(() => projects.value.find(p => p.id === projectId.value) ?? null)
+const isPss = (a: ProjectActivity) => a.module === 'pss' || isPssActivityCode(a.templateCode) || isPssActivityName(a.name)
+
+const wordReports = computed(() => {
+  const p = project.value
+  if (!p) return []
+  const out: { key: string; to: string; title: string; description: string; icon: string }[] = []
+  for (const a of p.activities) {
+    const cohort = cohortProgramOf({ module: a.module, activity_code: a.templateCode })
+    if (cohort) {
+      out.push({
+        key: a.id,
+        to: `/activities/${p.id}/${cohort.route}/reports?fa=${a.id}`,
+        title: `${a.name} — daily & weekly`,
+        description: `${cohort.label}: every session of a day or week, with attendance, topics, observations and follow-up.`,
+        icon: 'file-text',
+      })
+    } else if (isPss(a) && !out.some(r => r.key === 'pss')) {
+      out.push({
+        key: 'pss',
+        to: `/activities/${p.id}/pss/reports/daily`,
+        title: 'PSS daily facilitator report',
+        description: 'Structured PSS sessions of one day: attendance by age and sex, activities, protection notes.',
+        icon: 'file-text',
+      })
+    }
+  }
+  return out
+})
+
+const registerReports = computed(() => {
+  const p = project.value
+  if (!p) return []
+  return p.activities.flatMap(a => {
+    const cohort = cohortProgramOf({ module: a.module, activity_code: a.templateCode })
+    if (!cohort) return []
+    return [{
+      key: `reg-${a.id}`,
+      url: `/api/v1/${cohort.route}/export?framework_activity_id=${a.id}`,
+      filename: `${cohort.label}_Attendance.xlsx`,
+      title: `${a.name} — attendance register`,
+      description: `${cohort.label}: one row per ${cohort.nounSingular}, date or X for every session (DRA layout).`,
+    }]
+  })
+})
+
+async function download(key: string, url: string, filename: string) {
+  busy.value = key
   error.value = null
   try {
-    const token = resolveToken()
-    const headers: Record<string, string> = {}
-    if (token) headers['Authorization'] = `Bearer ${token}`
-
-    const res = await fetch(`${BASE_URL}/cfs/beneficiaries/export`, { headers })
-    if (!res.ok) {
-      const raw = await res.json().catch(() => ({}))
-      throw new Error(raw?.message ?? 'Export failed')
-    }
-
-    const blob = await res.blob()
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    const disposition = res.headers.get('Content-Disposition')
-    const filenameMatch = disposition?.match(/filename=([^;]+)/)
-    a.download = filenameMatch?.[1]?.trim() ?? 'beneficiaries_export.xlsx'
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
+    await downloadFile(url, filename)
   } catch (e: any) {
-    error.value = e?.message ?? 'Export failed'
+    error.value = e?.message ?? 'Download failed'
   } finally {
-    exporting.value = false
+    busy.value = ''
   }
 }
+
+const downloadBeneficiaries = () =>
+  download('beneficiaries', `/api/v1/beneficiaries/export${locationId.value ? `?cfs_location_id=${locationId.value}` : ''}`, 'beneficiaries.xlsx')
+
+async function loadActivities(p: Project) {
+  if (p.activities.length) return
+  const raw: any[] = ((await frameworkApi.getActivities(p.id)) as any).activities ?? []
+  p.activities = raw
+    .filter(a => a.is_active !== false)
+    .map(a => ({
+      id: a.id,
+      name: a.activity_name ?? a.template?.name ?? 'Activity',
+      code: a.activity_code ?? '',
+      module: a.module ?? null,
+      templateCode: a.template?.code ?? a.activity_code ?? '',
+      isActive: a.is_active !== false,
+    }))
+}
+
+watch(projectId, async id => {
+  const p = projects.value.find(x => x.id === id)
+  if (!p) return
+  try {
+    await loadActivities(p)
+  } catch (e: any) {
+    error.value = e?.message ?? 'Failed to load the project activities'
+  }
+})
+
+onMounted(async () => {
+  try {
+    const [fws, locs] = await Promise.all([
+      frameworkApi.listFrameworks(),
+      beneficiaryApi.listLocations().catch(() => [] as OrgLocation[]),
+    ])
+    locations.value = locs
+    projects.value = (fws.frameworks ?? []).map((f: any) => ({
+      id: f.id,
+      name: f.project_name || f.partner_name || 'Project',
+      activities: [],
+    }))
+    if (projects.value.length) {
+      await loadActivities(projects.value[0]!)
+      projectId.value = projects.value[0]!.id
+    }
+  } catch (e: any) {
+    error.value = e?.message ?? 'Failed to load projects'
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>
-.reports-page {
-  max-width: 860px;
-}
-
-/* ── Page header ─────────────────────────────────── */
-.page-header {
-  margin-bottom: 28px;
-}
-
-.page-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 4px;
-}
-
-.page-subtitle {
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  margin: 0;
-}
-
-/* ── Error banner ────────────────────────────────── */
-.rp-error {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  margin-bottom: 20px;
-  background: var(--error-bg);
-  border: 1px solid rgba(248, 113, 113, 0.2);
-  border-radius: var(--radius-md);
-  font-size: 0.82rem;
-  color: var(--error);
-}
-
-.rp-error-dismiss {
-  margin-left: auto;
-  background: none;
-  border: none;
-  color: var(--error);
-  cursor: pointer;
-  padding: 2px;
-  opacity: 0.7;
-  transition: opacity 0.15s;
-}
-
-.rp-error-dismiss:hover {
-  opacity: 1;
-}
-
-.rp-fade-enter-active,
-.rp-fade-leave-active {
-  transition: opacity 0.2s, transform 0.2s;
-}
-
-.rp-fade-enter-from,
-.rp-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
-}
-
-/* ── Section ─────────────────────────────────────── */
-.rp-section {
-  margin-bottom: 32px;
-}
-
-.rp-section-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 4px;
-}
-
-.rp-section-title {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.rp-section-badge {
-  font-size: 0.68rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 2px 8px;
-  border-radius: 100px;
-  background: var(--primary-dim);
-  color: var(--primary);
-}
-
-.rp-section-desc {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin: 0 0 16px;
-  line-height: 1.5;
-}
-
-/* ── Card grid ───────────────────────────────────── */
-.rp-card-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-}
-
-/* ── Report card ─────────────────────────────────── */
-.rp-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px 18px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  transition: all 0.18s ease;
-  text-align: left;
-  width: 100%;
-}
-
-.rp-card:hover:not(:disabled) {
-  border-color: var(--primary);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), var(--shadow-glow);
-  transform: translateY(-1px);
-}
-
-.rp-card:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.rp-card--disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-
-.rp-card--loading {
-  pointer-events: none;
-  opacity: 0.8;
-}
-
-/* ── Card icon ───────────────────────────────────── */
-.rp-card-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.rp-card-icon--primary {
-  background: var(--primary-dim);
-  color: var(--primary);
-}
-
-.rp-card-icon--success {
-  background: var(--success-bg);
-  color: var(--success);
-}
-
-.rp-card-icon--accent {
-  background: var(--accent-dim);
-  color: var(--accent);
-}
-
-.rp-card-icon--warning {
-  background: var(--warning-bg);
-  color: var(--warning);
-}
-
-/* ── Card body ───────────────────────────────────── */
-.rp-card-body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.rp-card-title {
-  font-size: 0.86rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.rp-card-desc {
-  font-size: 0.76rem;
-  color: var(--text-muted);
-  line-height: 1.45;
-}
-
-/* ── Card action area ────────────────────────────── */
-.rp-card-action {
-  flex-shrink: 0;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-}
-
-.rp-card:hover:not(:disabled) .rp-card-action {
-  color: var(--primary);
-}
-
-.rp-card-soon {
-  font-size: 0.68rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 3px 8px;
-  border-radius: 100px;
-  background: var(--hover-bg);
-  color: var(--text-muted);
-}
-
-/* ── Spinner ─────────────────────────────────────── */
-.rp-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid var(--border-subtle);
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: rp-spin 0.6s linear infinite;
-}
-
-@keyframes rp-spin {
-  to { transform: rotate(360deg); }
-}
-
-/* ── Mobile ──────────────────────────────────────── */
-@media (max-width: 640px) {
-  .rp-card {
-    padding: 14px;
-    gap: 12px;
-  }
-
-  .rp-card-icon {
-    width: 38px;
-    height: 38px;
-  }
-
-  .rp-card-desc {
-    display: none;
-  }
-}
+.rp-page { max-width: 960px; }
+.rp-card { flex-direction: row; align-items: center; gap: 12px; text-align: left; font: inherit; cursor: pointer; }
+.rp-card:disabled { opacity: 0.6; cursor: progress; }
+.rp-card--stack { flex-direction: column; align-items: stretch; cursor: default; }
+.rp-row { display: flex; align-items: center; gap: 10px; }
+.rp-row .tu-select { flex: 1; min-width: 0; }
+.rp-body { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rp-icon { width: 36px; height: 36px; border-radius: 10px; flex: none; display: inline-flex; align-items: center; justify-content: center; background: var(--primary-dim); color: var(--primary); }
+.rp-icon--excel { background: var(--data-teal-dim); color: var(--data-teal); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 </style>

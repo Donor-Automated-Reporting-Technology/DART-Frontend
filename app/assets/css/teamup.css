@@ -120,8 +120,8 @@ button.tu-list-item:focus-visible { outline: 2px solid var(--primary); outline-o
 .tu-risk { color: #b91c1c; font-weight: 700; }
 
 /* Modal / sheet */
-.tu-scrim { position: fixed; inset: 0; background: rgba(17, 24, 39, 0.45); display: flex; align-items: flex-end; justify-content: center; z-index: 50; }
-.tu-sheet { width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; background: var(--bg-panel); border-radius: 18px 18px 0 0; padding: 20px; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; }
+.tu-scrim { position: fixed; inset: 0; background: rgba(17, 24, 39, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; backdrop-filter: blur(6px); }
+.tu-sheet { width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto; background: var(--bg-panel); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; }
 @media (min-width: 720px) {
   .tu-scrim { align-items: center; }
   .tu-sheet { border-radius: 16px; }

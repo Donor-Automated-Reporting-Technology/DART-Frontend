@@ -48,6 +48,10 @@ export type TargetFieldMeasure =
   | 'disability'
   | 'female_disability'
   | 'male_disability'
+  | 'female_child'
+  | 'male_child'
+  | 'female_adult'
+  | 'male_adult'
   | 'manual'
 
 export const TARGET_FIELD_MEASURES: Array<{ value: TargetFieldMeasure; label: string }> = [
@@ -57,6 +61,10 @@ export const TARGET_FIELD_MEASURES: Array<{ value: TargetFieldMeasure; label: st
   { value: 'disability', label: 'With disability' },
   { value: 'female_disability', label: 'Girls with disability' },
   { value: 'male_disability', label: 'Boys with disability' },
+  { value: 'female_child', label: 'Girls under 18' },
+  { value: 'male_child', label: 'Boys under 18' },
+  { value: 'female_adult', label: 'Women 18+' },
+  { value: 'male_adult', label: 'Men 18+' },
   { value: 'manual', label: 'Entered manually' },
 ]
 

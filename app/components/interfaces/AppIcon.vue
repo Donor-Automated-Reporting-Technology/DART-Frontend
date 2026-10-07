@@ -472,9 +472,54 @@
       <circle cx="12" cy="12" r="10" />
     </template>
 
-    <!-- Fallback: render a small square so nothing is invisible -->
+
+    <template v-else-if="name === 'wifi-off'">
+      <line x1="1" y1="1" x2="23" y2="23" /><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55" /><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39" /><path d="M10.71 5.05A16 16 0 0 1 22.58 9" /><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88" /><path d="M8.53 16.11a6 6 0 0 1 6.95 0" /><line x1="12" y1="20" x2="12.01" y2="20" />
+    </template>
+
+    <template v-else-if="name === 'alert-triangle'">
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+    </template>
+
+    <template v-else-if="name === 'calendar-x'">
+      <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /><line x1="10" y1="14" x2="14" y2="18" /><line x1="14" y1="14" x2="10" y2="18" />
+    </template>
+
+    <template v-else-if="name === 'copy'">
+      <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </template>
+
+    <template v-else-if="name === 'flag'">
+      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" />
+    </template>
+
+    <template v-else-if="name === 'grid'">
+      <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+    </template>
+
+    <template v-else-if="name === 'list-checks'">
+      <path d="m3 17 2 2 4-4" /><path d="m3 7 2 2 4-4" /><path d="M13 6h8" /><path d="M13 12h8" /><path d="M13 18h8" />
+    </template>
+
+    <template v-else-if="name === 'mouse-pointer'">
+      <path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z" /><path d="m13 13 6 6" />
+    </template>
+
+    <template v-else-if="name === 'package'">
+      <path d="M16.5 9.4 7.55 4.24" /><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" />
+    </template>
+
+    <template v-else-if="name === 'play'">
+      <polygon points="5 3 19 12 5 21 5 3" />
+    </template>
+
+    <template v-else-if="name === 'play-circle'">
+      <circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" />
+    </template>
+
+    <!-- Fallback for an unknown name: a small dot rather than an empty box -->
     <template v-else>
-      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <circle cx="12" cy="12" r="3" />
     </template>
   </svg>
 </template>
@@ -496,7 +541,9 @@
  * layout-list, user, layout-grid, map, heart, layout-dashboard,
  * log-out, download, file-spreadsheet, layers, search,
  * sliders-horizontal, pencil, printer, layout,
- * panel-left-close, panel-left-open, check, chevron-down, chevron-up
+ * panel-left-close, panel-left-open, check, chevron-down, chevron-up,
+ * wifi-off, alert-triangle, calendar-x, copy, flag, grid, list-checks,
+ * mouse-pointer, package, play, play-circle
  */
 withDefaults(
   defineProps<{

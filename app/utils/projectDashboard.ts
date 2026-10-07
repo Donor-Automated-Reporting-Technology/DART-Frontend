@@ -27,6 +27,10 @@ const MEASURE_LABELS: Record<string, string> = {
   disability: 'beneficiaries with disability',
   female_disability: 'girls with disability',
   male_disability: 'boys with disability',
+  female_child: 'girls under 18',
+  male_child: 'boys under 18',
+  female_adult: 'women 18+',
+  male_adult: 'men 18+',
 }
 
 /** Where a target field's actual comes from, in words. */

@@ -1,0 +1,47 @@
+/*
+ * One rule for every modal in the app: centred on the screen (phones too) with
+ * the page behind blurred. Component styles are scoped and some turn modals
+ * into bottom sheets on small screens, so these overrides use !important.
+ * Add a new modal's backdrop / panel class here.
+ */
+
+/* Backdrops */
+.enroll-overlay,
+.discard-backdrop,
+.sheet-backdrop,
+.pss-copy-monday__overlay,
+.dlg-backdrop,
+.pss-form__backdrop,
+.pss-picker__backdrop,
+.tu-scrim,
+.modal-overlay,
+.sync-modal-overlay,
+.sf-overlay,
+.modal-backdrop,
+.obj-backdrop {
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+  background: rgba(15, 23, 42, 0.45) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  backdrop-filter: blur(6px) !important;
+}
+
+/* Side drawers stay drawers, with the same blur behind them. */
+.drawer-overlay {
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+/* Panels: rounded cards rather than bottom sheets, never taller than the screen. */
+.enroll-modal,
+.dlg,
+.pss-form__panel,
+.pss-picker__panel,
+.sheet,
+.sf-modal,
+.modal-box,
+.tu-sheet {
+  border-radius: 16px !important;
+  max-height: 88vh !important;
+}
