@@ -81,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { isTeamUpActivity } from '../../../services/teamupApi'
+import { cohortProgramOf } from '../../../utils/cohortPrograms'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { frameworkApi } from '../../../services/frameworkApi'
@@ -161,11 +161,12 @@ function activityRoute(a: FrameworkActivity): string {
   //   4. Framework-type safety net: in MVP the ONLY active activity for a
   //      child_protection framework is PSS, so route anything in a CP
   //      project straight to /pss instead of the generic detail page.
-  // TeamUp has its own hub (closed groups + 20-session curriculum), whether
-  // the activity came from the TEAMUP template or was added from the logframe
-  // with the TeamUp module.
-  if (isTeamUpActivity({ ...a, activity_code: a.template?.code })) {
-    return `/activities/${frameworkId}/teamup?fa=${a.id}`
+  // Cohort programmes (TeamUp, Parenting, Community Dialogue) have their own
+  // hub, whether the activity came from the template or was added from the
+  // logframe with the programme's module.
+  const cohort = cohortProgramOf({ ...a, activity_code: a.template?.code })
+  if (cohort) {
+    return `/activities/${frameworkId}/${cohort.route}?fa=${a.id}`
   }
   if (
     isPssActivityCode(a.template?.code) ||

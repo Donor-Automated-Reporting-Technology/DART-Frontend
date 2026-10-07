@@ -319,7 +319,9 @@
                 <label class="field-label" for="aa-module">Module *</label>
                 <select id="aa-module" v-model="addForm.module" class="field-input">
                   <option value="pss">PSS — Psychosocial Support</option>
-                  <option value="teamup">TeamUp — 20-session group programme</option>
+                  <option value="teamup">TeamUp — 20-session group programme for children</option>
+                  <option value="parenting">Parenting — sessions with caregivers</option>
+                  <option value="community_dialogue">Community Dialogue — sessions with community members</option>
                 </select>
               </div>
             </div>

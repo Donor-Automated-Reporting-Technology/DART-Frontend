@@ -1,5 +1,5 @@
 <template>
-  <CohortReportsPage program="teamup" />
+  <CohortEnrollPage program="parenting" />
 </template>
 
 <script setup lang="ts">

@@ -1,5 +1,6 @@
 /**
- * TeamUp Word reports (session report + group progress report).
+ * Word reports for cohort programmes (TeamUp, Parenting, Community Dialogue):
+ * session, daily, weekly and group progress reports.
  *
  * Same technique and typography as the PSS daily facilitator report
  * (pages/activities/[id]/pss/reports/daily.vue): an HTML payload saved as
@@ -15,11 +16,17 @@ import type {
 import { BLOCK_LABELS } from '../services/teamupApi'
 
 export interface ReportHeader {
+  /** Programme name used in titles ("TeamUp", "Parenting", "Community Dialogue"). */
+  programLabel?: string
+  /** Plural noun for participants ("children", "caregivers"…). */
+  noun?: string
   organisationName?: string
   projectName?: string
   partnerName?: string
   activityName?: string
 }
+
+const lbl = (h: ReportHeader) => h.programLabel || 'TeamUp'
 
 const esc = (v: unknown): string =>
   String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -85,7 +92,7 @@ function letterhead(title: string, h: ReportHeader): string {
   const project = h.projectName
     ? `Project: ${esc(h.projectName)}${h.partnerName ? ` &mdash; ${esc(h.partnerName)}` : ''} &nbsp;&nbsp;&nbsp;&nbsp; `
     : ''
-  return `<p class="title">${esc(title)}</p>${org}<p class="lead">${project}Activity: ${esc(h.activityName || 'TeamUp')}</p>`
+  return `<p class="title">${esc(title)}</p>${org}<p class="lead">${project}Activity: ${esc(h.activityName || h.programLabel || 'TeamUp')}</p>`
 }
 
 function metaBlock(rows: Array<[string, string]>): string {
@@ -113,7 +120,7 @@ interface SessionParts {
 }
 
 /** Attendance + "session conducted" blocks for one session. */
-function sessionParts(detail: TeamUpSessionDetail): SessionParts {
+function sessionParts(detail: TeamUpSessionDetail, noun = 'children'): SessionParts {
   const s = detail.session
   const byId = new Map(detail.roster.map(e => [e.beneficiary_id, e]))
   const marks = new Map((s.attendance ?? []).map(a => [a.beneficiary_id, a.status]))
@@ -125,10 +132,10 @@ function sessionParts(detail: TeamUpSessionDetail): SessionParts {
 
   const names = (list: TeamUpEnrollment[]) => list.map(e => esc(e.beneficiary_name)).join(', ')
   const attendance = detail.roster.length === 0
-    ? `<p class="body"><i>No children are enrolled in this group.</i></p>`
+    ? `<p class="body"><i>No ${noun} are enrolled in this group.</i></p>`
     : `
       <p class="body">
-        <b>${present.length}</b> of <b>${detail.roster.length}</b> enrolled children attended
+        <b>${present.length}</b> of <b>${detail.roster.length}</b> enrolled ${noun} attended
         (<b>${girls}</b> ${girls === 1 ? 'girl' : 'girls'} and <b>${present.length - girls}</b> ${present.length - girls === 1 ? 'boy' : 'boys'}).
         ${withDisability > 0 ? `<b>${withDisability}</b> ${withDisability === 1 ? 'child' : 'children'} present ${withDisability === 1 ? 'lives' : 'live'} with a disability.` : ''}
       </p>
@@ -182,13 +189,13 @@ const sessionLabel = (d: TeamUpSessionDetail) =>
   `Session ${d.session.sequence_no} — ${d.session.module_name ?? ''} ${d.session.session_in_module ?? ''}/${d.session.module_sessions ?? ''}`
 const unique = (vals: string[]) => [...new Set(vals.filter(Boolean))]
 
-/** One completed (or in-progress) session — the TeamUp facilitator report. */
+/** One completed (or in-progress) session — the facilitator's session report. */
 export function buildSessionReport(detail: TeamUpSessionDetail, header: ReportHeader): string {
   const s = detail.session
   const g = detail.group
   const location = g.service_point_name ?? ''
   const facilitator = s.facilitator_name ?? 'Facilitator'
-  const { present, attendanceHtml: attendance, conductedHtml } = sessionParts(detail)
+  const { present, attendanceHtml: attendance, conductedHtml } = sessionParts(detail, header.noun)
   const flags = s.flags ?? []
 
   const meta = metaBlock([
@@ -202,13 +209,13 @@ export function buildSessionReport(detail: TeamUpSessionDetail, header: ReportHe
 
   const summary = `
     <p class="body">
-      Session <b>${s.sequence_no}</b> of the TeamUp cycle was ${s.status === 'completed' ? 'completed' : 'held'} with
+      Session <b>${s.sequence_no}</b> of the ${esc(lbl(header))} cycle was ${s.status === 'completed' ? 'completed' : 'held'} with
       <b>${plural(present.length, 'child', 'children')}</b> present.
       ${flags.length ? `<b>${plural(flags.length, 'child was', 'children were')}</b> flagged for child-protection follow-up.` : 'No children were flagged for protection follow-up.'}
     </p>`
 
-  return wrap(`TeamUp Session Report — ${g.name} Session ${s.sequence_no}`, `
-    ${letterhead('TeamUp Session Report', header)}
+  return wrap(`${lbl(header)} Session Report — ${g.name} Session ${s.sequence_no}`, `
+    ${letterhead(`${lbl(header)} Session Report`, header)}
     <hr class="rule" />${meta}<hr class="rule" />
     <h2 class="section">1.&nbsp;&nbsp;Attendance</h2>${attendance}
     <hr class="rule" />
@@ -244,7 +251,7 @@ export function buildGroupReport(report: TeamUpGroupReport, sessions: TeamUpSess
   const summary = `
     <p class="body">
       The <b>${esc(g.name)}</b> group has completed <b>${report.sessions_completed}</b> of
-      <b>${report.total_sessions}</b> TeamUp sessions. <b>${plural(report.rows.length, 'child was', 'children were')}</b>
+      <b>${report.total_sessions}</b> ${esc(lbl(header))} sessions. <b>${plural(report.rows.length, 'child was', 'children were')}</b>
       enrolled (<b>${girls}</b> ${girls === 1 ? 'girl' : 'girls'}, <b>${report.rows.length - girls}</b> ${report.rows.length - girls === 1 ? 'boy' : 'boys'}).
     </p>
     <p class="body">
@@ -271,8 +278,8 @@ export function buildGroupReport(report: TeamUpGroupReport, sessions: TeamUpSess
     ? `<table class="grid"><tr><th>#</th><th>Module</th><th>Date</th><th>Facilitator</th></tr>${sessionRows}</table>`
     : '<p class="body"><i>No sessions have been completed yet.</i></p>'
 
-  return wrap(`TeamUp Group Progress Report — ${g.name}`, `
-    ${letterhead('TeamUp Group Progress Report', header)}
+  return wrap(`${lbl(header)} Group Progress Report — ${g.name}`, `
+    ${letterhead(`${lbl(header)} Group Progress Report`, header)}
     <hr class="rule" />${meta}<hr class="rule" />
     <h2 class="section">1.&nbsp;&nbsp;Summary</h2>${summary}
     <hr class="rule" />
@@ -304,9 +311,9 @@ function periodMeta(details: TeamUpSessionDetail[], opts: PeriodReportOptions, d
   ])
 }
 
-/** Every TeamUp session held on one day — the TeamUp daily facilitator report. */
+/** Every session of the programme held on one day — the daily facilitator report. */
 export function buildDailyReport(details: TeamUpSessionDetail[], date: string, header: ReportHeader, opts: PeriodReportOptions): string {
-  const parts = details.map(sessionParts)
+  const parts = details.map(d => sessionParts(d, header.noun))
   const present = parts.reduce((n, p) => n + p.present.length, 0)
   const girls = parts.reduce((n, p) => n + p.girls, 0)
   const enrolled = details.reduce((n, d) => n + d.roster.length, 0)
@@ -314,10 +321,10 @@ export function buildDailyReport(details: TeamUpSessionDetail[], date: string, h
   const flags = details.reduce((n, d) => n + (d.session.flags?.length ?? 0), 0)
 
   const overview = details.length === 0
-    ? '<p class="body"><i>No TeamUp sessions were recorded for this date.</i></p>'
+    ? `<p class="body"><i>No ${esc(lbl(header))} sessions were recorded for this date.</i></p>`
     : `<p class="body">
-         <b>${plural(details.length, 'TeamUp session was', 'TeamUp sessions were')}</b> held today.
-         <b>${present}</b> of <b>${enrolled}</b> enrolled children attended
+         <b>${plural(details.length, `${lbl(header)} session was`, `${lbl(header)} sessions were`)}</b> held today.
+         <b>${present}</b> of <b>${enrolled}</b> enrolled ${header.noun ?? 'children'} attended
          (<b>${girls}</b> ${girls === 1 ? 'girl' : 'girls'}, <b>${present - girls}</b> ${present - girls === 1 ? 'boy' : 'boys'};
          <b>${uniquePresent}</b> different ${uniquePresent === 1 ? 'child' : 'children'}).
        </p>`
@@ -334,8 +341,8 @@ export function buildDailyReport(details: TeamUpSessionDetail[], date: string, h
       ${flags ? `<b>${plural(flags, 'child was', 'children were')}</b> flagged for child-protection follow-up.` : 'No children were flagged for protection follow-up.'}
     </p>`
 
-  return wrap(`TeamUp Daily Report — ${formatDateLong(date)}`, `
-    ${letterhead('TeamUp Daily Facilitator Report', header)}
+  return wrap(`${lbl(header)} Daily Report — ${formatDateLong(date)}`, `
+    ${letterhead(`${lbl(header)} Daily Facilitator Report`, header)}
     <hr class="rule" />${periodMeta(details, opts, [['Date', formatDateLong(date)]])}<hr class="rule" />
     <h2 class="section">1.&nbsp;&nbsp;Attendance</h2>${overview}
     <hr class="rule" />
@@ -348,9 +355,9 @@ export function buildDailyReport(details: TeamUpSessionDetail[], date: string, h
   `)
 }
 
-/** A week of TeamUp sessions — summary tables instead of every session in full. */
+/** A week of sessions — summary tables instead of every session in full. */
 export function buildWeeklyReport(details: TeamUpSessionDetail[], from: string, to: string, header: ReportHeader, opts: PeriodReportOptions): string {
-  const parts = details.map(sessionParts)
+  const parts = details.map(d => sessionParts(d, header.noun))
   const present = parts.reduce((n, p) => n + p.present.length, 0)
   const marked = parts.reduce((n, p) => n + p.present.length + p.absent.length + p.excused.length, 0)
   const presentIds = new Set(parts.flatMap(p => p.present.map(e => e.beneficiary_id)))
@@ -360,7 +367,7 @@ export function buildWeeklyReport(details: TeamUpSessionDetail[], from: string, 
   const period = `${formatDateLong(from)} – ${formatDateLong(to)}`
 
   const glance = details.length === 0
-    ? '<p class="body"><i>No TeamUp sessions were recorded this week.</i></p>'
+    ? `<p class="body"><i>No ${esc(lbl(header))} sessions were recorded this week.</i></p>`
     : `<p class="body">
          <b>${plural(details.length, 'session was', 'sessions were')}</b> held with
          <b>${plural(unique(details.map(d => d.group.id)).length, 'group', 'groups')}</b>, reaching
@@ -412,8 +419,8 @@ export function buildWeeklyReport(details: TeamUpSessionDetail[], from: string, 
   const observations = details.filter(d => d.session.key_observations)
     .map(d => `<p class="bullet">-&nbsp;&nbsp;<b>${esc(d.group.name)}, session ${d.session.sequence_no}:</b> ${nl2br(d.session.key_observations!)}</p>`).join('')
 
-  return wrap(`TeamUp Weekly Report — ${period}`, `
-    ${letterhead('TeamUp Weekly Facilitator Report', header)}
+  return wrap(`${lbl(header)} Weekly Report — ${period}`, `
+    ${letterhead(`${lbl(header)} Weekly Facilitator Report`, header)}
     <hr class="rule" />${periodMeta(details, opts, [['Week', period]])}<hr class="rule" />
     <h2 class="section">1.&nbsp;&nbsp;Week at a Glance</h2>${glance}
     <hr class="rule" />
@@ -421,7 +428,7 @@ export function buildWeeklyReport(details: TeamUpSessionDetail[], from: string, 
     <hr class="rule" />
     <h2 class="section">3.&nbsp;&nbsp;Group Progress</h2>${groupsTable || '<p class="body">No group met this week.</p>'}
     <hr class="rule" />
-    <h2 class="section">4.&nbsp;&nbsp;Children to Follow Up</h2>${followUps.join('') || '<p class="body">No follow-ups this week.</p>'}
+    <h2 class="section">4.&nbsp;&nbsp;Who to Follow Up</h2>${followUps.join('') || '<p class="body">No follow-ups this week.</p>'}
     <hr class="rule" />
     <h2 class="section">5.&nbsp;&nbsp;Key Observations</h2>${observations || '<p class="body">No observations were recorded.</p>'}
     <hr class="rule" />

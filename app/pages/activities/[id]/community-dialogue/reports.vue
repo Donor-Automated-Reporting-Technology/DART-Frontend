@@ -1,5 +1,5 @@
 <template>
-  <CohortReportsPage program="teamup" />
+  <CohortReportsPage program="community_dialogue" />
 </template>
 
 <script setup lang="ts">

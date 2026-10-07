@@ -150,11 +150,11 @@
               </div>
             </div>
 
-            <!-- ═══ TeamUp groups at this location ═══ -->
+            <!-- ═══ Groups (TeamUp, Parenting, Community Dialogue) at this location ═══ -->
             <div v-if="teamupGroups.length" class="fac-sessions-section">
               <div class="section-header">
                 <div class="section-header-left">
-                  <h3 class="section-title">TeamUp groups</h3>
+                  <h3 class="section-title">My groups</h3>
                   <span class="section-count">{{ teamupGroups.length }}</span>
                 </div>
               </div>
@@ -162,15 +162,15 @@
                 <NuxtLink
                   v-for="g in teamupGroups"
                   :key="g.id"
-                  :to="`/dashboard/teamup/${g.framework_activity_id}`"
+                  :to="`/dashboard/${programOf(g).route}/${g.framework_activity_id}`"
                   class="tu-card tu-card--link"
                 >
                   <div class="tu-row">
-                    <strong>{{ g.name }}</strong>
-                    <span class="tu-muted">Age {{ g.age_band }} · {{ g.enrolled_count }} children</span>
+                    <strong>{{ g.name }} <span class="tu-pill tu-pill--active">{{ programOf(g).label }}</span></strong>
+                    <span class="tu-muted"><template v-if="g.age_band">Age {{ g.age_band }} · </template>{{ g.enrolled_count }} {{ programOf(g).noun }}</span>
                   </div>
                   <div class="tu-bar"><span :style="{ width: `${g.total_sessions ? (g.sessions_completed / g.total_sessions) * 100 : 0}%` }" /></div>
-                  <span class="tu-muted">{{ g.sessions_completed }} of {{ g.total_sessions }} sessions done · open TeamUp dashboard</span>
+                  <span class="tu-muted">{{ g.sessions_completed }} of {{ g.total_sessions }} sessions done · open dashboard</span>
                 </NuxtLink>
               </div>
             </div>
@@ -419,7 +419,8 @@ import { useRouter } from 'vue-router'
 import { useDashboard } from '../../composables/useDashboard'
 import DashboardBreadcrumb from '../../components/dashboard/DashboardBreadcrumb.vue'
 import AppIcon from '../../components/interfaces/AppIcon.vue'
-import { teamupApi } from '../../services/teamupApi'
+import { cohortApi } from '../../services/teamupApi'
+import { COHORT_PROGRAMS, type CohortProgramKey } from '../../utils/cohortPrograms'
 import type { TeamUpGroup } from '../../interfaces/teamup'
 
 const router = useRouter()
@@ -510,14 +511,15 @@ function openSession(id: string) {
 
 onMounted(fetchDashboard)
 
-// TeamUp groups at the facilitator's CFS (the API scopes field staff to their location).
+// Active groups of every cohort programme at the facilitator's location
+// (the API scopes field staff to their location).
 const teamupGroups = ref<TeamUpGroup[]>([])
+const programOf = (g: TeamUpGroup) => COHORT_PROGRAMS[g.program as CohortProgramKey] ?? COHORT_PROGRAMS.teamup
 onMounted(async () => {
-  try {
-    teamupGroups.value = (await teamupApi.listGroups()).filter(g => g.status === 'active')
-  } catch {
-    teamupGroups.value = []
-  }
+  const lists = await Promise.all(
+    (Object.keys(COHORT_PROGRAMS) as CohortProgramKey[]).map(k => cohortApi(k).listGroups().catch(() => [] as TeamUpGroup[])),
+  )
+  teamupGroups.value = lists.flat().filter(g => g.status === 'active')
 })
 </script>
 

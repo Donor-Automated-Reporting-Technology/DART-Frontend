@@ -1,0 +1,179 @@
+<template>
+  <NuxtLayout name="app" :breadcrumbs="breadcrumbs">
+    <div class="tu-page" style="max-width: 1100px">
+      <div v-if="loading" class="tu-stack"><div class="tu-skeleton" /><div class="tu-skeleton" /></div>
+
+      <template v-else-if="report">
+        <div class="tu-header">
+          <div>
+            <h1 class="tu-title">{{ report.group.name }} · group report</h1>
+            <p class="tu-subtitle">
+              {{ report.group.service_point_name }}<template v-if="report.group.age_band"> · Age {{ report.group.age_band }}</template> ·
+              Facilitators: {{ report.facilitators.join(', ') || '—' }}
+            </p>
+          </div>
+          <NuxtLink :to="groupUrl" class="tu-btn tu-btn--ghost tu-no-print">
+            <AppIcon name="arrow-left" :size="14" />
+            Group
+          </NuxtLink>
+        </div>
+
+        <div v-if="justDone" class="tu-alert tu-alert--ok tu-no-print">
+          <AppIcon name="check-circle" :size="14" />
+          Session {{ justDone }} completed.
+        </div>
+        <div v-if="error" class="tu-alert tu-alert--error">{{ error }}</div>
+
+        <div class="tu-kpis">
+          <div class="tu-kpi"><strong>{{ report.sessions_completed }}/{{ report.total_sessions }}</strong>Sessions done</div>
+          <div class="tu-kpi"><strong>{{ report.on_track }}</strong>On track for {{ report.min_dosage }}+</div>
+          <div class="tu-kpi"><strong :class="{ 'tu-risk': report.at_risk > 0 }">{{ report.at_risk }}</strong>At risk{{ report.dropped ? ` · ${report.dropped} dropped` : '' }}</div>
+        </div>
+
+        <div class="tu-grid-wrap">
+          <table class="tu-table">
+            <thead>
+              <tr>
+                <th class="tu-sticky" scope="col">Child</th>
+                <th v-for="n in report.total_sessions" :key="n" scope="col">{{ n }}</th>
+                <th scope="col">Attended</th>
+                <th scope="col">Missed</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in report.rows" :key="r.enrollment_id">
+                <th class="tu-sticky" scope="row">
+                  {{ r.name }}
+                  <span v-if="r.status === 'dropped'" class="tu-pill tu-pill--done" :title="r.drop_reason">Dropped</span>
+                  <span v-else-if="r.at_risk" class="tu-pill tu-pill--warn">At risk</span>
+                </th>
+                <td v-for="c in r.cells" :key="c.sequence_no">
+                  <span v-if="c.status === 'present'" class="tu-cell tu-cell--present">{{ shortDate(c.date) }}</span>
+                  <span v-else-if="c.status === 'absent'" class="tu-cell tu-cell--absent">X</span>
+                  <span v-else-if="c.status === 'excused'" class="tu-cell tu-cell--excused">E</span>
+                </td>
+                <td><strong>{{ r.attended }}</strong></td>
+                <td :class="{ 'tu-risk': r.at_risk }">{{ r.missed }}</td>
+              </tr>
+              <tr v-if="report.rows.length === 0">
+                <td :colspan="report.total_sessions + 3" class="tu-muted">No {{ cfg.noun }} enrolled yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="tu-muted">Date = attended · X = absent · E = excused. The Excel register shows E as X (missed).</span>
+
+        <div v-if="canExport" class="tu-card tu-no-print">
+          <strong style="font-size: 0.88rem">The Excel attendance register includes</strong>
+          <span class="tu-muted">
+            Month · Name · Gender · Age · Language · Disability · Contact · Location ·
+            Each session (date or X)<template v-if="cfg.key === 'teamup'"> · Caregiver · Group · Totals attended/missed · Baseline · Endline · Facilitators · Drop-out remark</template><template v-else-if="cfg.key === 'community_dialogue'"> · Remarks</template>
+          </span>
+        </div>
+
+        <div class="tu-actions tu-no-print">
+          <button type="button" class="tu-btn" :disabled="preparingWord" @click="downloadWord">
+            <AppIcon name="file-text" :size="16" />
+            {{ preparingWord ? 'Preparing…' : 'Download Word report' }}
+          </button>
+          <button v-if="canExport" type="button" class="tu-btn tu-btn--ghost" :disabled="downloading" @click="download">
+            <AppIcon name="download" :size="16" />
+            {{ downloading ? 'Preparing…' : 'Download Excel' }}
+          </button>
+          <button type="button" class="tu-btn tu-btn--ghost" @click="printPage">
+            <AppIcon name="printer" :size="16" />
+            Print report
+          </button>
+        </div>
+      </template>
+
+      <div v-else-if="error" class="tu-alert tu-alert--error">{{ error }}</div>
+    </div>
+  </NuxtLayout>
+</template>
+
+<script setup lang="ts">
+import { cohortProgram, type CohortProgramKey } from '../../utils/cohortPrograms'
+
+const props = defineProps<{ program: CohortProgramKey }>()
+const cfg = cohortProgram(props.program)
+const api = cohortApi(props.program)
+
+import AppIcon from '../interfaces/AppIcon.vue'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { canDownloadData, cohortApi } from '../../services/teamupApi'
+import { useAuthStore } from '../../stores/auth'
+import { loadReportHeader } from '../../composables/useTeamUpHelpers'
+import { buildGroupReport, downloadDoc } from '../../utils/teamupWordReport'
+import type { TeamUpGroupReport } from '../../interfaces/teamup'
+
+
+const route = useRoute()
+const frameworkId = route.params.id as string
+const groupId = route.params.groupId as string
+const groupUrl = `/activities/${frameworkId}/${cfg.route}/groups/${groupId}`
+const canExport = computed(() => canDownloadData(useAuthStore().userRole))
+const justDone = computed(() => (route.query.done as string) || '')
+
+const report = ref<TeamUpGroupReport | null>(null)
+const loading = ref(true)
+const downloading = ref(false)
+const error = ref<string | null>(null)
+
+const breadcrumbs = computed(() => [
+  { title: cfg.label, href: `/activities/${frameworkId}/${cfg.route}${report.value?.group.framework_activity_id ? `?fa=${report.value?.group.framework_activity_id}` : ''}` },
+  { title: report.value?.group.name ?? 'Group', href: groupUrl },
+  { title: 'Report', href: route.fullPath, current: true },
+])
+
+// "19/3/2026" → "19/3" to keep grid cells narrow.
+function shortDate(d?: string) {
+  return d ? d.split('/').slice(0, 2).join('/') : ''
+}
+
+const preparingWord = ref(false)
+async function downloadWord() {
+  if (!report.value) return
+  preparingWord.value = true
+  error.value = null
+  try {
+    const [detail, header] = await Promise.all([
+      api.getGroup(groupId),
+      loadReportHeader(frameworkId, report.value.group.framework_activity_id).then(h => ({ ...h, programLabel: cfg.label, noun: cfg.noun })),
+    ])
+    const html = buildGroupReport(report.value, detail.sessions, header)
+    downloadDoc(html, `teamup-${report.value.group.name}-progress-report.doc`.replace(/\s+/g, '-').toLowerCase())
+  } catch (e: any) {
+    error.value = e?.message ?? 'Could not prepare the Word report'
+  } finally {
+    preparingWord.value = false
+  }
+}
+
+function printPage() {
+  window.print()
+}
+
+async function download() {
+  downloading.value = true
+  error.value = null
+  try {
+    await api.downloadExcel({ groupId })
+  } catch (e: any) {
+    error.value = e?.message ?? 'Download failed'
+  } finally {
+    downloading.value = false
+  }
+}
+
+onMounted(async () => {
+  try {
+    report.value = await api.getReport(groupId)
+  } catch (e: any) {
+    error.value = e?.message ?? 'Failed to load report'
+  } finally {
+    loading.value = false
+  }
+})
+</script>

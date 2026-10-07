@@ -19,9 +19,12 @@ export interface TeamUpModule {
 }
 
 export interface TeamUpCurriculumSession {
+  id?: string
   sequence_no: number
   module_order: number
   module_name: string
+  session_name: string
+  objectives: string[]
   session_in_module: number
   module_sessions: number
 }
@@ -33,9 +36,16 @@ export interface TeamUpActivity {
   summary: string
 }
 
+/** A curriculum for any cohort programme (built-in DRA default or the organisation's own). */
 export interface TeamUpCurriculum {
+  id: string
+  organisation_id?: string
+  program: string
   code: string
   name: string
+  description?: string
+  built_in: boolean
+  groups_using: number
   min_dosage: number
   modules: TeamUpModule[]
   sessions: TeamUpCurriculumSession[]
@@ -51,6 +61,7 @@ export interface TeamUpGroup {
   name: string
   program: string
   curriculum_code: string
+  curriculum_id?: string
   age_band?: AgeBand
   meeting_days: number[]
   meeting_time?: string
@@ -158,7 +169,8 @@ export interface CreateTeamUpGroupRequest {
   framework_activity_id: string
   cfs_location_id?: string
   name: string
-  age_band: AgeBand
+  age_band?: AgeBand
+  curriculum_id?: string
   meeting_days: number[]
   meeting_time?: string
   start_date?: string
@@ -260,7 +272,7 @@ export interface TeamUpDashboard {
     dropped: number
     flagged_children: number
   }
-  dosage: { label: string; count: number }[]
+  dosage: { label: string; count: number; ok: boolean }[]
   wellbeing: { sessions_counted: number; checkin_good_pct: number; checkout_good_pct: number; checkin_bad_pct: number; checkout_bad_pct: number }
   scores: { children_with_both: number; avg_baseline: number; avg_endline: number; avg_change: number; improved: number }
   by_location: {
@@ -300,4 +312,11 @@ export interface TeamUpDashboard {
     marked: number
     status: string
   }[]
+}
+
+export interface SaveCurriculumRequest {
+  name: string
+  description?: string
+  min_dosage: number
+  modules: { name: string; sessions: { name: string; objectives: string[] }[] }[]
 }
