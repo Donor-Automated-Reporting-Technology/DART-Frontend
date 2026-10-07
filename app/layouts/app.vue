@@ -26,7 +26,7 @@
       <!-- ── Brand / Logo block ─────────────────────────────────────────────── -->
       <div class="sidebar-brand">
         <!-- Square logo mark -->
-        <div class="brand-mark" aria-hidden="true">W</div>
+        <WellReachMark :size="28" class="brand-mark" />
 
         <!-- Brand text: app name + org (hidden when collapsed) -->
         <div class="brand-copy">
@@ -293,6 +293,7 @@
 </template>
 
 <script setup lang="ts">
+import WellReachMark from '../components/brand/WellReachMark.vue';
 import { ref, computed, watch, onMounted } from 'vue';
 import { useAuthStore }       from '../stores/auth';
 import { useOnboardingStore } from '../stores/onboarding';
@@ -504,7 +505,6 @@ async function handleLogout(): Promise<void> {
   width: 28px;
   height: 28px;
   border-radius: var(--radius-sm);
-  background-color: var(--primary);
   color: #000;
   font-size: 0.82rem;
   font-weight: 800;

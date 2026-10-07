@@ -5,7 +5,16 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: 'WellReach',
-      meta: [{ name: 'description', content: 'Offline-first activity tracking and donor reporting for NGOs' }],
+      meta: [
+        { name: 'description', content: 'Offline-first activity tracking and donor reporting for NGOs' },
+        { name: 'theme-color', content: '#0E7C66' },
+      ],
+      // The WellReach mark (Joyful W): SVG for modern browsers, PNG/ICO fallbacks.
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
+      ],
     },
   },
   ssr: false,
@@ -27,8 +36,8 @@ export default defineNuxtConfig({
       name: 'WellReach — trusted data for children\'s wellbeing',
       short_name: 'WellReach',
       description: 'Offline-first activity tracking and donor reporting for NGOs',
-      theme_color: '#818cf8',
-      background_color: '#0f0f1a',
+      theme_color: '#0E7C66',
+      background_color: '#FBFAF7',
       display: 'standalone',
       icons: [
         {
@@ -40,6 +49,13 @@ export default defineNuxtConfig({
           src: '/icon-512.png',
           sizes: '512x512',
           type: 'image/png',
+        },
+        {
+          // Full-bleed version Android crops into its own shape.
+          src: '/icon-maskable-512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'maskable',
         },
       ],
     },
