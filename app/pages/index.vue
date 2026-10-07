@@ -20,7 +20,7 @@
         <div class="nav-actions">
           <ThemeToggle />
           <NuxtLink to="/login" class="btn btn-quiet">Sign in</NuxtLink>
-          <a href="#waitlist" class="btn btn-ink">Join the waitlist</a>
+          <a href="#waitlist" class="btn btn-ink"><span class="label-long">Join the waitlist</span><span class="label-short">Join</span></a>
         </div>
       </header>
 
@@ -594,10 +594,12 @@ section[id] { scroll-margin-top: 16px; }
 .btn-primary { background: var(--teal); color: #fff !important; box-shadow: 0 8px 24px rgba(14, 124, 102, 0.22); }
 .btn-ink { background: var(--btn-ink-bg); color: var(--btn-ink-text) !important; }
 .btn-quiet { padding: 0 12px; color: var(--ink) !important; }
+.label-short { display: none; }
+.btn { white-space: nowrap; }
 
 /* Hero */
 .hero { position: relative; overflow: hidden; background: var(--hero); border-bottom: 1px solid var(--line-2); }
-.nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 76px; flex-wrap: wrap; z-index: 2; }
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 72px; flex-wrap: wrap; z-index: 2; }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
 .wordmark { font-family: Sora, sans-serif; font-weight: 800; font-size: 20px; letter-spacing: -0.02em; color: var(--ink); }
 .wordmark span { color: var(--hl); }
@@ -607,18 +609,19 @@ section[id] { scroll-margin-top: 16px; }
 .nav-links a { text-decoration: none; color: var(--text); }
 .nav-links a:hover { color: var(--ink); }
 .nav-actions { display: flex; gap: 8px; align-items: center; }
-.hero-body { display: flex; flex-wrap: wrap; gap: 56px; align-items: center; padding-top: 56px; padding-bottom: 88px; z-index: 1; }
-.hero-copy { flex: 1 1 480px; min-width: 0; }
+.hero-body { display: flex; flex-wrap: wrap; gap: 48px 72px; align-items: center; padding-top: 72px; padding-bottom: 104px; z-index: 1; }
+.hero-copy { flex: 1 1 440px; min-width: 0; max-width: 540px; }
 .pill { display: inline-flex; align-items: center; gap: 10px; padding: 6px 14px 6px 7px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--text); }
 .pill-tag { background: var(--amber); color: #0B2A27; font-weight: 800; font-size: 11px; padding: 3px 9px; border-radius: 999px; }
-.hero h1 { font-weight: 800; font-size: clamp(34px, 4.2vw, 54px); line-height: 1.06; margin-top: 22px; }
+.hero h1 { font-weight: 800; font-size: clamp(30px, 3.3vw, 44px); line-height: 1.14; letter-spacing: -0.025em; margin-top: 20px; text-wrap: balance; }
 .hl { color: var(--hl); }
-.lead { font-size: 17px; color: var(--text-2); margin: 20px 0 0; max-width: 540px; }
-.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
-.proof { margin: 30px 0 0; font-size: 14px; color: var(--muted); }
+.hero h1 .hl { white-space: nowrap; }
+.lead { font-size: 17px; line-height: 1.65; color: var(--text-2); margin: 18px 0 0; max-width: 500px; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.proof { margin: 26px 0 0; font-size: 13px; color: var(--muted); }
 .proof b { color: var(--amber-text); }
-.hero-visual { flex: 1 1 460px; min-width: 0; position: relative; min-height: 460px; }
-.dash { position: absolute; right: 0; top: 0; left: 168px; padding: 22px; box-sizing: border-box; border-radius: 20px; }
+.hero-visual { flex: 1 1 480px; min-width: 0; position: relative; min-height: 440px; }
+.dash { position: absolute; right: 0; top: 0; left: 156px; padding: 22px; box-sizing: border-box; border-radius: 20px; }
 .dash-head { display: flex; justify-content: space-between; align-items: center; }
 .muted-sm { font-size: 12px; color: var(--muted); font-weight: 600; }
 .dash-title { font-family: Sora, sans-serif; font-weight: 700; font-size: 16px; color: var(--ink); }
@@ -633,7 +636,7 @@ section[id] { scroll-margin-top: 16px; }
 .bar-fill { height: 6px; border-radius: 99px; }
 .dash-foot { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--track); display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--text); }
 .dash-foot .link { color: var(--teal-text); }
-.phone { position: absolute; left: 0; bottom: 0; width: 186px; border-radius: 30px; padding: 8px; }
+.phone { position: absolute; left: 0; bottom: 0; width: 178px; border-radius: 30px; padding: 8px; }
 .phone-screen { background: var(--surface); border-radius: 23px; padding: 15px 13px; min-height: 290px; box-sizing: border-box; color: var(--ink); font-size: 12px; box-shadow: inset 0 0 0 1px var(--track); }
 .phone-head { display: flex; justify-content: space-between; align-items: center; font-weight: 800; }
 .offline { font-size: 10px; font-weight: 700; color: var(--chip-text); background: var(--chip-bg); padding: 2px 8px; border-radius: 99px; }
@@ -771,6 +774,8 @@ td.tool { font-weight: 700; color: var(--ink); width: 26%; }
 
 @media (max-width: 760px) {
   .nav-links { display: none; }
+  .nav { flex-wrap: nowrap; }
+  .actions .btn { flex: 1 1 100%; }
   .hero-visual { min-height: 0; }
   .dash { position: static; width: 100%; }
   .phone { display: none; }
@@ -779,5 +784,13 @@ td.tool { font-weight: 700; color: var(--ink); width: 26%; }
   .fact + .fact { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); }
   .fact { padding: 14px 0; flex-direction: row; align-items: baseline; gap: 14px; }
   .fact-value { min-width: 96px; font-size: 22px; }
+}
+
+@media (max-width: 520px) {
+  .btn-quiet { display: none; }
+  .nav-actions .btn-ink { padding: 0 18px; }
+  .label-long { display: none; }
+  .label-short { display: inline; }
+  .wordmark { font-size: 18px; }
 }
 </style>
