@@ -383,3 +383,8 @@ select {
   background: #ffffff;
   color: var(--text-primary);
 }
+
+/* In-page anchor links scroll smoothly on pages that opt in (landing page). */
+@media (prefers-reduced-motion: no-preference) {
+  html.smooth-scroll { scroll-behavior: smooth; }
+}

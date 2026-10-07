@@ -1,10 +1,14 @@
 <template>
   <div class="login-page">
+    <div class="auth-toggle"><ThemeToggle /></div>
     <div class="form-section">
       <div class="form-container">
 
         <div class="brand-header">
-          <h1 class="logo">WellReach</h1>
+          <NuxtLink to="/" class="logo-link" aria-label="WellReach home">
+            <WellReachMark :size="52" />
+            <h1 class="logo">Well<span>Reach</span></h1>
+          </NuxtLink>
           <h2 class="tagline">Welcome Back!</h2>
         </div>
 
@@ -65,6 +69,8 @@
 </template>
 
 <script setup lang="ts">
+import WellReachMark from '../components/brand/WellReachMark.vue';
+import ThemeToggle from '../components/brand/ThemeToggle.vue';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
@@ -182,6 +188,7 @@ const handleLogin = async () => {
 
 <style scoped>
 .login-page {
+  position: relative;
   min-height: 100vh;
   display: flex;
   background-color: var(--bg-dark);
@@ -209,12 +216,30 @@ const handleLogin = async () => {
   margin-bottom: 2rem;
 }
 
+.auth-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.logo-link {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
 .logo {
-  font-size: 3.5rem;
+  font-size: 2.4rem;
   font-weight: 800;
   color: var(--text-primary);
-  margin: 0 0 0.5rem 0;
-  letter-spacing: 2px;
+  margin: 0 0 0.25rem 0;
+  letter-spacing: -0.02em;
+}
+
+.logo span {
+  color: var(--primary);
 }
 
 .tagline {

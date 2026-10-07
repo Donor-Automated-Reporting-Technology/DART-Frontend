@@ -9,6 +9,11 @@ export default defineNuxtConfig({
         { name: 'description', content: 'Offline-first activity tracking and donor reporting for NGOs' },
         { name: 'theme-color', content: '#0E7C66' },
       ],
+      // Apply the saved light/dark choice before first paint, on every page
+      // (same key as composables/useTheme.ts), so pages never flash.
+      script: [
+        { innerHTML: "try{var t=localStorage.getItem('dart-theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-theme',t)}catch(e){}" },
+      ],
       // The WellReach mark (Joyful W): SVG for modern browsers, PNG/ICO fallbacks.
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },

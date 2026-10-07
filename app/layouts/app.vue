@@ -248,23 +248,7 @@
         <div class="header-end">
           <DSyncStatusFooter />
 
-          <!-- Theme toggle — pill switch -->
-          <button
-            class="theme-pill"
-            type="button"
-            :class="{ 'theme-pill--dark': isDark }"
-            :title="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
-            :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
-            @click="toggleTheme"
-          >
-            <span class="theme-pill__icon">
-              <AppIcon name="sun" :size="13" />
-            </span>
-            <span class="theme-pill__thumb" />
-            <span class="theme-pill__icon">
-              <AppIcon name="moon" :size="13" />
-            </span>
-          </button>
+          <ThemeToggle />
 
           <div
             v-if="showOnboardingPill"
@@ -294,6 +278,7 @@
 
 <script setup lang="ts">
 import WellReachMark from '../components/brand/WellReachMark.vue';
+import ThemeToggle from '../components/brand/ThemeToggle.vue';
 import { ref, computed, watch, onMounted } from 'vue';
 import { useAuthStore }       from '../stores/auth';
 import { useOnboardingStore } from '../stores/onboarding';
