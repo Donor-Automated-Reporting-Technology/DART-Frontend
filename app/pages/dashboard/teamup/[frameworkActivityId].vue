@@ -4,7 +4,7 @@
 
     <div v-if="loading" class="tu-stack">
       <div class="tu-skeleton" style="height: 120px" />
-      <div class="tud-kpis"><div v-for="n in 4" :key="n" class="tu-skeleton" /></div>
+      <div class="tud-bento"><div class="tu-skeleton tud-hero" style="height: 220px" /><div v-for="n in 3" :key="n" class="tu-skeleton" /></div>
       <div class="tu-skeleton" style="height: 220px" />
     </div>
 
@@ -16,69 +16,57 @@
 
     <template v-else-if="d">
       <!-- ═══ Header ═══ -->
-      <section class="tud-card tud-head">
-        <div class="tud-head-info">
+      <section class="tud-head">
+        <div>
           <h1 class="tud-title">{{ d.activity.name }}</h1>
-          <div class="tud-chips">
-            <span v-if="d.activity.code" class="tud-chip">{{ d.activity.code }}</span>
-            <span class="tud-chip">TeamUp module</span>
-            <span v-if="d.activity.target_count" class="tud-chip">Target: {{ d.activity.target_count }} {{ d.activity.target_unit }}</span>
-            <span v-if="d.scope_location" class="tud-chip tud-chip--scope">Your CFS: {{ d.scope_location }}</span>
-          </div>
-          <div class="tu-actions tud-actions">
-            <NuxtLink :to="hubUrl" class="tu-btn">
-              <AppIcon name="users" :size="16" />
-              Open TeamUp hub
-            </NuxtLink>
-            <NuxtLink :to="`/activities/${d.activity.framework_id}/teamup/reports?fa=${d.activity.id}`" class="tu-btn tu-btn--ghost">
-              <AppIcon name="file-text" :size="16" />
-              Reports
-            </NuxtLink>
-            <button v-if="canExport" type="button" class="tu-btn tu-btn--ghost" :disabled="downloading" @click="downloadExcel">
-              <AppIcon name="download" :size="16" />
-              {{ downloading ? 'Preparing…' : 'Excel' }}
-            </button>
-          </div>
+          <p v-if="d.scope_location" class="tud-sub">{{ d.scope_location }}</p>
         </div>
-        <div v-if="d.activity.target_count" class="tud-ring" :title="`${d.summary.children} of ${d.activity.target_count} reached`">
-          <svg viewBox="0 0 36 36" aria-hidden="true">
-            <path class="tud-ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="tud-ring-fill" :stroke-dasharray="`${Math.min(d.summary.target_percentage, 100)}, 100`" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <span class="tud-ring-label">{{ d.summary.target_percentage }}%</span>
+        <div class="tud-actions">
+          <NuxtLink :to="hubUrl" class="tu-btn">
+            <AppIcon name="users" :size="16" />
+            Open TeamUp hub
+          </NuxtLink>
+          <NuxtLink :to="`/activities/${d.activity.framework_id}/teamup/reports?fa=${d.activity.id}`" class="tu-btn tu-btn--ghost">
+            <AppIcon name="file-text" :size="16" />
+            Reports
+          </NuxtLink>
         </div>
       </section>
 
-      <!-- ═══ Headline figures ═══ -->
-      <section class="tud-kpis" aria-label="Headline figures">
-        <div class="tud-card tud-kpi">
-          <span class="tud-kpi-label">Children reached</span>
-          <span class="tud-kpi-value">{{ d.summary.children }}</span>
-          <span class="tud-kpi-foot">{{ d.summary.girls }} girls · {{ d.summary.boys }} boys · {{ d.summary.with_disability }} with disability</span>
-        </div>
-        <div class="tud-card tud-kpi tud-kpi--accent">
-          <span class="tud-kpi-label">Reached {{ d.min_dosage }}+ sessions</span>
-          <span class="tud-kpi-value">{{ d.summary.reached_min_dosage }}<small> / {{ d.summary.children }}</small></span>
-          <div class="tu-bar"><span :style="{ width: `${dosagePct}%` }" /></div>
-          <span class="tud-kpi-foot">{{ dosagePct }}% of children — the minimum for TeamUp to help</span>
-        </div>
-        <div class="tud-card tud-kpi">
-          <span class="tud-kpi-label">Attendance</span>
-          <span class="tud-kpi-value" :class="rateClass(d.summary.attendance_rate)">{{ d.summary.attendance_rate }}%</span>
-          <span class="tud-kpi-foot">{{ d.summary.avg_sessions_per_child }} sessions per child · {{ d.summary.sessions_held }} sessions held</span>
-        </div>
-        <div class="tud-card tud-kpi" :class="{ 'tud-kpi--alert': attention > 0 }">
-          <span class="tud-kpi-label">Need attention</span>
-          <span class="tud-kpi-value">{{ attention }}</span>
-          <span class="tud-kpi-foot">{{ d.summary.at_risk }} at risk · {{ d.summary.dropped }} dropped · {{ d.summary.flagged_children }} flagged</span>
-        </div>
+      <!-- ═══ Reach + headline figures ═══ -->
+      <section class="tud-bento" aria-label="Headline figures">
+        <ReachHero
+          class="tud-hero"
+          :total="d.summary.children"
+          :girls="d.summary.girls"
+          :boys="d.summary.boys"
+          :with-disability="d.summary.with_disability"
+          :target="d.activity.target_count || undefined"
+          badge="TeamUp"
+        />
+        <StatTile
+          :value="`${d.summary.attendance_rate}%`"
+          label="Attendance"
+          :sub="`${d.summary.avg_sessions_per_child} sessions per child`"
+          :tone="rateTone(d.summary.attendance_rate)"
+        />
+        <StatTile
+          :value="d.summary.sessions_held"
+          label="Sessions held"
+          :sub="`${d.summary.active_groups} active · ${d.summary.completed_groups} completed groups`"
+        />
+        <StatTile
+          :value="attention"
+          label="Need attention"
+          :sub="`${d.summary.at_risk} at risk · ${d.summary.dropped} dropped`"
+          :alert="attention > 0"
+        />
       </section>
 
       <!-- ═══ Dosage ═══ -->
       <section class="tud-card">
         <div class="tud-section-head">
           <h2 class="tud-section-title">Sessions attended per child</h2>
-          <span class="tu-muted">{{ d.summary.active_groups }} active · {{ d.summary.completed_groups }} completed groups</span>
         </div>
         <div class="tud-bars">
           <div v-for="b in d.dosage" :key="b.label" class="tud-bar-row">
@@ -89,12 +77,12 @@
             <span class="tud-bar-count">{{ b.count }}</span>
           </div>
         </div>
-        <span class="tu-muted">Green = {{ d.min_dosage }} or more sessions. TeamUp research shows children need at least {{ d.min_dosage }} sessions to benefit.</span>
+        <span class="tu-muted">Green: {{ d.min_dosage }} or more sessions — what children need for TeamUp to help.</span>
       </section>
 
       <!-- ═══ Wellbeing + baseline/endline ═══ -->
-      <div class="tud-two">
-        <section class="tud-card">
+      <div v-if="d.wellbeing.sessions_counted || d.scores.children_with_both" class="tud-two">
+        <section v-if="d.wellbeing.sessions_counted" class="tud-card">
           <h2 class="tud-section-title">How children feel</h2>
           <template v-if="d.wellbeing.sessions_counted">
             <div class="tud-compare">
@@ -105,20 +93,18 @@
               Thumbs counts from {{ d.wellbeing.sessions_counted }} sessions. "Not good": {{ d.wellbeing.checkin_bad_pct }}% at check-in → {{ d.wellbeing.checkout_bad_pct }}% at check-out.
             </span>
           </template>
-          <span v-else class="tu-muted">No thumbs counts recorded yet.</span>
         </section>
-        <section class="tud-card">
+        <section v-if="d.scores.children_with_both" class="tud-card">
           <h2 class="tud-section-title">Baseline → Endline</h2>
           <template v-if="d.scores.children_with_both">
             <div class="tud-scores">
-              <div><span class="tud-kpi-value">{{ d.scores.avg_baseline }}</span><span class="tu-muted">Avg baseline</span></div>
+              <div><span class="tud-num">{{ d.scores.avg_baseline }}</span><span class="tu-muted">Avg baseline</span></div>
               <AppIcon name="chevron-right" :size="18" />
-              <div><span class="tud-kpi-value">{{ d.scores.avg_endline }}</span><span class="tu-muted">Avg endline</span></div>
-              <div><span class="tud-kpi-value" :class="d.scores.avg_change >= 0 ? 'tud-good' : 'tud-bad'">{{ d.scores.avg_change > 0 ? '+' : '' }}{{ d.scores.avg_change }}</span><span class="tu-muted">Change</span></div>
+              <div><span class="tud-num">{{ d.scores.avg_endline }}</span><span class="tu-muted">Avg endline</span></div>
+              <div><span class="tud-num" :class="d.scores.avg_change >= 0 ? 'tud-good' : 'tud-bad'">{{ d.scores.avg_change > 0 ? '+' : '' }}{{ d.scores.avg_change }}</span><span class="tu-muted">Change</span></div>
             </div>
             <span class="tu-muted">{{ d.scores.improved }} of {{ d.scores.children_with_both }} children improved.</span>
           </template>
-          <span v-else class="tu-muted">No children have both a baseline and an endline score yet.</span>
         </section>
       </div>
 
@@ -203,21 +189,19 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import DashboardBreadcrumb from '../../../components/dashboard/DashboardBreadcrumb.vue'
+import ReachHero from '../../../components/dashboard/module/ReachHero.vue'
+import StatTile from '../../../components/dashboard/module/StatTile.vue'
 import AppIcon from '../../../components/interfaces/AppIcon.vue'
-import { useAuthStore } from '../../../stores/auth'
-import { canDownloadData, teamupApi } from '../../../services/teamupApi'
+import { teamupApi } from '../../../services/teamupApi'
 import type { TeamUpDashboard } from '../../../interfaces/teamup'
 
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
 const frameworkActivityId = route.params.frameworkActivityId as string
 
 const d = ref<TeamUpDashboard | null>(null)
 const loading = ref(true)
-const downloading = ref(false)
 const error = ref<string | null>(null)
-const canExport = computed(() => canDownloadData(auth.userRole))
 
 const breadcrumbs = computed(() => {
   const crumbs = [{ title: d.value?.scope_location ? 'My location' : 'Organisation', href: '/dashboard' }]
@@ -229,12 +213,12 @@ const breadcrumbs = computed(() => {
 })
 
 const hubUrl = computed(() => d.value ? `/activities/${d.value.activity.framework_id}/teamup?fa=${d.value.activity.id}` : '#')
-const dosagePct = computed(() => d.value?.summary.children ? Math.round((d.value.summary.reached_min_dosage / d.value.summary.children) * 100) : 0)
 const attention = computed(() => (d.value ? d.value.summary.at_risk + d.value.summary.dropped : 0))
 const maxBucket = computed(() => Math.max(1, ...(d.value?.dosage ?? []).map(b => b.count)))
 
 const barWidth = (n: number) => Math.round((n / maxBucket.value) * 100)
 const isOkBucket = (label: string) => label.startsWith('12') || label.startsWith('20')
+const rateTone = (r: number) => (r >= 75 ? 'good' : r >= 50 ? 'warn' : 'bad') as 'good' | 'warn' | 'bad'
 const rateClass = (r: number) => (r >= 75 ? 'tud-good' : r >= 50 ? 'tud-warn' : 'tud-bad')
 const formatDate = (s: string) => new Date(`${s}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 
@@ -243,17 +227,6 @@ function openGroup(id: string) {
 }
 function openSession(id: string) {
   if (d.value) router.push(`/activities/${d.value.activity.framework_id}/teamup/sessions/${id}`)
-}
-
-async function downloadExcel() {
-  downloading.value = true
-  try {
-    await teamupApi.downloadExcel({ frameworkActivityId })
-  } catch (e: any) {
-    error.value = e?.message ?? 'Download failed'
-  } finally {
-    downloading.value = false
-  }
 }
 
 async function load() {
@@ -274,30 +247,18 @@ onMounted(load)
 <style scoped>
 .tud { display: flex; flex-direction: column; gap: 14px; max-width: 1100px; padding-bottom: 48px; }
 .tud-card { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
-.tud-head { flex-direction: row; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.tud-head-info { display: flex; flex-direction: column; gap: 8px; flex: 1 1 320px; min-width: 0; }
-.tud-title { font-size: 1.35rem; font-weight: 750; margin: 0; color: var(--text-primary); letter-spacing: -0.02em; }
-.tud-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.tud-chip { font-size: 0.72rem; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--bg-input); color: var(--text-secondary); border: 1px solid var(--border-color); }
-.tud-chip--scope { background: var(--primary-dim); color: var(--primary); border-color: transparent; }
-.tud-actions { margin-top: 4px; }
-.tud-actions > * { flex: 0 1 auto; }
-.tud-ring { position: relative; width: 92px; height: 92px; flex: none; }
-.tud-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.tud-ring path { fill: none; stroke-width: 3; }
-.tud-ring-bg { stroke: var(--bg-input); }
-.tud-ring-fill { stroke: var(--primary); stroke-linecap: round; }
-.tud-ring-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 750; font-size: 1.05rem; color: var(--text-primary); }
+.tud-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.tud-title { font-size: 1.45rem; font-weight: 750; margin: 0; color: var(--text-primary); letter-spacing: -0.02em; }
+.tud-sub { margin: 4px 0 0; font-size: 0.85rem; color: var(--text-muted); }
+.tud-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.tud-bento { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: repeat(3, auto); gap: 12px; }
+.tud-hero { grid-row: span 3; }
+@media (max-width: 760px) {
+  .tud-bento { grid-template-columns: 1fr; }
+  .tud-hero { grid-row: auto; }
+}
 
-.tud-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
-.tud-kpi { gap: 6px; }
-.tud-kpi-label { font-size: 0.72rem; font-weight: 650; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
-.tud-kpi-value { font-size: 1.8rem; font-weight: 750; color: var(--text-primary); line-height: 1.1; }
-.tud-kpi-value small { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; }
-.tud-kpi-foot { font-size: 0.75rem; color: var(--text-muted); }
-.tud-kpi--accent { border-color: var(--primary); }
-.tud-kpi--alert { border-color: #f59e0b; }
-
+.tud-num { font-size: 1.8rem; font-weight: 750; color: var(--text-primary); line-height: 1.1; }
 .tud-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .tud-section-title { font-size: 0.95rem; font-weight: 700; margin: 0; color: var(--text-primary); }
 
