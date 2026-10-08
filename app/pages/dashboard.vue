@@ -2,9 +2,6 @@
   <NuxtLayout name="app">
     <div class="dashboard-page">
 
-      <!-- Onboarding banner -->
-      <OnboardingBanner />
-
       <!-- Greeting header -->
       <div class="page-greeting">
         <div class="greeting-body">
@@ -57,7 +54,6 @@ import { ref, computed } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useSyncQueue } from '../composables/useSyncQueue'
 import { useOfflineStatus } from '../composables/useOfflineStatus'
-import OnboardingBanner from '../components/onboarding/OnboardingBanner.vue'
 import AppIcon from '../components/interfaces/AppIcon.vue'
 
 definePageMeta({
