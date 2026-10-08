@@ -358,15 +358,32 @@
       <div class="footer-bottom">
         <div class="wrap footer-bottom-row">
           <span>© {{ year }} WellReach. Built with SSWOCO in South Sudan.</span>
-          <span>Free during testing</span>
+          <span>
+            Free during testing ·
+            <button type="button" class="cookie-settings-link" @click="showCookieBanner = true">Cookie settings</button>
+          </span>
         </div>
       </div>
     </footer>
+
+    <!-- Cookie consent: analytics load only after "Accept". -->
+    <Transition name="cookie">
+      <div v-if="showCookieBanner" class="cookie-banner" role="dialog" aria-live="polite" aria-label="Cookie consent">
+        <p>
+          We use Google Analytics cookies on this page to see how visitors find WellReach.
+          Nothing is tracked inside the app, and we never share programme data.
+        </p>
+        <div class="cookie-actions">
+          <button type="button" class="btn btn-ghost-line" @click="setConsent('denied')">Decline</button>
+          <button type="button" class="btn btn-primary" @click="setConsent('granted')">Accept</button>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import WellReachMark from '../components/brand/WellReachMark.vue'
 import ThemeToggle from '../components/brand/ThemeToggle.vue'
 
@@ -382,6 +399,67 @@ useHead({
     { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
     { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@500;600;700;800&display=swap' },
   ],
+})
+
+// ── Analytics consent ─────────────────────────────────────────────────────
+// Google Tag Manager (GTM-KX7HWXK7) runs on this public landing page only,
+// never in the signed-in app (which holds child-protection data), and only
+// after the visitor accepts cookies. The choice is remembered per device.
+const GTM_ID = 'GTM-KX7HWXK7'
+const CONSENT_KEY = 'wr-cookie-consent'
+const consent = ref<'granted' | 'denied' | null>(null)
+const showCookieBanner = ref(false)
+
+function loadGtm() {
+  const w = window as any
+  if (w.__wrGtmLoaded) return
+  w.__wrGtmLoaded = true
+  // Google's standard GTM loader.
+  w.dataLayer = w.dataLayer || []
+  w.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' })
+  const script = document.createElement('script')
+  script.async = true
+  script.src = `https://www.googletagmanager.com/gtm.js?id=${GTM_ID}`
+  document.head.appendChild(script)
+}
+
+function setConsent(value: 'granted' | 'denied') {
+  const withdrawing = consent.value === 'granted' && value === 'denied'
+  consent.value = value
+  showCookieBanner.value = false
+  try {
+    localStorage.setItem(CONSENT_KEY, value)
+  } catch {
+    /* storage unavailable: the choice lasts for this visit only */
+  }
+  if (value === 'granted') loadGtm()
+  // GTM can't be unloaded from a running page; reload so it is gone.
+  else if (withdrawing) window.location.reload()
+}
+
+// Leaving for the app (sign in, register…) after GTM has loaded: do a full page
+// load instead of a client-side route change, so GTM doesn't follow the
+// visitor into the signed-in pages.
+onBeforeRouteLeave((to) => {
+  if ((window as any).__wrGtmLoaded) {
+    window.location.assign(to.fullPath)
+    return false
+  }
+})
+
+onMounted(() => {
+  let stored: string | null = null
+  try {
+    stored = localStorage.getItem(CONSENT_KEY)
+  } catch {
+    /* storage unavailable */
+  }
+  if (stored === 'granted' || stored === 'denied') {
+    consent.value = stored
+    if (stored === 'granted') loadGtm()
+  } else {
+    showCookieBanner.value = true
+  }
 })
 
 const CONTACT_EMAIL = 'mubarak.admin@sswoco.org'
@@ -853,5 +931,47 @@ td.tool { color: var(--ink); width: 26%; }
 
 @media (prefers-reduced-motion: reduce) {
   .lp *, .lp *::before, .lp *::after { transition: none !important; }
+}
+
+/* ── Cookie consent ───────────────────────────────────────────────── */
+.cookie-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: min(720px, calc(100% - 32px));
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 16px 16px 20px;
+  box-sizing: border-box;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: 0 12px 40px rgba(11, 42, 39, 0.18);
+  color: var(--ink);
+}
+.cookie-banner p { margin: 0; flex: 1; font-size: 14px; line-height: 1.5; color: var(--muted); }
+.cookie-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.cookie-actions .btn { min-height: 40px; padding: 0 18px; }
+.btn-ghost-line { background: transparent; border-color: var(--line); }
+.btn-ghost-line:hover { border-color: var(--teal); }
+.cookie-settings-link {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.cookie-settings-link:hover { color: var(--teal-text); }
+.cookie-enter-active, .cookie-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+.cookie-enter-from, .cookie-leave-to { opacity: 0; transform: translate(-50%, 12px); }
+@media (max-width: 600px) {
+  .cookie-banner { flex-direction: column; align-items: stretch; gap: 14px; bottom: 12px; }
+  .cookie-actions .btn { flex: 1; }
 }
 </style>
