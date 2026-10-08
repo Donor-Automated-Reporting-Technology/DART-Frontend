@@ -402,25 +402,31 @@ useHead({
 })
 
 // ── Analytics consent ─────────────────────────────────────────────────────
-// Google Tag Manager (GTM-KX7HWXK7) runs on this public landing page only,
+// Google Analytics 4 (G-01LQTQW7V4) runs on this public landing page only,
 // never in the signed-in app (which holds child-protection data), and only
 // after the visitor accepts cookies. The choice is remembered per device.
-const GTM_ID = 'GTM-KX7HWXK7'
+const GA_ID = 'G-01LQTQW7V4'
 const CONSENT_KEY = 'wr-cookie-consent'
 const consent = ref<'granted' | 'denied' | null>(null)
 const showCookieBanner = ref(false)
 
-function loadGtm() {
+function loadAnalytics() {
   const w = window as any
-  if (w.__wrGtmLoaded) return
-  w.__wrGtmLoaded = true
-  // Google's standard GTM loader.
-  w.dataLayer = w.dataLayer || []
-  w.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' })
+  if (w.__wrGaLoaded) return
+  w.__wrGaLoaded = true
+  // Google's standard gtag.js snippet.
   const script = document.createElement('script')
   script.async = true
-  script.src = `https://www.googletagmanager.com/gtm.js?id=${GTM_ID}`
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`
   document.head.appendChild(script)
+  w.dataLayer = w.dataLayer || []
+  w.gtag = function gtag() {
+    // gtag.js expects the arguments object itself, not an array.
+    // eslint-disable-next-line prefer-rest-params
+    w.dataLayer.push(arguments)
+  }
+  w.gtag('js', new Date())
+  w.gtag('config', GA_ID)
 }
 
 function setConsent(value: 'granted' | 'denied') {
@@ -432,16 +438,16 @@ function setConsent(value: 'granted' | 'denied') {
   } catch {
     /* storage unavailable: the choice lasts for this visit only */
   }
-  if (value === 'granted') loadGtm()
-  // GTM can't be unloaded from a running page; reload so it is gone.
+  if (value === 'granted') loadAnalytics()
+  // Analytics can't be unloaded from a running page; reload so it is gone.
   else if (withdrawing) window.location.reload()
 }
 
-// Leaving for the app (sign in, register…) after GTM has loaded: do a full page
-// load instead of a client-side route change, so GTM doesn't follow the
-// visitor into the signed-in pages.
+// Leaving for the app (sign in, register…) after analytics has loaded: do a
+// full page load instead of a client-side route change, so analytics doesn't
+// follow the visitor into the signed-in pages.
 onBeforeRouteLeave((to) => {
-  if ((window as any).__wrGtmLoaded) {
+  if ((window as any).__wrGaLoaded) {
     window.location.assign(to.fullPath)
     return false
   }
@@ -456,7 +462,7 @@ onMounted(() => {
   }
   if (stored === 'granted' || stored === 'denied') {
     consent.value = stored
-    if (stored === 'granted') loadGtm()
+    if (stored === 'granted') loadAnalytics()
   } else {
     showCookieBanner.value = true
   }
