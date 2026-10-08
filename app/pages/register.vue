@@ -204,4 +204,8 @@ const handleRegister = async () => {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Dark mode: green text uses the bright mint so it pops. */
+[data-theme='dark'] .switch a,
+[data-theme='dark'] .link-btn { color: #8AF0D2; }
 </style>

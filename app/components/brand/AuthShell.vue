@@ -1,8 +1,8 @@
 <template>
   <!-- Shared frame for login and register: a dark brand panel on the left
        (desktop only) and a calm, compact form area on the right. -->
-  <div class="auth">
-    <aside class="brand-panel" aria-hidden="true">
+  <div class="auth" :class="{ centered }">
+    <aside v-if="!centered" class="brand-panel" aria-hidden="true">
       <div class="glow glow-teal" />
       <div class="glow glow-amber" />
       <NuxtLink to="/" class="brand" tabindex="-1">
@@ -43,10 +43,12 @@
       </div>
 
       <div class="form-wrap" :class="{ wide }">
-        <NuxtLink to="/" class="mobile-brand" aria-label="WellReach home">
-          <WellReachMark :size="40" />
-        </NuxtLink>
-        <slot />
+        <div :class="{ card: centered }">
+          <NuxtLink to="/" class="mobile-brand" aria-label="WellReach home">
+            <WellReachMark :size="40" />
+          </NuxtLink>
+          <slot />
+        </div>
       </div>
 
       <p class="copyright">© {{ year }} WellReach</p>
@@ -58,7 +60,7 @@
 import WellReachMark from './WellReachMark.vue'
 import ThemeToggle from './ThemeToggle.vue'
 
-withDefaults(defineProps<{ headline: string; lead: string; wide?: boolean }>(), { wide: false })
+withDefaults(defineProps<{ headline?: string; lead?: string; wide?: boolean; centered?: boolean }>(), { headline: '', lead: '', wide: false, centered: false })
 
 const year = new Date().getFullYear()
 
@@ -101,8 +103,8 @@ useHead({
 .glow-teal { width: 520px; height: 520px; left: -160px; top: -180px; background: rgba(14, 124, 102, 0.35); }
 .glow-amber { width: 380px; height: 380px; right: -140px; bottom: -120px; background: rgba(242, 165, 65, 0.12); }
 .brand { position: relative; display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
-.wordmark { font-family: Sora, sans-serif; font-weight: 800; font-size: 20px; letter-spacing: -0.02em; color: #fff; }
-.wordmark span { color: #7FD1BC; }
+.wordmark { font-family: Sora, sans-serif; font-weight: 700; font-size: 20px; letter-spacing: -0.02em; color: #fff; }
+.wordmark span { color: #8AF0D2; }
 .panel-middle { position: relative; display: flex; flex-direction: column; gap: 36px; }
 .panel-copy { position: relative; }
 .panel-copy h2 { margin: 0; font-family: Sora, sans-serif; font-weight: 600; font-size: 30px; line-height: 1.15; letter-spacing: -0.02em; color: #fff; }
@@ -122,14 +124,14 @@ useHead({
   color: #DADFDE;
 }
 .card-top { display: flex; justify-content: space-between; align-items: center; }
-.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 8px; border-radius: 999px; background: rgba(127, 209, 188, 0.14); color: #7FD1BC; font-size: 11px; font-weight: 700; line-height: 1; }
-.dot { width: 6px; height: 6px; border-radius: 50%; background: #7FD1BC; box-shadow: 0 0 8px #7FD1BC; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 8px; border-radius: 999px; background: rgba(127, 209, 188, 0.14); color: #8AF0D2; font-size: 11px; font-weight: 600; line-height: 1; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: #8AF0D2; box-shadow: 0 0 8px #8AF0D2; }
 .card-meta { color: #8D9795; font-size: 12px; }
 .card-stat { margin: 16px 0 14px; color: #C3C9C8; }
 .card-stat strong { font-family: Sora, sans-serif; font-size: 28px; color: #fff; margin-right: 6px; }
 .card-row { display: flex; justify-content: space-between; margin-top: 10px; }
 .track { height: 5px; margin-top: 6px; border-radius: 99px; background: rgba(255, 255, 255, 0.1); }
-.fill { height: 5px; border-radius: 99px; background: #7FD1BC; }
+.fill { height: 5px; border-radius: 99px; background: #8AF0D2; }
 .fill.amber { background: #F2A541; }
 .panel-foot { position: relative; margin: 0; font-size: 13px; color: #8D9795; }
 
@@ -147,5 +149,27 @@ useHead({
   .brand-panel { display: none; }
   .mobile-brand { display: inline-flex; }
   .form-side { padding: 20px; }
+}
+
+/* Centred mode (login): no brand panel; one frosted card on a faint glow. */
+.auth.centered { position: relative; overflow: hidden; }
+.auth.centered::before,
+.auth.centered::after { content: ''; position: absolute; border-radius: 50%; filter: blur(100px); pointer-events: none; }
+.auth.centered::before { width: 560px; height: 560px; left: 50%; top: -260px; margin-left: -420px; background: rgba(14, 124, 102, 0.14); }
+.auth.centered::after { width: 460px; height: 460px; left: 50%; bottom: -260px; margin-left: 40px; background: rgba(242, 165, 65, 0.1); }
+.auth.centered .form-side { position: relative; z-index: 1; }
+.auth.centered .form-wrap { max-width: 420px; }
+.auth.centered .mobile-brand { display: inline-flex; margin-bottom: 22px; }
+.card {
+  padding: 36px 32px 30px;
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--bg-panel) 82%, transparent);
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 24px 60px rgba(11, 42, 39, 0.1);
+}
+@media (max-width: 480px) {
+  .card { padding: 28px 20px 24px; border-radius: 20px; }
 }
 </style>
