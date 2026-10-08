@@ -19,7 +19,7 @@
 
       <!-- Sub-navigation -->
       <nav class="sub-nav">
-        <NuxtLink :to="`/settings/projects/${projectId}`" class="sub-nav-item">Project settings</NuxtLink>
+        <NuxtLink v-if="canManageProject" :to="`/settings/projects/${projectId}`" class="sub-nav-item">Project settings</NuxtLink>
         <span class="sub-nav-item sub-nav-item--active">M&E logframe</span>
       </nav>
 
@@ -391,6 +391,7 @@ definePageMeta({
   layout: false,
   middleware: ['auth', 'role-guard'],
   allowedRoles: ['org_admin', 'data_manager', 'program_manager', 'supervisor', 'case_worker', 'facilitator', 'director'],
+  permission: 'logframe.view',
 })
 
 const route = useRoute()
@@ -399,7 +400,8 @@ const authStore = useAuthStore()
 
 /** Roles allowed to mutate the logframe (mirrors backend logframeManageRoles). */
 const MANAGE_ROLES = ['org_admin', 'data_manager', 'program_manager', 'supervisor']
-const canManage = computed(() => MANAGE_ROLES.includes(authStore.userRole ?? ''))
+// Editing follows the role's logframe.edit permission (system role until /me loads).
+const canManage = computed(() => authStore.orgRole ? authStore.can('logframe.edit') : MANAGE_ROLES.includes(authStore.userRole ?? ''))
 
 const project = ref<Framework | null>(null)
 const logframe = ref<Logframe | null>(null)
@@ -822,6 +824,9 @@ onMounted(() => {
   fetchAll()
   fetchTemplates()
 })
+
+// The project settings tab is for people who manage projects.
+const canManageProject = computed(() => !authStore.orgRole || authStore.can('projects.manage'))
 </script>
 
 <style scoped>

@@ -119,27 +119,15 @@
         <div class="nav-group">
           <span class="nav-group-label">System</span>
           <NuxtLink
-            v-if="isAdmin || isManager"
             to="/settings"
             class="nav-item"
-            :class="{ 'nav-item--active': route.path.startsWith('/settings') && route.path !== '/settings/account' }"
+            :class="{ 'nav-item--active': route.path.startsWith('/settings') }"
             title="Settings"
             @click="closeSidebarOnMobile"
           >
             <span class="nav-item-indicator" />
             <AppIcon name="settings" :size="16" class="nav-icon" />
             <span class="nav-label">Settings</span>
-          </NuxtLink>
-          <NuxtLink
-            to="/settings/account"
-            class="nav-item"
-            active-class="nav-item--active"
-            title="My account"
-            @click="closeSidebarOnMobile"
-          >
-            <span class="nav-item-indicator" />
-            <AppIcon name="user" :size="16" class="nav-icon" />
-            <span class="nav-label">My account</span>
           </NuxtLink>
         </div>
 

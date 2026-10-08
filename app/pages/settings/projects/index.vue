@@ -14,7 +14,7 @@
           <h1 class="page-title">Projects</h1>
           <p class="page-subtitle">Each project has its own M&E logframe. Activities and targets are managed in M&E.</p>
         </div>
-        <NuxtLink to="/settings/projects/new" class="btn-primary">+ New project</NuxtLink>
+        <NuxtLink v-if="canManage" to="/settings/projects/new" class="btn-primary">+ New project</NuxtLink>
       </header>
 
       <!-- Loading -->
@@ -29,7 +29,7 @@
       <section v-else-if="!projects.length" class="section-card empty-card">
         <h2 class="card-title">No projects yet</h2>
         <p class="card-hint">Create your first project to start setting up its M&E logframe.</p>
-        <NuxtLink to="/settings/projects/new" class="btn-primary">+ Create project</NuxtLink>
+        <NuxtLink v-if="canManage" to="/settings/projects/new" class="btn-primary">+ Create project</NuxtLink>
       </section>
 
       <!-- List -->
@@ -44,7 +44,7 @@
           <NuxtLink
             v-for="p in projects"
             :key="p.id"
-            :to="`/settings/projects/${p.id}`"
+            :to="canManage ? `/settings/projects/${p.id}` : `/settings/projects/${p.id}/logframe`"
             class="list-row"
           >
             <span class="list-row-body">
@@ -62,7 +62,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useAuthStore } from '../../../stores/auth'
 import { frameworkApi } from '../../../services/frameworkApi'
 import type { Framework } from '../../../interfaces/framework'
 
@@ -70,6 +71,7 @@ definePageMeta({
   layout: false,
   middleware: ['auth', 'role-guard'],
   allowedRoles: ['org_admin', 'program_manager'],
+  permission: ['projects.manage', 'logframe.view'],
 })
 
 const projects = ref<Framework[]>([])
@@ -104,6 +106,9 @@ async function fetchProjects() {
 }
 
 onMounted(fetchProjects)
+
+// M&E staff without projects.manage go straight to each project's logframe.
+const canManage = computed(() => useAuthStore().can('projects.manage') || !useAuthStore().orgRole)
 </script>
 
 <style scoped>

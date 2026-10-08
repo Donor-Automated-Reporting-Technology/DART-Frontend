@@ -131,6 +131,7 @@ definePageMeta({
   layout: false,
   middleware: ['auth', 'role-guard'],
   allowedRoles: ['org_admin', 'program_manager'],
+  permission: 'org.manage',
 })
 
 const authStore = useAuthStore()

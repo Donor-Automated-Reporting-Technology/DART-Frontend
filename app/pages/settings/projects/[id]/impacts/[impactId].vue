@@ -406,6 +406,7 @@ definePageMeta({
   key: (r) => r.fullPath,
   middleware: ['auth', 'role-guard'],
   allowedRoles: ['org_admin', 'data_manager', 'program_manager', 'supervisor', 'case_worker', 'facilitator', 'director'],
+  permission: 'logframe.view',
 })
 
 const route = useRoute()
@@ -414,7 +415,8 @@ const impactId = route.params.impactId as string
 const authStore = useAuthStore()
 
 const MANAGE_ROLES = ['org_admin', 'data_manager', 'program_manager', 'supervisor']
-const canManage = computed(() => MANAGE_ROLES.includes(authStore.userRole ?? ''))
+// Editing follows the role's logframe.edit permission (system role until /me loads).
+const canManage = computed(() => authStore.orgRole ? authStore.can('logframe.edit') : MANAGE_ROLES.includes(authStore.userRole ?? ''))
 
 const project = ref<Framework | null>(null)
 const impact = ref<LogframeLevel | null>(null)
