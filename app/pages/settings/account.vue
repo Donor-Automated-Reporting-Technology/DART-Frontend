@@ -386,6 +386,7 @@ onMounted(async () => {
 .subtitle { margin: 4px 0 0; font-size: 0.9375rem; color: var(--text-quiet); }
 
 .card {
+  position: relative;
   padding: 32px;
   background: var(--bg-panel);
   border: 1px solid var(--border-color);

@@ -85,24 +85,9 @@
             <AppIcon name="layers" :size="16" class="nav-icon" />
             <span class="nav-label">Projects</span>
           </NuxtLink>
-        </div>
-
-        <!-- Management ──────────────────────────────────────────────── -->
-        <div class="nav-group" v-if="isAdmin || isManager">
-          <span class="nav-group-label">Management</span>
-          <NuxtLink
-            to="/staff"
-            class="nav-item"
-            active-class="nav-item--active"
-            title="Staff"
-            @click="closeSidebarOnMobile"
-          >
-            <span class="nav-item-indicator" />
-            <AppIcon name="users" :size="16" class="nav-icon" />
-            <span class="nav-label">Staff</span>
-          </NuxtLink>
 
           <NuxtLink
+            v-if="canReports"
             to="/reports"
             class="nav-item"
             active-class="nav-item--active"
@@ -335,6 +320,11 @@ const isStaff = computed(() =>
 /** Check if user is a manager (program_manager) or admin */
 const isManager = computed(() =>
   authStore.userRole === 'org_admin' || authStore.userRole === 'program_manager'
+);
+
+/** Reports = data downloads; follows the role's data.export permission. */
+const canReports = computed(() =>
+  authStore.orgRole ? authStore.can('data.export') : isAdmin.value || isManager.value
 );
 
 // ─── Onboarding pill ──────────────────────────────────────────────────────────
@@ -959,6 +949,9 @@ async function handleLogout(): Promise<void> {
   border-radius: 20px 0 0 0;
   margin: 0;
   overflow-y: auto;
+  /* Contain absolutely positioned content (e.g. visually-hidden inputs) so it
+     can never stretch the document and scroll the whole shell away. */
+  position: relative;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
