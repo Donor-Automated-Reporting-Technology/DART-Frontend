@@ -33,6 +33,11 @@
       <p class="panel-foot">Trusted reports. More children reached.</p>
     </aside>
 
+    <template v-if="centered">
+      <div class="hero-glow a" aria-hidden="true" />
+      <div class="hero-glow b" aria-hidden="true" />
+      <div class="hero-glow c" aria-hidden="true" />
+    </template>
     <main class="form-side">
       <div class="form-top">
         <NuxtLink to="/" class="back">
@@ -151,17 +156,33 @@ useHead({
   .form-side { padding: 20px; }
 }
 
-/* Centred mode (login): no brand panel, no coloured glows. The page and the
-   card share almost the same neutral tone; a hairline and soft shadow separate them. */
-.auth.centered { background: color-mix(in srgb, var(--bg-panel) 55%, var(--bg-dark)); }
+/* Centred mode (login): the landing hero's background (soft grey with faint
+   teal and amber light; deep charcoal in dark mode) and a frosted-glass card. */
+.auth.centered { position: relative; overflow: hidden; background: #F1F3F2; }
+[data-theme='dark'] .auth.centered { background: #0E1416; }
+.hero-glow { position: absolute; border-radius: 50%; filter: blur(90px); pointer-events: none; }
+.hero-glow.a { width: 560px; height: 560px; left: -180px; top: -240px; background: rgba(14, 124, 102, 0.14); }
+.hero-glow.b { width: 520px; height: 520px; right: -120px; top: 140px; background: rgba(242, 165, 65, 0.16); }
+.hero-glow.c { width: 420px; height: 420px; right: 28%; top: 40px; background: rgba(14, 124, 102, 0.1); }
+[data-theme='dark'] .hero-glow.a { background: rgba(14, 124, 102, 0.22); }
+[data-theme='dark'] .hero-glow.b { background: rgba(242, 165, 65, 0.08); }
+[data-theme='dark'] .hero-glow.c { background: rgba(14, 124, 102, 0.12); }
+.auth.centered .form-side { position: relative; z-index: 1; }
 .auth.centered .form-wrap { max-width: 420px; }
 .auth.centered .mobile-brand { display: inline-flex; margin-bottom: 22px; }
 .card {
   padding: 36px 32px 30px;
   border-radius: 24px;
-  background: var(--bg-panel);
-  border: 1px solid var(--border-color);
-  box-shadow: 0 12px 40px rgba(11, 42, 39, 0.06);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 0 0 1px rgba(11, 42, 39, 0.05), 0 18px 50px rgba(11, 42, 39, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+[data-theme='dark'] .card {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 @media (max-width: 480px) {
   .card { padding: 28px 20px 24px; border-radius: 20px; }

@@ -168,9 +168,9 @@ const handleLogin = async () => {
   box-sizing: border-box;
   padding: 22px 16px 8px;
   border-radius: 14px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-panel);
-  color: var(--text-primary);
+  border: 1px solid rgba(11, 42, 39, 0.12);
+  background: rgba(255, 255, 255, 0.8);
+  color: #0B2A27;
   font: 400 15px Manrope, system-ui, sans-serif;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -245,4 +245,16 @@ const handleLogin = async () => {
 /* Dark mode: green text uses the bright mint so it pops. */
 [data-theme='dark'] .switch a,
 [data-theme='dark'] .float-field input:focus + label { color: #8AF0D2; }
+
+/* Text always contrasts with what it sits on (glass card on the hero background). */
+.title { color: #0B2A27; }
+.subtitle, .switch, .float-field label, .reveal { color: #4A5A57; }
+.switch a { color: #0A5C4C; }
+[data-theme='dark'] .title { color: #EEF3F1; }
+[data-theme='dark'] .subtitle,
+[data-theme='dark'] .switch,
+[data-theme='dark'] .float-field label,
+[data-theme='dark'] .reveal { color: #B3BEBB; }
+[data-theme='dark'] .float-field input { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.14); color: #EEF3F1; }
+.float-field input:focus + label { color: #0A5C4C; }
 </style>
