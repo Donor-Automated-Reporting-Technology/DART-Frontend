@@ -1,55 +1,64 @@
 <template>
-  <form class="aggregate-form" @submit.prevent="$emit('submit')">
+  <form class="aggregate-form" novalidate @focusout="iv.onBlur" @input="iv.onInput" @submit.prevent="iv.submit($event, () => $emit('submit'))">
     <div class="form-row">
       <div class="field">
-        <label class="field-label">Event Name</label>
-        <input v-model="form.event_name" type="text" class="field-input" placeholder="e.g. Community Awareness Day" required />
+        <label :for="`${fid}-1`" class="field-label">Event Name</label>
+        <input :id="`${fid}-1`" v-model="form.event_name" type="text" class="field-input" placeholder="e.g. Community Awareness Day" required :name="`${fid}-1`" v-bind="iv.aria(`${fid}-1`, 'iv')" />
+        <FieldError :id="'iv-' + `${fid}-1` + '-error'" :message="iv.messages[`${fid}-1`]" />
       </div>
       <div class="field">
-        <label class="field-label">Date</label>
-        <input v-model="form.event_date" type="date" class="field-input" required />
+        <label :for="`${fid}-2`" class="field-label">Date</label>
+        <input :id="`${fid}-2`" v-model="form.event_date" type="date" class="field-input" required :name="`${fid}-2`" v-bind="iv.aria(`${fid}-2`, 'iv')" />
+        <FieldError :id="'iv-' + `${fid}-2` + '-error'" :message="iv.messages[`${fid}-2`]" />
       </div>
     </div>
 
     <div class="form-row">
       <div class="field">
-        <label class="field-label">Location</label>
-        <select v-model="form.cfs_location_id" class="field-input" required>
+        <label :for="`${fid}-3`" class="field-label">Location</label>
+        <select :id="`${fid}-3`" v-model="form.cfs_location_id" class="field-input" required :name="`${fid}-3`" v-bind="iv.aria(`${fid}-3`, 'iv')">
           <option value="" disabled>Select location</option>
           <option v-for="sp in servicePoints" :key="sp.id" :value="sp.id">{{ sp.name }}</option>
         </select>
+        <FieldError :id="'iv-' + `${fid}-3` + '-error'" :message="iv.messages[`${fid}-3`]" />
       </div>
       <div class="field">
-        <label class="field-label">Community Leader Contact</label>
-        <input v-model="form.community_leader_contact" type="text" class="field-input" placeholder="Name / phone" />
+        <label :for="`${fid}-4`" class="field-label">Community Leader Contact</label>
+        <input :id="`${fid}-4`" v-model="form.community_leader_contact" type="text" class="field-input" placeholder="Name / phone" />
       </div>
     </div>
 
     <h4 class="section-title">Participant Counts</h4>
     <div class="counts-grid">
       <div class="count-field">
-        <label class="field-label">Girls</label>
-        <input v-model.number="form.girls" type="number" class="field-input" min="0" />
+        <label :for="`${fid}-5`" class="field-label">Girls</label>
+        <input :id="`${fid}-5`" v-model.number="form.girls" type="number" class="field-input" min="0" :name="`${fid}-5`" v-bind="iv.aria(`${fid}-5`, 'iv')" />
+        <FieldError :id="'iv-' + `${fid}-5` + '-error'" :message="iv.messages[`${fid}-5`]" />
       </div>
       <div class="count-field">
-        <label class="field-label">Boys</label>
-        <input v-model.number="form.boys" type="number" class="field-input" min="0" />
+        <label :for="`${fid}-6`" class="field-label">Boys</label>
+        <input :id="`${fid}-6`" v-model.number="form.boys" type="number" class="field-input" min="0" :name="`${fid}-6`" v-bind="iv.aria(`${fid}-6`, 'iv')" />
+        <FieldError :id="'iv-' + `${fid}-6` + '-error'" :message="iv.messages[`${fid}-6`]" />
       </div>
       <div class="count-field">
-        <label class="field-label">Women</label>
-        <input v-model.number="form.women" type="number" class="field-input" min="0" />
+        <label :for="`${fid}-7`" class="field-label">Women</label>
+        <input :id="`${fid}-7`" v-model.number="form.women" type="number" class="field-input" min="0" :name="`${fid}-7`" v-bind="iv.aria(`${fid}-7`, 'iv')" />
+        <FieldError :id="'iv-' + `${fid}-7` + '-error'" :message="iv.messages[`${fid}-7`]" />
       </div>
       <div class="count-field">
-        <label class="field-label">Men</label>
-        <input v-model.number="form.men" type="number" class="field-input" min="0" />
+        <label :for="`${fid}-8`" class="field-label">Men</label>
+        <input :id="`${fid}-8`" v-model.number="form.men" type="number" class="field-input" min="0" :name="`${fid}-8`" v-bind="iv.aria(`${fid}-8`, 'iv')" />
+        <FieldError :id="'iv-' + `${fid}-8` + '-error'" :message="iv.messages[`${fid}-8`]" />
       </div>
       <div class="count-field">
-        <label class="field-label">Disability (M)</label>
-        <input v-model.number="form.disability_male" type="number" class="field-input" min="0" />
+        <label :for="`${fid}-9`" class="field-label">Disability (M)</label>
+        <input :id="`${fid}-9`" v-model.number="form.disability_male" type="number" class="field-input" min="0" :name="`${fid}-9`" v-bind="iv.aria(`${fid}-9`, 'iv')" />
+        <FieldError :id="'iv-' + `${fid}-9` + '-error'" :message="iv.messages[`${fid}-9`]" />
       </div>
       <div class="count-field">
-        <label class="field-label">Disability (F)</label>
-        <input v-model.number="form.disability_female" type="number" class="field-input" min="0" />
+        <label :for="`${fid}-10`" class="field-label">Disability (F)</label>
+        <input :id="`${fid}-10`" v-model.number="form.disability_female" type="number" class="field-input" min="0" :name="`${fid}-10`" v-bind="iv.aria(`${fid}-10`, 'iv')" />
+        <FieldError :id="'iv-' + `${fid}-10` + '-error'" :message="iv.messages[`${fid}-10`]" />
       </div>
     </div>
 
@@ -59,8 +68,8 @@
     </div>
 
     <div class="field">
-      <label class="field-label">Notes</label>
-      <textarea v-model="form.notes" class="field-input field-textarea" rows="3" placeholder="Additional observations…" />
+      <label :for="`${fid}-11`" class="field-label">Notes</label>
+      <textarea :id="`${fid}-11`" v-model="form.notes" class="field-input field-textarea" rows="3" placeholder="Additional observations…" />
     </div>
 
     <div class="submit-bar">
@@ -73,7 +82,16 @@
 </template>
 
 <script setup lang="ts">
+import FieldError from '../../components/interfaces/FieldError.vue'
+import { useInlineValidation } from '../../composables/useInlineValidation'
+import { useId } from 'vue'
 import type { ServicePoint } from '../../interfaces/location'
+
+// Built-in field rules (required, min/max…) shown inline instead of browser pop-ups.
+const iv = useInlineValidation()
+
+// Links each label to its field.
+const fid = useId()
 
 defineProps<{
   form: {
@@ -104,21 +122,14 @@ defineEmits<{
 
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
-.field { display: flex; flex-direction: column; gap: 4px; }
-.field-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+.field { display: flex; flex-direction: column; gap: 8px; }
 
-.field-input {
-  padding: 9px 12px; background: var(--bg-input); border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.82rem; font-family: inherit;
-}
-.field-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-dim); }
-.field-textarea { resize: vertical; min-height: 60px; }
 
-select.field-input {
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 8px center; background-repeat: no-repeat; background-size: 16px; padding-right: 32px;
-}
+
+
+
+
+
 
 .section-title { font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); margin: 0; }
 

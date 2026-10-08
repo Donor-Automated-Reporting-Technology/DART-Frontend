@@ -412,11 +412,7 @@ function navigateAwayToActiveSchedule(): void {
 }
 
 /* ═══ Inline error text (mirrors .err-msg) ═══ */
-.err-msg {
-  margin: 0;
-  font-size: 0.72rem;
-  color: var(--error);
-}
+
 
 /* ═══ Actions ═══ */
 .actions {

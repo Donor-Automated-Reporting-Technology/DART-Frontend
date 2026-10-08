@@ -552,14 +552,9 @@ function onSubmit(): void {
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
-.field-label {
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: var(--text-secondary);
-}
+
 .req {
   color: var(--error);
   margin-left: 2px;
@@ -578,31 +573,10 @@ function onSubmit(): void {
   color: var(--text-muted);
   line-height: 1.4;
 }
-.field-input {
-  background: var(--input-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  color: var(--text-primary);
-  font-size: 0.92rem;
-  font-family: inherit;
-  width: 100%;
-  box-sizing: border-box;
-  resize: vertical;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.field-input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--focus-ring);
-}
-.field-input:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-.field-input::placeholder {
-  color: var(--text-placeholder);
-}
+
+
+
+
 
 /* Numbered list — follow-up actions */
 .list {

@@ -549,17 +549,10 @@ async function handleModalSave() {
 .field {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 8px;
 }
 
-.field-label {
-  font-size: 0.76rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
+
 
 .optional {
   font-size: 0.65rem;
@@ -568,24 +561,9 @@ async function handleModalSave() {
   opacity: 0.7;
 }
 
-.field-input {
-  width: 100%;
-  padding: 10px 12px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  color: var(--text-primary);
-  font-size: 0.845rem;
-  font-family: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  box-sizing: border-box;
-}
 
-.field-input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-dim);
-}
+
+
 
 /* ═══ Responsive ═══ */
 @media (max-width: 640px) {

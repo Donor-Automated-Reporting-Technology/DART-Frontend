@@ -1,38 +1,43 @@
 <template>
-  <div class="textarea-field" :class="{ 'has-error': error }">
-    <label v-if="label" :for="id">{{ label }} <span v-if="required" class="required">*</span></label>
-    <div class="input-wrapper">
-      <textarea
-        :id="id"
-        :value="modelValue"
-        @input="onInput"
-        :placeholder="placeholder"
-        :disabled="disabled"
-        :maxlength="maxlength"
-        :rows="rows ?? 4"
-        @blur="$emit('blur', $event)"
-      ></textarea>
+  <div class="ui-field">
+    <label v-if="label" class="ui-label" :for="id">
+      {{ label }}<span v-if="optional" class="ui-optional"> (optional)</span>
+    </label>
+    <textarea
+      :id="id"
+      class="ui-textarea"
+      :name="name || id"
+      :value="modelValue"
+      :placeholder="placeholder"
+      :disabled="disabled"
+      :required="required"
+      :maxlength="maxlength"
+      :rows="rows ?? 4"
+      :aria-invalid="error ? 'true' : undefined"
+      :aria-describedby="describedBy"
+      @input="onInput"
+      @blur="$emit('blur', $event)"
+    />
+    <div v-if="maxlength && !error" :id="`${id}-count`" class="ui-help count" :class="{ near: charsLeft <= 20 }">
+      {{ modelValue?.length || 0 }} / {{ maxlength }}
     </div>
-    <div class="bottom-info">
-      <span v-if="error" class="error-text">{{ error }}</span>
-      <span v-else class="spacer"></span>
-      <span v-if="maxlength" class="char-count" :class="{ 'near-limit': charsLeft <= 20 }">
-        {{ modelValue.length || 0 }} / {{ maxlength }}
-      </span>
-    </div>
+    <FieldError :id="`${id}-error`" :message="error" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import FieldError from './FieldError.vue';
 
 const props = defineProps<{
   modelValue: string;
   label?: string;
   id?: string;
+  name?: string;
   placeholder?: string;
   disabled?: boolean;
   required?: boolean;
+  optional?: boolean;
   error?: string;
   maxlength?: number;
   rows?: number;
@@ -49,58 +54,13 @@ const charsLeft = computed(() => {
   if (!props.maxlength) return 999;
   return props.maxlength - (props.modelValue?.length || 0);
 });
+
+const describedBy = computed(() =>
+  [props.maxlength && !props.error ? `${props.id}-count` : '', props.error ? `${props.id}-error` : ''].filter(Boolean).join(' ') || undefined
+);
 </script>
 
 <style scoped>
-.textarea-field {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 1rem;
-}
-label {
-  font-size: 0.875rem;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-.required {
-  color: var(--error);
-}
-textarea {
-  width: 100%;
-  background-color: var(--input-bg);
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  outline: none;
-  resize: vertical;
-  transition: border-color 0.2s;
-  font-family: inherit;
-}
-textarea:focus {
-  border-color: var(--primary);
-}
-.has-error textarea {
-  border-color: var(--error);
-}
-.bottom-info {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 0.25rem;
-  font-size: 0.8rem;
-}
-.error-text {
-  color: var(--error);
-}
-.char-count {
-  color: var(--text-secondary);
-}
-.char-count.near-limit {
-  color: #faad14;
-}
-.spacer {
-  flex-grow: 1;
-}
+.count { text-align: right; }
+.count.near { color: var(--text-primary); }
 </style>

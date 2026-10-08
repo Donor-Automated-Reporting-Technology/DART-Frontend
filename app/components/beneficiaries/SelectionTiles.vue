@@ -1,6 +1,6 @@
 <template>
-  <fieldset class="tiles" role="radiogroup" :aria-label="label">
-    <legend class="tiles__label">{{ label }} <span v-if="required" class="tiles__req">*</span></legend>
+  <fieldset class="tiles" role="radiogroup" :aria-label="label" :aria-describedby="error ? errorId : undefined">
+    <legend class="tiles__label">{{ label }}</legend>
     <div class="tiles__grid" :class="{ 'tiles__grid--wrap': options.length > 4 }">
       <button
         v-for="opt in options"
@@ -18,13 +18,14 @@
         <span class="tile__text">{{ opt.label }}</span>
       </button>
     </div>
-    <Transition name="tile-err">
-      <span v-if="error" class="tiles__error">{{ error }}</span>
-    </Transition>
+    <FieldError :id="errorId" :message="error" class="tiles__error" />
   </fieldset>
 </template>
 
 <script setup lang="ts">
+import { useId } from 'vue'
+import FieldError from '../interfaces/FieldError.vue'
+
 export interface TileOption {
   value: string
   label: string
@@ -42,6 +43,8 @@ defineProps<{
 defineEmits<{
   'update:modelValue': [value: string]
 }>()
+
+const errorId = `tiles-${useId()}-error`
 </script>
 
 <style scoped>
@@ -49,23 +52,15 @@ defineEmits<{
   border: none;
   padding: 0;
   margin: 0;
+  min-width: 0;
 }
 
 .tiles__label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #6E6E73;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.tiles__req {
-  color: var(--error);
-  font-weight: 500;
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--text-primary);
 }
 
 .tiles__grid {
@@ -79,65 +74,34 @@ defineEmits<{
 }
 
 .tile {
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 16px;
-  min-height: 44px;
-  background: var(--tile-bg, #F5F5F7);
-  border: none;
-  border-radius: 12px;
+  padding: 8px 16px;
+  min-height: var(--field-h, 46px);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border-hover);
+  border-radius: var(--field-radius, 10px);
+  color: var(--text-primary);
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
-
-.tile:hover {
-  background: var(--tile-hover-bg, #EBEBED);
-}
-
-.tile--selected {
-  background: var(--primary);
-  color: #fff;
-}
-
-.tile--selected:hover {
-  background: var(--primary);
-  opacity: 0.92;
-}
-
-.tile--error {
-  box-shadow: inset 0 0 0 1px var(--error);
-}
+.tile:hover { border-color: var(--primary); }
+.tile:focus-visible { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--field-ring); }
+.tile--selected,
+.tile--selected:hover { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.tile--error:not(.tile--selected) { border-color: var(--error-text); }
 
 .tile__text {
-  font-size: 0.82rem;
-  font-weight: 500;
+  font-size: 0.875rem;
+  font-weight: 400;
   color: inherit;
   text-align: center;
-  line-height: 1.2;
+  line-height: 1.3;
 }
 
-.tile:not(.tile--selected) .tile__text {
-  color: var(--text-primary);
-}
-
-.tiles__error {
-  display: block;
-  font-size: 0.72rem;
-  color: var(--error);
-  margin-top: 6px;
-  padding-left: 2px;
-}
-
-.tile-err-enter-active { animation: tile-err-in 0.25s ease; }
-.tile-err-leave-active { animation: tile-err-in 0.15s ease reverse; }
-
-@keyframes tile-err-in {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+.tiles__error { margin-top: 8px; }
 
 @media (max-width: 560px) {
   .tiles__grid {

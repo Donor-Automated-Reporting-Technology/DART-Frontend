@@ -26,7 +26,7 @@
       <div v-else-if="loadError" class="state state--error">{{ loadError }}</div>
 
       <!-- ─── Project details ─── -->
-      <form v-else-if="project" class="section-card" @submit.prevent="saveProject">
+      <form v-else-if="project" class="section-card" novalidate @submit.prevent="saveProject">
         <div class="card-head">
           <div class="card-head-text">
             <h2 class="card-title">Project details</h2>
@@ -36,27 +36,30 @@
 
         <div class="field">
           <label class="field-label" for="pe-name">Project name *</label>
-          <input id="pe-name" v-model="form.project_name" type="text" class="field-input" />
+          <input id="pe-name" v-model="form.project_name" type="text" class="field-input" :aria-invalid="errorAt('name') ? 'true' : undefined" :aria-describedby="errorAt('name') ? 'pe-name-error' : undefined" />
+          <FieldError id="pe-name-error" :message="errorAt('name')" />
         </div>
         <div class="form-grid">
           <div class="field">
             <label class="field-label" for="pe-start">Period start *</label>
-            <input id="pe-start" v-model="form.period_start" type="date" class="field-input" />
+            <input id="pe-start" v-model="form.period_start" type="date" class="field-input" :aria-invalid="errorAt('start') ? 'true' : undefined" :aria-describedby="errorAt('start') ? 'pe-start-error' : undefined" />
+            <FieldError id="pe-start-error" :message="errorAt('start')" />
           </div>
           <div class="field">
             <label class="field-label" for="pe-end">Period end *</label>
-            <input id="pe-end" v-model="form.period_end" type="date" class="field-input" />
+            <input id="pe-end" v-model="form.period_end" type="date" class="field-input" :aria-invalid="errorAt('end') ? 'true' : undefined" :aria-describedby="errorAt('end') ? 'pe-end-error' : undefined" />
+            <FieldError id="pe-end-error" :message="errorAt('end')" />
           </div>
         </div>
 
-        <div v-if="fwError" class="api-err">{{ fwError }}</div>
+        <p v-if="fwError && !errorField" class="api-err" role="alert">{{ fwError }}</p>
 
         <div class="actions">
           <Transition name="fade">
             <span v-if="fwSuccess" class="save-ok">Saved</span>
           </Transition>
           <button type="submit" class="btn-primary" :disabled="fwSaving">
-            <span v-if="fwSaving" class="btn-spinner" />
+            <span v-if="fwSaving" class="btn-spinner" aria-hidden="true" />
             {{ fwSaving ? 'Saving…' : 'Save changes' }}
           </button>
         </div>
@@ -70,6 +73,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { frameworkApi } from '../../../../services/frameworkApi'
 import { ApiError } from '../../../../services/api'
+import FieldError from '../../../../components/interfaces/FieldError.vue'
 import type { Framework } from '../../../../interfaces/framework'
 
 
@@ -155,6 +159,17 @@ async function saveProject() {
 onMounted(() => {
   fetchProject()
 })
+
+// Show the validation message under the field it is about (display only;
+// the checks in the submit handler are unchanged).
+const errorField = computed(() => {
+  const m = fwError.value
+  if (m === 'Project name is required') return 'name'
+  if (m === 'Period start and end are required') return !form.period_start ? 'start' : 'end'
+  if (m === 'End date must be after start date') return 'end'
+  return ''
+})
+const errorAt = (field: string) => (errorField.value === field ? fwError.value : '')
 </script>
 
 <style scoped>

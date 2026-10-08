@@ -236,7 +236,7 @@
             <h3>{{ indicatorModal.editing ? 'Edit indicator' : 'Add indicator' }}</h3>
             <button class="icon-btn" aria-label="Close" @click="indicatorModal.open = false">&times;</button>
           </div>
-          <form class="modal-form" @submit.prevent="saveIndicator">
+          <form class="modal-form" novalidate @focusout="iv.onBlur" @input="iv.onInput" @submit.prevent="iv.submit($event, saveIndicator)">
             <div class="field">
               <label class="field-label" for="lfi-level">Level *</label>
               <select id="lfi-level" v-model="indicatorForm.level_id" class="field-input" :disabled="!!indicatorModal.editing">
@@ -270,7 +270,8 @@
               </div>
               <div class="field">
                 <label class="field-label" for="lfi-by">Baseline year</label>
-                <input id="lfi-by" v-model.number="indicatorForm.baseline_year" type="number" min="1900" max="2100" class="field-input" />
+                <input id="lfi-by" v-model.number="indicatorForm.baseline_year" type="number" min="1900" max="2100" class="field-input" name="lfi-by" v-bind="iv.aria('lfi-by', 'iv')" />
+                <FieldError :id="'iv-' + 'lfi-by' + '-error'" :message="iv.messages['lfi-by']" />
               </div>
               <div class="field">
                 <label class="field-label" for="lfi-tv">Target value</label>
@@ -278,7 +279,8 @@
               </div>
               <div class="field">
                 <label class="field-label" for="lfi-ty">Target year</label>
-                <input id="lfi-ty" v-model.number="indicatorForm.target_year" type="number" min="1900" max="2100" class="field-input" />
+                <input id="lfi-ty" v-model.number="indicatorForm.target_year" type="number" min="1900" max="2100" class="field-input" name="lfi-ty" v-bind="iv.aria('lfi-ty', 'iv')" />
+                <FieldError :id="'iv-' + 'lfi-ty' + '-error'" :message="iv.messages['lfi-ty']" />
               </div>
             </div>
             <div class="field">
@@ -358,6 +360,8 @@
 </template>
 
 <script setup lang="ts">
+import FieldError from '../../../../components/interfaces/FieldError.vue'
+import { useInlineValidation } from '../../../../composables/useInlineValidation'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import CustomFieldsEditor from '../../../../components/settings/CustomFieldsEditor.vue'
@@ -379,6 +383,9 @@ import type {
   CustomFields,
   LogframeTargetField,
 } from '../../../../interfaces/logframe'
+
+// Built-in field rules (required, min/max…) shown inline instead of browser pop-ups.
+const iv = useInlineValidation()
 
 definePageMeta({
   layout: false,

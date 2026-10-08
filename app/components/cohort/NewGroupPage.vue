@@ -1,6 +1,6 @@
 <template>
   <NuxtLayout name="app" :breadcrumbs="breadcrumbs">
-    <form class="tu-page" @submit.prevent="submit">
+    <form class="tu-page" novalidate @focusout="iv.onBlur" @input="iv.onInput" @submit.prevent="iv.submit($event, submit)">
       <div>
         <span class="tu-step">Set up · 1 of 3</span>
         <h1 class="tu-title">New {{ cfg.label }} group</h1>
@@ -14,16 +14,18 @@
 
       <div class="tu-field">
         <label for="tu-loc">CFS location</label>
-        <select v-if="isAdmin" id="tu-loc" v-model="form.cfs_location_id" class="tu-select" required>
+        <select v-if="isAdmin" id="tu-loc" v-model="form.cfs_location_id" class="tu-select" required name="tu-loc" v-bind="iv.aria('tu-loc', 'iv')">
           <option value="" disabled>Choose a CFS</option>
           <option v-for="sp in servicePoints" :key="sp.id" :value="sp.id">{{ sp.name }}</option>
         </select>
         <input v-else id="tu-loc" class="tu-input" :value="auth.cfsLocationName ?? 'Your assigned CFS'" disabled>
+        <FieldError :id="'iv-' + 'tu-loc' + '-error'" :message="iv.messages['tu-loc']" />
       </div>
 
       <div class="tu-field">
         <label for="tu-name">Group name</label>
-        <input id="tu-name" v-model="form.name" class="tu-input" placeholder="e.g. Peace" required maxlength="100">
+        <input id="tu-name" v-model="form.name" class="tu-input" placeholder="e.g. Peace" required maxlength="100" name="tu-name" v-bind="iv.aria('tu-name', 'iv')">
+        <FieldError :id="'iv-' + 'tu-name' + '-error'" :message="iv.messages['tu-name']" />
       </div>
 
       <div v-if="cfg.requiresAgeBand" class="tu-field">
@@ -96,6 +98,8 @@
 </template>
 
 <script setup lang="ts">
+import FieldError from '../../components/interfaces/FieldError.vue'
+import { useInlineValidation } from '../../composables/useInlineValidation'
 import { cohortProgram, cohortProgramOf, type CohortProgramKey } from '../../utils/cohortPrograms'
 
 const props = defineProps<{ program: CohortProgramKey }>()
@@ -110,6 +114,9 @@ import { frameworkApi } from '../../services/frameworkApi'
 import { locationApi } from '../../services/locationApi'
 import { todayISO, WEEKDAYS, cohortApi } from '../../services/teamupApi'
 import type { AgeBand, TeamUpCurriculum } from '../../interfaces/teamup'
+
+// Built-in field rules (required, min/max…) shown inline instead of browser pop-ups.
+const iv = useInlineValidation()
 
 
 const AGE_BANDS: AgeBand[] = ['6-9', '10-14', '15-17']

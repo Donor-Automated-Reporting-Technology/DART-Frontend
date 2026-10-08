@@ -26,7 +26,7 @@ export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@vite-pwa/nuxt'],
   // <AppIcon> works in every page and component without an import.
   components: [{ path: '~/components/interfaces', pathPrefix: false }, '~/components'],
-  css: ['~/assets/css/main.css', '~/assets/css/project-settings.css', '~/assets/css/project-dashboard.css', '~/assets/css/teamup.css', '~/assets/css/modals.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/project-settings.css', '~/assets/css/project-dashboard.css', '~/assets/css/teamup.css', '~/assets/css/modals.css', '~/assets/css/forms.css'],
   nitro: {
     prerender: {
       routes: ['/'],

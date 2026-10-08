@@ -1,0 +1,355 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Forms — one look for every input in the app.
+
+   Colours come only from the theme tokens in main.css. Spacing follows the
+   4 / 8 / 16 / 24 / 32 / 48 / 64 scale: 8px from label to input, 24px
+   between fields, 32px between groups. Weight 400 everywhere except page
+   headings and primary button labels (600).
+
+   Field classes: .ui-input / .ui-select / .ui-textarea, plus the older class
+   names the app already uses (field-input, tu-input, sf-field__input, …) so
+   every form picks this up without template churn.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --field-h: 46px;
+  --field-radius: 10px;
+  --field-bg: var(--input-bg);
+  --field-border: var(--input-border-hover);
+  --field-border-hover: var(--text-secondary);
+  --field-text: var(--text-primary);
+  --field-label: var(--text-primary);
+  --field-help: var(--text-secondary);
+  --field-ring: color-mix(in srgb, var(--primary) 20%, transparent);
+  --field-error-ring: color-mix(in srgb, var(--error-text) 18%, transparent);
+  --field-ease: 150ms ease;
+  --link: var(--data-teal);          /* accent text on dark surfaces (≥ 7:1) */
+  --text-quiet: var(--text-secondary); /* secondary text on the page background */
+}
+[data-theme='light'] {
+  --link: var(--primary);            /* 5:1 on white */
+  --text-quiet: #374151;             /* the settings pages' secondary grey: 9:1 on the grey page */
+}
+
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+.ui-form { display: flex; flex-direction: column; gap: 24px; }
+.ui-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ui-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 24px 16px; }
+.ui-section { display: flex; flex-direction: column; gap: 24px; }
+.ui-section + .ui-section { margin-top: 8px; padding-top: 32px; border-top: 1px solid var(--border-color); }
+.ui-section-head h2,
+.ui-section-head h3 { margin: 0; font-size: 17px; font-weight: 400; line-height: 1.35; color: var(--text-primary); }
+.ui-section-head p { margin: 4px 0 0; font-size: 14px; font-weight: 400; line-height: 1.5; color: var(--text-secondary); }
+
+/* ── Labels, help and errors ────────────────────────────────────────────── */
+.ui-label { font-size: 14px; font-weight: 400; line-height: 1.4; color: var(--field-label); }
+.ui-label .ui-optional { color: var(--field-help); }
+.ui-help { margin: 0; font-size: 13px; font-weight: 400; line-height: 1.45; color: var(--field-help); }
+.ui-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--error-text);
+}
+.ui-error svg { flex: none; margin-top: 1px; }
+
+/* Form-level message (server errors), shown inline above the submit button. */
+.ui-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 16px;
+  border-radius: var(--field-radius);
+  border: 1px solid color-mix(in srgb, var(--error-text) 45%, transparent);
+  background: var(--bg-panel);
+  color: var(--error-text);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.ui-alert svg { flex: none; margin-top: 2px; }
+
+/* ── Text inputs, selects and textareas ─────────────────────────────────── */
+.ui-input, .ui-select, .ui-textarea,
+.field-input, .field-textarea,
+.tu-input, .tu-select, .tu-textarea,
+.drawer-input, .drawer-select,
+.loc-select, .tf-input,
+.sf-field__input,
+.floating-field__input {
+  width: 100%;
+  min-height: var(--field-h);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0 16px;
+  border: 1px solid var(--field-border);
+  border-radius: var(--field-radius);
+  background: var(--field-bg);
+  color: var(--field-text);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.4;
+  box-shadow: none;
+  outline: none;
+  transition: border-color var(--field-ease), background-color var(--field-ease), color var(--field-ease);
+}
+.ui-textarea, .field-textarea, .tu-textarea, textarea.field-input, textarea.floating-field__input {
+  min-height: 112px;
+  padding: 12px 16px;
+  resize: vertical;
+}
+
+.ui-input:hover, .ui-select:hover, .ui-textarea:hover,
+.field-input:hover, .field-textarea:hover,
+.tu-input:hover, .tu-select:hover, .tu-textarea:hover,
+.drawer-input:hover, .drawer-select:hover,
+.loc-select:hover, .tf-input:hover,
+.sf-field__input:hover, .floating-field__input:hover {
+  border-color: var(--field-border-hover);
+}
+
+/* Focus: accent border plus a thin, soft ring in the same colour. */
+.ui-input:focus, .ui-select:focus, .ui-textarea:focus,
+.field-input:focus, .field-textarea:focus,
+.tu-input:focus, .tu-select:focus, .tu-textarea:focus,
+.drawer-input:focus, .drawer-select:focus,
+.loc-select:focus, .tf-input:focus,
+.sf-field__input:focus, .floating-field__input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--field-ring);
+}
+
+/* Error state: set by aria-invalid or the app's existing error classes. */
+.ui-input[aria-invalid='true'], .ui-select[aria-invalid='true'], .ui-textarea[aria-invalid='true'],
+.field-input.is-error, .field-input.has-error, .field-textarea.is-error,
+.loc-select--error,
+.sf-field--error .sf-field__input,
+.floating-field--error .floating-field__input {
+  border-color: var(--error-text);
+}
+.ui-input[aria-invalid='true']:focus, .ui-select[aria-invalid='true']:focus, .ui-textarea[aria-invalid='true']:focus,
+.field-input.is-error:focus, .loc-select--error:focus,
+.sf-field--error .sf-field__input:focus,
+.floating-field--error .floating-field__input:focus {
+  box-shadow: 0 0 0 3px var(--field-error-ring);
+}
+
+/* Disabled: dimmed surface, text stays readable. */
+.ui-input:disabled, .ui-select:disabled, .ui-textarea:disabled,
+.field-input:disabled, .field-textarea:disabled,
+.tu-input:disabled, .tu-select:disabled, .tu-textarea:disabled,
+.drawer-input:disabled, .drawer-select:disabled, .loc-select:disabled,
+.sf-field__input:disabled, .floating-field__input:disabled {
+  background: var(--bg-surface);
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+/* Select: native control, custom chevron drawn in the theme's text colour. */
+.ui-select, select.field-input, .tu-select, .drawer-select, .loc-select, select.tf-input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 40px;
+  cursor: pointer;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%),
+    linear-gradient(135deg, var(--text-secondary) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 50%, calc(100% - 15px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+/* Date/time pickers keep the native picker but match the field. */
+.ui-input::-webkit-calendar-picker-indicator,
+.field-input::-webkit-calendar-picker-indicator,
+.tu-input::-webkit-calendar-picker-indicator { opacity: 0.7; cursor: pointer; }
+
+/* File input: the browser button becomes an outlined button. */
+input[type='file'] { font: inherit; font-size: 14px; color: var(--text-secondary); }
+input[type='file']::file-selector-button {
+  margin-right: 16px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--field-border);
+  border-radius: var(--field-radius);
+  background: var(--field-bg);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color var(--field-ease), color var(--field-ease);
+}
+input[type='file']::file-selector-button:hover { border-color: var(--primary); color: var(--link); }
+
+/* ── Checkboxes and radios ──────────────────────────────────────────────── */
+input[type='checkbox'],
+input[type='radio'] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  display: inline-grid;
+  place-content: center;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border: 1px solid var(--field-border);
+  border-radius: 6px;
+  background: var(--field-bg);
+  cursor: pointer;
+  vertical-align: middle;
+  transition: border-color var(--field-ease), background-color var(--field-ease);
+}
+input[type='radio'] { border-radius: 50%; }
+input[type='checkbox']::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  background: var(--on-primary);
+  clip-path: polygon(14% 44%, 0 59%, 40% 100%, 100% 22%, 85% 8%, 39% 69%);
+  transform: scale(0);
+}
+input[type='radio']::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--on-primary);
+  transform: scale(0);
+}
+input[type='checkbox']:hover,
+input[type='radio']:hover { border-color: var(--primary); }
+input[type='checkbox']:checked,
+input[type='radio']:checked { background: var(--primary); border-color: var(--primary); }
+input[type='checkbox']:checked::before,
+input[type='radio']:checked::before { transform: scale(1); }
+input[type='checkbox']:focus-visible,
+input[type='radio']:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--field-ring); border-color: var(--primary); }
+input[type='checkbox']:disabled,
+input[type='radio']:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* A label wrapping a checkbox or radio */
+.ui-choice { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 15px; font-weight: 400; color: var(--text-primary); cursor: pointer; }
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--field-h);
+  padding: 0 24px;
+  border: 1px solid transparent;
+  border-radius: var(--field-radius);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--field-ease), border-color var(--field-ease), color var(--field-ease);
+}
+.ui-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.ui-btn--primary { background: var(--primary); color: var(--on-primary); font-weight: 600; }
+.ui-btn--primary:hover:not(:disabled) { background: color-mix(in srgb, var(--primary) 88%, var(--text-primary)); }
+.ui-btn--outline { background: transparent; border-color: var(--field-border); color: var(--text-primary); }
+.ui-btn--outline:hover:not(:disabled) { border-color: var(--primary); color: var(--link); }
+.ui-btn--text { min-height: 0; padding: 4px 0; background: none; color: var(--link); }
+.ui-link { color: var(--link); font-weight: 400; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, var(--link) 40%, transparent); transition: color var(--field-ease), text-decoration-color var(--field-ease); }
+.ui-link:hover { text-decoration-color: currentColor; }
+.ui-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 2px; }
+.ui-btn--text:hover { text-decoration: underline; }
+.ui-btn--block { width: 100%; }
+.ui-btn:disabled { cursor: not-allowed; opacity: 0.7; }
+.ui-btn[aria-busy='true'] { cursor: wait; opacity: 1; }
+.ui-btn--done, .ui-btn--done:disabled { opacity: 1; cursor: default; }
+
+/* Spinner inside a button: uses the button's text colour. */
+.ui-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Password field with a show/hide button */
+.ui-password { position: relative; }
+.ui-password .ui-input { padding-right: 52px; }
+.ui-reveal {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color var(--field-ease);
+}
+.ui-reveal:hover { color: var(--text-primary); }
+.ui-reveal:focus-visible { outline: 2px solid var(--primary); outline-offset: 0; }
+
+/* Password requirements checklist */
+.ui-checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text-secondary); }
+.ui-checklist li { display: flex; align-items: center; gap: 8px; }
+.ui-checklist .mark { width: 16px; height: 16px; flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--field-border); transition: background-color var(--field-ease), border-color var(--field-ease); }
+.ui-checklist .mark svg { opacity: 0; }
+.ui-checklist li.met { color: var(--text-primary); }
+.ui-checklist li.met .mark { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.ui-checklist li.met .mark svg { opacity: 1; }
+
+/* "or" divider */
+.ui-divider { display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--text-secondary); }
+.ui-divider::before, .ui-divider::after { content: ''; flex: 1; height: 1px; background: var(--border-color); }
+
+/* Mobile: 16px text prevents iOS zoom on focus — for every text control,
+   including compact ones styled in their own components. */
+@media (max-width: 760px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='file']),
+  select,
+  textarea { font-size: 16px !important; }
+
+  .ui-input, .ui-select, .ui-textarea,
+  .field-input, .field-textarea,
+  .tu-input, .tu-select, .tu-textarea,
+  .drawer-input, .drawer-select, .loc-select, .tf-input,
+  .sf-field__input, .floating-field__input { font-size: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-input, .ui-select, .ui-textarea, .ui-btn, .ui-reveal,
+  input[type='checkbox'], input[type='radio'] { transition: none; }
+  .ui-spinner { animation-duration: 2s; }
+}
+
+/* ── Older label / error class names used across app forms ───────────────── */
+.field-label, .sf-field__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--field-label);
+}
+.err-msg, .sf-field__error, .field-err {
+  display: block;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--error-text);
+}

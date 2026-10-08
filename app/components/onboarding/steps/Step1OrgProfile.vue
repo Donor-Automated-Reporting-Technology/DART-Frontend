@@ -252,19 +252,10 @@ async function save() {
 .field {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 8px;
 }
 
-.field-label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
+
 
 .optional {
   font-size: 0.65rem;
@@ -278,28 +269,11 @@ async function save() {
 .required { color: var(--error); font-weight: 500; }
 
 /* ── Textarea ─────────────────────────────────────────────────────────────── */
-.field-textarea {
-  width: 100%;
-  padding: 9px 11px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: 0.845rem;
-  line-height: 1.5;
-  resize: vertical;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  box-sizing: border-box;
-  font-family: inherit;
-}
 
-.field-textarea:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-dim);
-}
 
-.field-textarea.is-error { border-color: var(--error); }
+
+
+
 
 .textarea-meta {
   display: flex;
@@ -369,28 +343,13 @@ async function save() {
 }
 
 /* ── Text input ───────────────────────────────────────────────────────────── */
-.field-input {
-  width: 100%;
-  padding: 7px 10px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: 0.82rem;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  box-sizing: border-box;
-  font-family: inherit;
-}
 
-.field-input::placeholder { color: var(--text-muted); opacity: 0.7; }
 
-.field-input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-dim);
-}
 
-.field-input.is-error { border-color: var(--error); }
+
+
+
+
 
 /* ── Delete button ────────────────────────────────────────────────────────── */
 .del-btn {
@@ -411,11 +370,7 @@ async function save() {
 .del-btn:hover { color: var(--error); border-color: var(--error); }
 
 /* ── Errors ───────────────────────────────────────────────────────────────── */
-.err-msg {
-  font-size: 0.72rem;
-  color: var(--error);
-  margin-top: 1px;
-}
+
 
 .err-sm { font-size: 0.68rem; }
 

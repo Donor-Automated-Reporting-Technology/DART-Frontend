@@ -23,7 +23,7 @@
 
       <!-- Card -->
       <div class="reg-card">
-        <form @submit.prevent="onSubmit">
+        <form novalidate @submit.prevent="onSubmit">
           <!-- Animated stage wrapper -->
           <Transition :name="slideDir" mode="out-in">
             <!-- Stage 0: Identity -->
@@ -88,13 +88,13 @@
             <!-- Stage 1: Background -->
             <div v-else-if="step === 1" key="background" class="stage">
               <div class="loc-field">
-                <label class="loc-label" for="reg-location">Registered at <span class="loc-req">*</span></label>
-                <select id="reg-location" v-model="form.cfs_location_id" class="loc-select" :class="{ 'loc-select--error': errors.cfs_location_id }">
+                <label class="loc-label" for="reg-location">Registered at</label>
+                <select id="reg-location" v-model="form.cfs_location_id" class="loc-select" :class="{ 'loc-select--error': errors.cfs_location_id }" :aria-invalid="errors.cfs_location_id ? 'true' : undefined" :aria-describedby="errors.cfs_location_id ? 'reg-location-error' : 'reg-location-hint'">
                   <option value="" disabled>Choose a location</option>
                   <option v-for="l in locations" :key="l.id" :value="l.id">{{ l.name }}{{ l.id === auth.cfsLocationId ? ' (your location)' : '' }}</option>
                 </select>
-                <p v-if="errors.cfs_location_id" class="loc-error">{{ errors.cfs_location_id }}</p>
-                <p v-else class="loc-hint">
+                <FieldError id="reg-location-error" :message="errors.cfs_location_id" />
+                <p v-if="!errors.cfs_location_id" id="reg-location-hint" class="loc-hint">
                   {{ auth.cfsLocationId
                     ? 'Defaults to your location. Change it if this person joins an activity somewhere else, such as in town.'
                     : 'Choose the CFS or site where this person takes part in activities.' }}
@@ -257,6 +257,7 @@
 </template>
 
 <script setup lang="ts">
+import FieldError from '../../components/interfaces/FieldError.vue'
 import { reactive, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { beneficiaryApi, type OrgLocation } from '../../services/beneficiaryApi'
@@ -573,13 +574,13 @@ async function onSubmit() {
 .stage {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .stage__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 24px 16px;
 }
 
 /* ── Slide transitions ── */
@@ -713,12 +714,10 @@ async function onSubmit() {
 }
 
 /* ── Location picker ── */
-.loc-field { display: flex; flex-direction: column; gap: 6px; }
-.loc-label { font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); }
-.loc-req { color: var(--error); }
-.loc-select { min-height: 48px; padding: 0 12px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-input); color: var(--text-primary); font: inherit; font-size: 0.92rem; }
-.loc-select:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
-.loc-select--error { border-color: var(--error); }
-.loc-hint { font-size: 0.76rem; color: var(--text-muted); margin: 0; }
-.loc-error { font-size: 0.76rem; color: var(--error); margin: 0; }
+.loc-field { display: flex; flex-direction: column; gap: 8px; }
+.loc-label { font-size: 0.875rem; font-weight: 400; color: var(--text-primary); }
+
+
+
+.loc-hint { font-size: 0.8125rem; line-height: 1.45; color: var(--text-secondary); margin: 0; }
 </style>

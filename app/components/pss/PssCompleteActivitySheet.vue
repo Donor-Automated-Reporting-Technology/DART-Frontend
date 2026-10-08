@@ -464,13 +464,8 @@ function onSubmit(): void {
   gap: 16px;
 }
 
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field-label {
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--text-secondary, var(--text-muted));
-}
+.field { display: flex; flex-direction: column; gap: 8px; }
+
 .opt {
   font-size: 0.7rem;
   color: var(--text-muted);
@@ -479,23 +474,8 @@ function onSubmit(): void {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-.field-input {
-  background: var(--bg-input, var(--input-bg));
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  padding: 10px 12px;
-  color: var(--text-primary);
-  font-size: 0.92rem;
-  font-family: inherit;
-  width: 100%;
-  box-sizing: border-box;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.field-input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--focus-ring, var(--primary-dim));
-}
+
+
 .field-input--textarea {
   resize: vertical;
   min-height: 76px;

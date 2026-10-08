@@ -158,9 +158,7 @@ function onTimeInput(
 }
 
 .period-label:focus-visible {
-  outline: 2px solid var(--text-muted);
-  outline-offset: 2px;
-}
+  outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--field-ring);}
 
 .period-remove {
   display: inline-flex;
@@ -204,7 +202,7 @@ function onTimeInput(
 .time-input {
   background: var(--bg-panel);
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--input-border-hover);
   border-radius: 6px;
   padding: 0.5rem 0.625rem;
   font: inherit;
@@ -213,9 +211,7 @@ function onTimeInput(
 }
 
 .time-input:focus-visible {
-  outline: 2px solid var(--text-muted);
-  outline-offset: 1px;
-  border-color: transparent;
+  outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--field-ring);
 }
 
 .time-sep {

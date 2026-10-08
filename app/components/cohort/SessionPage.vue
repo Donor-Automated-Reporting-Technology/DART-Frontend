@@ -197,18 +197,20 @@
 
       <!-- Flag sheet -->
       <div v-if="flagOpen && detail" class="tu-scrim" @click.self="flagOpen = false">
-        <form class="tu-sheet" role="dialog" aria-labelledby="tu-flag-title" @submit.prevent="submitFlag">
+        <form class="tu-sheet" role="dialog" aria-labelledby="tu-flag-title" novalidate @focusout="iv.onBlur" @input="iv.onInput" @submit.prevent="iv.submit($event, submitFlag)">
           <h2 id="tu-flag-title" class="tu-title" style="font-size: 1.1rem">Flag a {{ cfg.nounSingular }} for follow-up</h2>
           <div class="tu-field">
             <label for="tu-flag-child">{{ cfg.nounSingular.charAt(0).toUpperCase() + cfg.nounSingular.slice(1) }}</label>
-            <select id="tu-flag-child" v-model="flagForm.beneficiaryId" class="tu-select" required>
+            <select id="tu-flag-child" v-model="flagForm.beneficiaryId" class="tu-select" required name="tu-flag-child" v-bind="iv.aria('tu-flag-child', 'iv')">
               <option value="" disabled>Choose a {{ cfg.nounSingular }}</option>
               <option v-for="e in detail.roster" :key="e.beneficiary_id" :value="e.beneficiary_id">{{ e.beneficiary_name }}</option>
             </select>
+            <FieldError :id="'iv-' + 'tu-flag-child' + '-error'" :message="iv.messages['tu-flag-child']" />
           </div>
           <div class="tu-field">
             <label for="tu-flag-concern">What did you notice?</label>
-            <textarea id="tu-flag-concern" v-model="flagForm.concern" class="tu-textarea" rows="3" required />
+            <textarea id="tu-flag-concern" v-model="flagForm.concern" class="tu-textarea" rows="3" required name="tu-flag-concern" v-bind="iv.aria('tu-flag-concern', 'iv')" />
+            <FieldError :id="'iv-' + 'tu-flag-concern' + '-error'" :message="iv.messages['tu-flag-concern']" />
           </div>
           <div class="tu-actions">
             <button type="button" class="tu-btn tu-btn--ghost" @click="flagOpen = false">Cancel</button>
@@ -221,6 +223,8 @@
 </template>
 
 <script setup lang="ts">
+import FieldError from '../../components/interfaces/FieldError.vue'
+import { useInlineValidation } from '../../composables/useInlineValidation'
 import { cohortProgram, type CohortProgramKey } from '../../utils/cohortPrograms'
 
 const props = defineProps<{ program: CohortProgramKey }>()
@@ -240,6 +244,9 @@ import type {
   TeamUpSessionDetail,
   Thumbs,
 } from '../../interfaces/teamup'
+
+// Built-in field rules (required, min/max…) shown inline instead of browser pop-ups.
+const iv = useInlineValidation()
 
 
 // TeamUp: attendance → check-in → activities → check-out. Other programmes:

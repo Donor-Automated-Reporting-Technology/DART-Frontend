@@ -114,7 +114,7 @@ function removeRow(index: number) {
   flex: 1; min-width: 0; padding: 10px 12px; font-size: 0.9rem;
   background: var(--ps-input, var(--bg-input)); border: 1px solid var(--ps-input-border, var(--border-color));
   border-radius: 8px; color: var(--ps-text, var(--text-primary)); font-family: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 .cf-input--key { flex: 0 0 38%; }
 .cf-remove {

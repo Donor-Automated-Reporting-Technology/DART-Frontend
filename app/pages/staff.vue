@@ -112,45 +112,50 @@
                 >
                   <!-- Step 0: Identity -->
                   <div v-if="step === 0" key="identity" class="sf-step">
-                    <div class="sf-field" :class="{ 'sf-field--error sf-shake': fieldErrors.full_name }">
-                      <label class="sf-field__label">Full Name</label>
+                    <div class="sf-field" :class="{ 'sf-field--error': fieldErrors.full_name }">
+                      <label class="sf-field__label" for="sf-full-name">Full Name</label>
                       <input
+                        id="sf-full-name"
                         v-model="form.full_name"
                         type="text"
+                        autocomplete="off"
+                        :aria-invalid="fieldErrors.full_name ? 'true' : undefined"
+                        :aria-describedby="fieldErrors.full_name ? 'sf-full-name-error' : undefined"
                         class="sf-field__input"
                         placeholder="e.g. Amara Diallo"
                         @input="clearFieldError('full_name')"
                       />
-                      <Transition name="sf-fade">
-                        <span v-if="fieldErrors.full_name" class="sf-field__error">{{ fieldErrors.full_name }}</span>
-                      </Transition>
+                      <FieldError id="sf-full-name-error" :message="fieldErrors.full_name" />
                     </div>
-                    <div class="sf-field" :class="{ 'sf-field--error sf-shake': fieldErrors.email }">
-                      <label class="sf-field__label">Email Address</label>
+                    <div class="sf-field" :class="{ 'sf-field--error': fieldErrors.email }">
+                      <label class="sf-field__label" for="sf-email">Email Address</label>
                       <input
+                        id="sf-email"
                         v-model="form.email"
                         type="email"
+                        autocomplete="off" inputmode="email" autocapitalize="none" spellcheck="false"
+                        :aria-invalid="fieldErrors.email ? 'true' : undefined"
+                        :aria-describedby="fieldErrors.email ? 'sf-email-error' : undefined"
                         class="sf-field__input"
                         placeholder="amara@organisation.org"
                         @input="clearFieldError('email')"
                       />
-                      <Transition name="sf-fade">
-                        <span v-if="fieldErrors.email" class="sf-field__error">{{ fieldErrors.email }}</span>
-                      </Transition>
+                      <FieldError id="sf-email-error" :message="fieldErrors.email" />
                     </div>
                   </div>
 
                   <!-- Step 1: Role -->
                   <div v-if="step === 1" key="role" class="sf-step">
-                    <div class="sf-field" :class="{ 'sf-field--error sf-shake': fieldErrors.role }">
-                      <label class="sf-field__label">Role</label>
-                      <div class="sf-role-grid">
+                    <div class="sf-field" :class="{ 'sf-field--error': fieldErrors.role }">
+                      <p id="sf-role-label" class="sf-field__label">Role</p>
+                      <div class="sf-role-grid" role="group" aria-labelledby="sf-role-label" :aria-describedby="fieldErrors.role ? 'sf-role-error' : undefined">
                         <button
                           v-for="r in roleOptions"
                           :key="r.value"
                           type="button"
                           class="sf-role-card"
                           :class="{ 'sf-role-card--active': form.role === r.value }"
+                          :aria-pressed="form.role === r.value"
                           @click="form.role = r.value; clearFieldError('role')"
                         >
                           <div class="sf-role-card__icon" v-html="r.icon" />
@@ -158,19 +163,21 @@
                           <span class="sf-role-card__desc">{{ r.desc }}</span>
                         </button>
                       </div>
-                      <Transition name="sf-fade">
-                        <span v-if="fieldErrors.role" class="sf-field__error">{{ fieldErrors.role }}</span>
-                      </Transition>
+                      <FieldError id="sf-role-error" :message="fieldErrors.role" />
                     </div>
                   </div>
 
                   <!-- Step 2: Credentials -->
                   <div v-if="step === 2" key="credentials" class="sf-step">
-                    <div class="sf-field" :class="{ 'sf-field--error sf-shake': fieldErrors.password }">
-                      <label class="sf-field__label">Temporary Password</label>
+                    <div class="sf-field" :class="{ 'sf-field--error': fieldErrors.password }">
+                      <label class="sf-field__label" for="sf-password">Temporary Password</label>
                       <div class="sf-field__input-wrap">
                         <input
+                          id="sf-password"
                           v-model="form.password"
+                          autocomplete="new-password"
+                          :aria-invalid="fieldErrors.password ? 'true' : undefined"
+                          aria-describedby="sf-password-rules sf-password-error"
                           :type="showPassword ? 'text' : 'password'"
                           class="sf-field__input"
                           placeholder="Min 8 characters"
@@ -179,6 +186,8 @@
                         <button
                           type="button"
                           class="sf-field__toggle"
+                          aria-controls="sf-password"
+                          :aria-pressed="showPassword"
                           @click="showPassword = !showPassword"
                           :aria-label="showPassword ? 'Hide password' : 'Show password'"
                         >
@@ -186,11 +195,9 @@
                           <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                         </button>
                       </div>
-                      <Transition name="sf-fade">
-                        <span v-if="fieldErrors.password" class="sf-field__error">{{ fieldErrors.password }}</span>
-                      </Transition>
+                      <FieldError id="sf-password-error" :message="fieldErrors.password" />
                     </div>
-                    <div class="sf-password-hints">
+                    <div id="sf-password-rules" class="sf-password-hints">
                       <span class="sf-hint" :class="{ 'sf-hint--pass': form.password.length >= 8 }">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                         8+ characters
@@ -211,22 +218,23 @@
               <div class="sf-modal__footer">
                 <button
                   v-if="step > 0"
-                  class="sf-btn-secondary"
+                  type="button" class="ui-btn ui-btn--outline"
                   @click="prevStep"
                 >Back</button>
                 <div class="sf-modal__footer-spacer" />
                 <button
                   v-if="step < stepLabels.length - 1"
-                  class="sf-btn-next"
+                  type="button" class="ui-btn ui-btn--primary"
                   @click="nextStep"
                 >Continue</button>
                 <button
                   v-else
-                  class="sf-btn-save"
+                  type="button" class="ui-btn ui-btn--primary"
                   :disabled="creating"
+                  :aria-busy="creating ? 'true' : undefined"
                   @click="handleCreate"
                 >
-                  <span v-if="creating" class="spinner spinner--sm" />
+                  <span v-if="creating" class="ui-spinner" aria-hidden="true" />
                   {{ creating ? 'Creating...' : 'Create Staff' }}
                 </button>
               </div>
@@ -260,7 +268,7 @@
                 />
               </div>
               <div class="sf-modal__footer">
-                <button class="sf-btn-secondary" @click="showEdit = false">Cancel</button>
+                <button type="button" class="ui-btn ui-btn--outline" @click="showEdit = false">Cancel</button>
                 <button
                   v-if="editOriginalLocations.length > 0"
                   class="sf-btn-danger"
@@ -270,8 +278,8 @@
                   Unassign All
                 </button>
                 <div class="sf-modal__footer-spacer" />
-                <button class="sf-btn-save" :disabled="creating || editLocations.length === 0" @click="handleEditSave">
-                  <span v-if="creating" class="spinner spinner--sm" />
+                <button type="button" class="ui-btn ui-btn--primary" :disabled="creating || editLocations.length === 0" @click="handleEditSave">
+                  <span v-if="creating" class="ui-spinner" aria-hidden="true" />
                   {{ creating ? 'Saving...' : 'Save Assignments' }}
                 </button>
               </div>
@@ -292,6 +300,7 @@
 </template>
 
 <script setup lang="ts">
+import FieldError from '../components/interfaces/FieldError.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { staffApi } from '../services/staffApi'
 import type { StaffMember } from '../services/staffApi'
@@ -959,49 +968,20 @@ onMounted(() => {
 .sf-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
-.sf-field__label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #86868B;
-}
 
-.sf-field__input {
-  padding: 10px 14px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: 0.84rem;
-  font-family: inherit;
-  width: 100%;
-  box-sizing: border-box;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
 
-.sf-field__input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-dim);
-}
 
-.sf-field--error .sf-field__input {
-  border-color: var(--error);
-}
 
-.sf-field--error .sf-field__input:focus {
-  box-shadow: 0 0 0 3px var(--error-bg);
-}
 
-.sf-field__error {
-  font-size: 0.72rem;
-  color: var(--error);
-  padding-left: 2px;
-}
+
+
+
+
+
+
 
 .sf-field__input-wrap {
   position: relative;
@@ -1010,19 +990,22 @@ onMounted(() => {
 }
 
 .sf-field__input-wrap .sf-field__input {
-  padding-right: 40px;
+  padding-right: 52px;
 }
 
 .sf-field__toggle {
   position: absolute;
-  right: 10px;
+  right: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
   background: none;
   border: none;
-  color: #86868B;
+  border-radius: 8px;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: color 0.15s ease;
 }
@@ -1124,102 +1107,28 @@ onMounted(() => {
   flex: 1;
 }
 
-.sf-btn-secondary {
-  padding: 9px 18px;
-  background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-size: 0.82rem;
-  font-family: inherit;
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-.sf-btn-secondary:hover {
-  border-color: var(--text-muted);
-  color: var(--text-primary);
-}
-
-.sf-btn-next {
-  padding: 9px 20px;
-  background: #1D1D1F;
-  color: #FFFFFF;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.82rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-}
-
-:root:not([data-theme="light"]) .sf-btn-next {
-  background: rgba(255, 255, 255, 0.12);
-  color: var(--text-primary);
-}
-
-.sf-btn-next:hover {
-  opacity: 0.85;
-}
-
-.sf-btn-save {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 20px;
-  background: var(--primary);
-  color: #FFFFFF;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.82rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-}
-
-.sf-btn-save:hover {
-  opacity: 0.88;
-}
-
-.sf-btn-save:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.spinner--sm {
-  width: 14px;
-  height: 14px;
-  border-width: 1.5px;
-}
-
 /* ── Slide & Fade transitions (steps) ────────────────────────────────────── */
 .sf-slide-forward-enter-active,
 .sf-slide-forward-leave-active,
 .sf-slide-back-enter-active,
 .sf-slide-back-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.15s ease;
 }
 
 .sf-slide-forward-enter-from {
   opacity: 0;
-  transform: translateX(24px);
 }
 
 .sf-slide-forward-leave-to {
   opacity: 0;
-  transform: translateX(-24px);
 }
 
 .sf-slide-back-enter-from {
   opacity: 0;
-  transform: translateX(-24px);
 }
 
 .sf-slide-back-leave-to {
   opacity: 0;
-  transform: translateX(24px);
 }
 
 .sf-slide-forward-leave-active,
@@ -1247,18 +1156,6 @@ onMounted(() => {
 .sf-fade-leave-to { opacity: 0; }
 
 /* ── Shake animation ─────────────────────────────────────────────────────── */
-@keyframes sf-shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-4px); }
-  40% { transform: translateX(4px); }
-  60% { transform: translateX(-3px); }
-  80% { transform: translateX(2px); }
-}
-
-.sf-shake {
-  animation: sf-shake 0.4s ease;
-}
-
 /* ── Success toast ───────────────────────────────────────────────────────── */
 .sf-toast {
   position: fixed;
@@ -1289,7 +1186,7 @@ onMounted(() => {
   color: var(--text-primary);
 }
 
-.sf-toast-enter-active { transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.sf-toast-enter-active { transition: opacity 0.15s ease; }
 .sf-toast-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
 .sf-toast-enter-from { opacity: 0; transform: translateX(-50%) translateY(12px); }
 .sf-toast-leave-to { opacity: 0; transform: translateX(-50%) translateY(4px); }

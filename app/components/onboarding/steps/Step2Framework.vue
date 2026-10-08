@@ -28,7 +28,7 @@
           <select
             id="s2-type"
             v-model="form.framework_type"
-            class="field-select"
+            class="field-input"
             :class="{ 'is-error': errors.framework_type }"
           >
             <option value="" disabled>Select a framework…</option>
@@ -284,59 +284,24 @@ async function save() {
 .field {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 8px;
 }
 
-.field-label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
+
 
 .req { color: var(--error); font-weight: 500; }
 
-.field-input {
-  width: 100%;
-  padding: 7px 10px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: 0.82rem;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  box-sizing: border-box;
-  font-family: inherit;
-}
 
-.field-input::placeholder { color: var(--text-muted); opacity: 0.7; }
-.field-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-dim); }
-.field-input.is-error { border-color: var(--error); }
+
+
+
+
 
 .select-wrap {
   position: relative;
 }
 
-.field-select {
-  width: 100%;
-  padding: 7px 30px 7px 10px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: 0.82rem;
-  appearance: none;
-  cursor: pointer;
-  font-family: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
 
-.field-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-dim); }
-.field-select.is-error { border-color: var(--error); }
 
 .select-icon {
   position: absolute;
@@ -347,11 +312,7 @@ async function save() {
   pointer-events: none;
 }
 
-.err-msg {
-  font-size: 0.72rem;
-  color: var(--error);
-  margin-top: 1px;
-}
+
 
 .success-bar {
   display: flex;

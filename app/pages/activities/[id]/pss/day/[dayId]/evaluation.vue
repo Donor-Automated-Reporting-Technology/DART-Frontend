@@ -508,7 +508,7 @@ onBeforeUnmount(() => {
   font-size: 16px; font-weight: 600;
   background: var(--bg-input);
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--input-border-hover);
   border-radius: 8px;
   font-variant-numeric: tabular-nums;
 }

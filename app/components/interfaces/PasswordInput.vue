@@ -1,137 +1,88 @@
 <template>
-  <div class="password-input" :class="{ 'has-error': error }">
-    <label v-if="label" :for="id">{{ label }} <span v-if="required" class="required">*</span></label>
-    <div class="input-wrapper">
+  <div class="ui-field">
+    <label v-if="label" class="ui-label" :for="id">{{ label }}</label>
+    <div class="ui-password">
       <input
         :id="id"
+        class="ui-input"
         :type="showPassword ? 'text' : 'password'"
+        :name="name || id"
         :value="modelValue"
-        @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
         :placeholder="placeholder"
         :disabled="disabled"
+        :required="required"
+        :autocomplete="autocomplete || (showStrength ? 'new-password' : 'current-password')"
+        :aria-invalid="error ? 'true' : undefined"
+        :aria-describedby="describedBy"
+        @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
         @blur="$emit('blur', $event)"
-      />
-      <button 
-        type="button" 
-        class="toggle-btn" 
-        @click="showPassword = !showPassword"
-        tabindex="-1"
       >
-        {{ showPassword ? 'Hide' : 'Show' }}
+      <button
+        type="button"
+        class="ui-reveal"
+        :aria-label="showPassword ? 'Hide password' : 'Show password'"
+        :aria-pressed="showPassword"
+        :aria-controls="id"
+        @click="showPassword = !showPassword"
+      >
+        <svg v-if="!showPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>
+        <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17.7 17.7 0 0 1-3.2 4.2M6.6 6.6C3.9 8.4 2 12 2 12s3.6 7 10 7a10.5 10.5 0 0 0 5.4-1.5M9.9 9.9a3 3 0 0 0 4.2 4.2" /></svg>
       </button>
     </div>
-    
-    <div v-if="showStrength && modelValue" class="strength-meter">
-      <div class="strength-bar" :class="strengthClass" :style="{ width: strengthPercent + '%' }"></div>
-    </div>
-    
-    <span v-if="error" class="error-text">{{ error }}</span>
+
+    <!-- New passwords: the requirements, ticked off as they are met. -->
+    <ul v-if="checklist.length" :id="`${id}-rules`" class="ui-checklist" aria-label="Password requirements">
+      <li v-for="rule in checklist" :key="rule.label" :class="{ met: rule.met }">
+        <span class="mark" aria-hidden="true">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+        </span>
+        {{ rule.label }}<span class="visually-hidden">{{ rule.met ? ' (met)' : ' (not met)' }}</span>
+      </li>
+    </ul>
+
+    <FieldError :id="`${id}-error`" :message="error" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import FieldError from './FieldError.vue';
+
+export interface PasswordRule { label: string; test: (value: string) => boolean }
 
 const props = defineProps<{
   modelValue: string;
   label?: string;
   id?: string;
+  name?: string;
   placeholder?: string;
   disabled?: boolean;
   required?: boolean;
   error?: string;
+  autocomplete?: string;
+  /** Show the requirements checklist (new-password fields). */
   showStrength?: boolean;
+  /** Requirements to list; defaults to the registration rules. */
+  rules?: PasswordRule[];
 }>();
 
 defineEmits(['update:modelValue', 'blur']);
 
 const showPassword = ref(false);
 
-const strengthPercent = computed(() => {
-  const val = props.modelValue || '';
-  let score = 0;
-  if (val.length >= 8) score += 40;
-  if (/[A-Z]/.test(val)) score += 20;
-  if (/\d/.test(val)) score += 20;
-  if (/[^A-Za-z0-9]/.test(val)) score += 20;
-  return Math.min(score, 100);
+// Mirrors the rules useRegistration validates (display only).
+const defaultRules: PasswordRule[] = [
+  { label: 'At least 8 characters', test: v => v.length >= 8 },
+  { label: 'Includes a number', test: v => /\d/.test(v) },
+];
+
+const checklist = computed(() => {
+  const rules = props.rules ?? (props.showStrength ? defaultRules : []);
+  const value = props.modelValue || '';
+  return rules.map(r => ({ label: r.label, met: r.test(value) }));
 });
 
-const strengthClass = computed(() => {
-  const p = strengthPercent.value;
-  if (p < 40) return 'weak';
-  if (p < 80) return 'medium';
-  return 'strong';
-});
+const describedBy = computed(() =>
+  [checklist.value.length ? `${props.id}-rules` : '', props.error ? `${props.id}-error` : ''].filter(Boolean).join(' ') || undefined
+);
 </script>
-
-<style scoped>
-.password-input {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 1rem;
-}
-label {
-  font-size: 0.875rem;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-.required {
-  color: var(--error);
-}
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-input {
-  width: 100%;
-  background-color: var(--input-bg);
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  padding: 0.75rem 3.5rem 0.75rem 1rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  outline: none;
-  transition: border-color 0.2s;
-}
-input:focus {
-  border-color: var(--primary);
-}
-.has-error input {
-  border-color: var(--error);
-}
-.toggle-btn {
-  position: absolute;
-  right: 1rem;
-  background: none;
-  border: none;
-  color: var(--primary);
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-.toggle-btn:hover {
-  text-decoration: underline;
-}
-.error-text {
-  color: var(--error);
-  font-size: 0.8rem;
-  margin-top: 0.25rem;
-}
-.strength-meter {
-  height: 4px;
-  background-color: var(--border-color);
-  margin-top: 0.5rem;
-  border-radius: 2px;
-  overflow: hidden;
-}
-.strength-bar {
-  height: 100%;
-  transition: width 0.3s, background-color 0.3s;
-}
-.weak { background-color: var(--error); }
-.medium { background-color: #faad14; }
-.strong { background-color: var(--success); }
-</style>

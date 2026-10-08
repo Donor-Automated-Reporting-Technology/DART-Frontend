@@ -91,16 +91,21 @@
 .ps-page .btn-back,
 .ps-page .btn-edit {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0;
-  padding: 9px 16px; font-size: 0.85rem; font-weight: 600; font-family: inherit; line-height: 1.2;
-  border: none; border-radius: 8px; cursor: pointer; text-decoration: none;
-  transition: background 0.15s, color 0.15s;
+  padding: 9px 16px; font-size: 0.85rem; font-weight: 400; font-family: inherit; line-height: 1.2;
+  border: 1px solid transparent; border-radius: 10px; cursor: pointer; text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
-.ps-page .btn-primary { background: var(--brand); color: #fff; }
+.ps-page .btn-primary:focus-visible,
+.ps-page .btn-secondary:focus-visible,
+.ps-page .btn-ghost:focus-visible,
+.ps-page .btn-back:focus-visible,
+.ps-page .btn-edit:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.ps-page .btn-primary { background: var(--brand); color: var(--on-primary); font-weight: 600; }
 .ps-page .btn-primary:hover:not(:disabled) { background: var(--brand-hover); }
 .ps-page .btn-secondary,
-.ps-page .btn-back { background: var(--ps-tile); color: var(--ps-text); }
+.ps-page .btn-back { background: transparent; border-color: var(--ps-input-border); color: var(--ps-text); }
 .ps-page .btn-secondary:hover:not(:disabled),
-.ps-page .btn-back:hover { background: var(--brand-soft); color: var(--brand-text); }
+.ps-page .btn-back:hover { border-color: var(--brand); color: var(--ps-text); text-decoration: none; }
 .ps-page .btn-edit { padding: 7px 16px; font-size: 0.82rem; background: var(--brand-soft); color: var(--ps-text); }
 .ps-page .btn-edit:hover { background: var(--brand); color: #fff; }
 .ps-page .btn-ghost { background: transparent; color: var(--ps-text-2); }
@@ -108,8 +113,8 @@
 .ps-page .btn-primary:disabled,
 .ps-page .btn-secondary:disabled { opacity: 0.55; cursor: not-allowed; }
 .ps-page .btn-spinner {
-  width: 12px; height: 12px; border: 2px solid rgba(255, 255, 255, 0.35);
-  border-top-color: #fff; border-radius: 50%; animation: ps-spin 0.7s linear infinite;
+  width: 14px; height: 14px; border: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-top-color: currentColor; border-radius: 50%; animation: ps-spin 0.7s linear infinite;
 }
 @keyframes ps-spin { to { transform: rotate(360deg); } }
 
@@ -160,31 +165,42 @@
 .ps-page .tag--brand { color: #fff; background: var(--brand); }
 
 /* ── Forms ───────────────────────────────────────────────────────────────── */
+/* Field look comes from forms.css; these only map it onto the project tokens.
+   8px label → input, 24px between fields, labels in regular weight. */
 .ps-page .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0 16px; }
-.ps-page .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-.ps-page .field-label { font-size: 0.8rem; font-weight: 600; color: var(--ps-text); }
-.ps-page .field-hint { font-size: 0.76rem; color: var(--ps-text-2); }
+.ps-page .field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; min-width: 0; }
+.ps-page .field-label { font-size: 0.875rem; font-weight: 400; color: var(--ps-text); }
+.ps-page .field-hint { font-size: 0.8125rem; line-height: 1.45; color: var(--ps-text-2); }
 .ps-page .field-input {
-  width: 100%; padding: 10px 12px; font-size: 0.9rem; line-height: 1.45; font-family: inherit;
+  min-height: var(--field-h); padding: 0 16px; font-size: 0.9375rem; line-height: 1.4;
   color: var(--ps-text); background: var(--ps-input);
-  border: 1px solid var(--ps-input-border); border-radius: 8px;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  border: 1px solid var(--ps-input-border); border-radius: var(--field-radius);
 }
-.ps-page textarea.field-input { resize: vertical; }
-.ps-page .field-input::placeholder { color: var(--ps-text-2); opacity: 0.7; }
+.ps-page textarea.field-input { padding: 12px 16px; min-height: 112px; resize: vertical; }
+.ps-page .field-input::placeholder { color: var(--ps-text-2); opacity: 1; }
+.ps-page .field-input:hover { border-color: var(--ps-text-2); }
 .ps-page .field-input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
-.ps-page .field-input:disabled { opacity: 0.6; cursor: not-allowed; }
-.ps-page input[type="checkbox"],
-.ps-page input[type="radio"] { accent-color: var(--brand); }
+.ps-page .field-input:disabled { background: var(--ps-tile); color: var(--ps-text-2); cursor: not-allowed; }
+.ps-page .field-input.is-error,
+.ps-page .field-input[aria-invalid='true'] { border-color: var(--error-text); }
+.ps-page .field-error,
+.ps-page .err-msg { display: flex; gap: 8px; margin: 0; font-size: 0.8125rem; color: var(--error-text); }
+.ps-page input[type="checkbox"]:checked,
+.ps-page input[type="radio"]:checked { background: var(--brand); border-color: var(--brand); }
+@media (max-width: 760px) { .ps-page .field-input { font-size: 16px; } }
 
-.ps-page .actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+.ps-page .actions { display: flex; align-items: center; justify-content: flex-end; gap: 16px; margin-top: 8px; }
+.ps-page .actions .btn-primary,
+.ps-page .actions .btn-secondary,
+.ps-page .actions .btn-ghost { min-height: var(--field-h); padding: 0 24px; font-size: 0.9375rem; }
 .ps-page .api-err {
-  margin-top: 12px; padding: 10px 14px; font-size: 0.86rem; color: var(--error);
-  background: var(--error-bg); border-radius: 8px;
+  display: flex; gap: 8px; margin-top: 16px; padding: 16px; font-size: 0.875rem; line-height: 1.45; color: var(--error-text);
+  background: var(--ps-card); border: 1px solid color-mix(in srgb, var(--error-text) 45%, transparent); border-radius: var(--field-radius);
 }
 .ps-page .save-ok {
-  padding: 8px 14px; font-size: 0.84rem; font-weight: 600;
-  color: #fff; background: var(--brand); border-radius: 8px;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 16px; font-size: 0.875rem; font-weight: 400;
+  color: var(--ps-text); background: var(--brand-soft); border-radius: 8px;
 }
 
 /* ── Clickable list rows ─────────────────────────────────────────────────── */
@@ -255,3 +271,8 @@
 .ps-page .year-targets .card-hint { margin: 0 0 12px; }
 .ps-page .year-targets-sum { font-size: 0.78rem; color: var(--ps-text-2); font-variant-numeric: tabular-nums; }
 .ps-page .year-targets-sum--off { color: var(--warning); font-weight: 600; }
+
+/* Forms keep a readable width inside wider cards. */
+.ps-page form .field,
+.ps-page form .form-grid,
+.ps-page form .api-err { max-width: 640px; }

@@ -716,19 +716,19 @@ onMounted(loadData);
 .obj-input {
   flex: 1;
   background: var(--bg-input, var(--input-bg));
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--input-border-hover);
   border-radius: 10px;
   padding: 8px 12px;
   color: var(--text-primary);
   font: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 .obj-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--focus-ring, var(--primary-dim));
+  box-shadow: 0 0 0 3px var(--field-ring);
 }
-.obj-input::placeholder { color: var(--text-muted); }
+.obj-input::placeholder { color: var(--text-secondary); }
 .obj-remove {
   background: var(--hover-bg, var(--bg-input)); border: 1px solid var(--border-color); color: var(--text-muted);
   width: 28px; height: 28px; border-radius: 6px; display: grid; place-items: center; cursor: pointer;

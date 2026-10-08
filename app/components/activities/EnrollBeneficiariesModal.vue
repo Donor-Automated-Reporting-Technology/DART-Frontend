@@ -320,17 +320,17 @@ watch(() => props.open, (isOpen) => {
   width: 100%;
   padding: 10px 34px 10px 38px;
   background: var(--bg-input);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--input-border-hover);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-size: 0.84rem;
   font-family: inherit;
   box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.em-search::placeholder { color: var(--text-muted); }
-.em-search:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-dim); }
+.em-search::placeholder { color: var(--text-secondary); }
+.em-search:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--field-ring); }
 
 .em-search-clear {
   position: absolute;

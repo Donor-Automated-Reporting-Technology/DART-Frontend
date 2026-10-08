@@ -63,13 +63,14 @@
       </template>
 
       <!-- ═══ Editor ═══ -->
-      <form v-else class="tu-stack" @submit.prevent="save">
+      <form v-else class="tu-stack" novalidate @focusout="iv.onBlur" @input="iv.onInput" @submit.prevent="iv.submit($event, save)">
         <div v-if="lockedShape" class="tu-alert tu-alert--warn">
           Groups already use this curriculum: you can rename modules and sessions and change objectives, but not add, remove or move sessions.
         </div>
         <div class="tu-field">
           <label for="cur-name">Curriculum name</label>
-          <input id="cur-name" v-model="draft.name" class="tu-input" required maxlength="200">
+          <input id="cur-name" v-model="draft.name" class="tu-input" required maxlength="200" name="cur-name" v-bind="iv.aria('cur-name', 'iv')">
+          <FieldError :id="'iv-' + 'cur-name' + '-error'" :message="iv.messages['cur-name']" />
         </div>
         <div class="tu-grid2">
           <div class="tu-field">
@@ -78,7 +79,8 @@
           </div>
           <div class="tu-field">
             <label for="cur-min">Minimum sessions to count as reached (0 = none)</label>
-            <input id="cur-min" v-model.number="draft.min_dosage" type="number" min="0" :max="totalSessions" class="tu-input">
+            <input id="cur-min" v-model.number="draft.min_dosage" type="number" min="0" :max="totalSessions" class="tu-input" name="cur-min" v-bind="iv.aria('cur-min', 'iv')">
+            <FieldError :id="'iv-' + 'cur-min' + '-error'" :message="iv.messages['cur-min']" />
           </div>
         </div>
 
@@ -96,7 +98,8 @@
             <div class="tu-row">
               <div class="tu-field" style="flex: 1">
                 <label :for="`cur-s-${mi}-${si}`">Session {{ sequenceOf(mi, si) }}</label>
-                <input :id="`cur-s-${mi}-${si}`" v-model="s.name" class="tu-input" required>
+                <input :id="`cur-s-${mi}-${si}`" v-model="s.name" class="tu-input" required :name="`cur-s-${mi}-${si}`" v-bind="iv.aria(`cur-s-${mi}-${si}`, 'iv')">
+                <FieldError :id="'iv-' + `cur-s-${mi}-${si}` + '-error'" :message="iv.messages[`cur-s-${mi}-${si}`]" />
               </div>
               <button v-if="!lockedShape && m.sessions.length > 1" type="button" class="tu-btn tu-btn--ghost" :aria-label="`Remove session ${sequenceOf(mi, si)}`" @click="m.sessions.splice(si, 1)">
                 <AppIcon name="x" :size="14" />
@@ -129,6 +132,8 @@
 </template>
 
 <script setup lang="ts">
+import FieldError from '../../components/interfaces/FieldError.vue'
+import { useInlineValidation } from '../../composables/useInlineValidation'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import AppIcon from '../interfaces/AppIcon.vue'
@@ -136,6 +141,9 @@ import { useAuthStore } from '../../stores/auth'
 import { cohortApi } from '../../services/teamupApi'
 import { cohortProgram, type CohortProgramKey } from '../../utils/cohortPrograms'
 import type { SaveCurriculumRequest, TeamUpCurriculum } from '../../interfaces/teamup'
+
+// Built-in field rules (required, min/max…) shown inline instead of browser pop-ups.
+const iv = useInlineValidation()
 
 const props = defineProps<{ program: CohortProgramKey }>()
 const cfg = cohortProgram(props.program)

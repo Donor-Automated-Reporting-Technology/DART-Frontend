@@ -15,8 +15,8 @@
           <div class="drawer-body">
             <!-- Status -->
             <div class="drawer-section">
-              <label class="drawer-label">Status</label>
-              <select v-model="local.status" class="drawer-select">
+              <label :for="`${fid}-1`" class="drawer-label">Status</label>
+              <select :id="`${fid}-1`" v-model="local.status" class="drawer-select">
                 <option value="">All Statuses</option>
                 <option value="verified">Verified</option>
                 <option value="active">Active</option>
@@ -47,8 +47,8 @@
 
             <!-- Region / Centre -->
             <div class="drawer-section">
-              <label class="drawer-label">Centre / Location</label>
-              <select v-model="local.centreId" class="drawer-select">
+              <label :for="`${fid}-2`" class="drawer-label">Centre / Location</label>
+              <select :id="`${fid}-2`" v-model="local.centreId" class="drawer-select">
                 <option value="">All Centres</option>
                 <option v-for="sp in servicePoints" :key="sp.id" :value="sp.id">
                   {{ sp.name }}
@@ -58,8 +58,8 @@
 
             <!-- Disability Status -->
             <div class="drawer-section">
-              <label class="drawer-label">Disability Status</label>
-              <select v-model="local.disabilityStatus" class="drawer-select">
+              <label :for="`${fid}-3`" class="drawer-label">Disability Status</label>
+              <select :id="`${fid}-3`" v-model="local.disabilityStatus" class="drawer-select">
                 <option value="">Any</option>
                 <option value="none">No Disability</option>
                 <option value="vision">Vision</option>
@@ -72,9 +72,9 @@
 
             <!-- Date Joined -->
             <div class="drawer-section">
-              <label class="drawer-label">Date Joined</label>
+              <label :for="`${fid}-4`" class="drawer-label">Date Joined</label>
               <div class="date-range">
-                <input type="date" v-model="local.dateJoinedFrom" class="drawer-input" placeholder="From" />
+                <input :id="`${fid}-4`" type="date" v-model="local.dateJoinedFrom" class="drawer-input" placeholder="From" />
                 <span class="date-sep">to</span>
                 <input type="date" v-model="local.dateJoinedTo" class="drawer-input" placeholder="To" />
               </div>
@@ -82,9 +82,9 @@
 
             <!-- Household Size -->
             <div class="drawer-section">
-              <label class="drawer-label">Household Size</label>
+              <label :for="`${fid}-5`" class="drawer-label">Household Size</label>
               <div class="range-inputs">
-                <input
+                <input :id="`${fid}-5`"
                   type="number"
                   v-model.number="local.householdSizeMin"
                   class="drawer-input drawer-input--small"
@@ -119,7 +119,11 @@
 </template>
 
 <script setup lang="ts">
+import { useId } from 'vue'
 import { reactive, watch } from 'vue'
+
+// Links each label to its field.
+const fid = useId()
 
 interface DrawerFilters {
   status: string
@@ -249,36 +253,11 @@ function resetFilters() {
   letter-spacing: 0.04em;
 }
 
-.drawer-select,
-.drawer-input {
-  height: 44px;
-  padding: 0 12px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  color: var(--text-primary);
-  font-size: 0.84rem;
-  font-family: inherit;
-  transition: border-color 0.15s;
-  box-sizing: border-box;
-  width: 100%;
-}
 
-.drawer-select:focus,
-.drawer-input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--focus-ring);
-}
 
-.drawer-select {
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 10px center;
-  background-repeat: no-repeat;
-  background-size: 16px;
-  padding-right: 34px;
-}
+
+
+
 
 .drawer-input--small { width: 100%; }
 

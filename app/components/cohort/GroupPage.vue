@@ -105,7 +105,7 @@
 
       <!-- Start session sheet (objectives) -->
       <div v-if="startOpen" class="tu-scrim" @click.self="startOpen = false">
-        <form class="tu-sheet" role="dialog" aria-labelledby="tu-start-title" @submit.prevent="startSession">
+        <form class="tu-sheet" role="dialog" aria-labelledby="tu-start-title" novalidate @focusout="iv.onBlur" @input="iv.onInput" @submit.prevent="iv.submit($event, startSession)">
           <h2 id="tu-start-title" class="tu-title" style="font-size: 1.1rem">Session objectives</h2>
           <span class="tu-muted">Suggested for {{ nextSession?.module_name }}. Edit or add your own.</span>
           <div v-for="(o, i) in objectives" :key="i" class="tu-row">
@@ -121,7 +121,8 @@
           </button>
           <div class="tu-field">
             <label for="tu-date">Session date</label>
-            <input id="tu-date" v-model="sessionDate" type="date" class="tu-input" required>
+            <input id="tu-date" v-model="sessionDate" type="date" class="tu-input" required name="tu-date" v-bind="iv.aria('tu-date', 'iv')">
+            <FieldError :id="'iv-' + 'tu-date' + '-error'" :message="iv.messages['tu-date']" />
           </div>
           <div v-for="w in startWarnings" :key="w" class="tu-alert tu-alert--warn">
             <AppIcon name="alert-circle" :size="14" />
@@ -136,16 +137,18 @@
 
       <!-- Edit child sheet -->
       <div v-if="editing" class="tu-scrim" @click.self="editing = null">
-        <form class="tu-sheet" role="dialog" aria-labelledby="tu-edit-title" @submit.prevent="saveEdit">
+        <form class="tu-sheet" role="dialog" aria-labelledby="tu-edit-title" novalidate @focusout="iv.onBlur" @input="iv.onInput" @submit.prevent="iv.submit($event, saveEdit)">
           <h2 id="tu-edit-title" class="tu-title" style="font-size: 1.1rem">{{ editing.beneficiary_name }}</h2>
           <div class="tu-grid2">
             <div class="tu-field">
               <label for="tu-base">Baseline score</label>
-              <input id="tu-base" v-model.number="editForm.baseline" type="number" min="0" class="tu-input">
+              <input id="tu-base" v-model.number="editForm.baseline" type="number" min="0" class="tu-input" name="tu-base" v-bind="iv.aria('tu-base', 'iv')">
+              <FieldError :id="'iv-' + 'tu-base' + '-error'" :message="iv.messages['tu-base']" />
             </div>
             <div class="tu-field">
               <label for="tu-end">Endline score</label>
-              <input id="tu-end" v-model.number="editForm.endline" type="number" min="0" class="tu-input">
+              <input id="tu-end" v-model.number="editForm.endline" type="number" min="0" class="tu-input" name="tu-end" v-bind="iv.aria('tu-end', 'iv')">
+              <FieldError :id="'iv-' + 'tu-end' + '-error'" :message="iv.messages['tu-end']" />
             </div>
           </div>
           <div class="tu-field">
@@ -157,7 +160,8 @@
           </div>
           <div v-if="editForm.status === 'dropped'" class="tu-field">
             <label for="tu-reason">Reason for dropping out</label>
-            <input id="tu-reason" v-model="editForm.reason" class="tu-input" placeholder="e.g. Family relocated" required>
+            <input id="tu-reason" v-model="editForm.reason" class="tu-input" placeholder="e.g. Family relocated" required name="tu-reason" v-bind="iv.aria('tu-reason', 'iv')">
+            <FieldError :id="'iv-' + 'tu-reason' + '-error'" :message="iv.messages['tu-reason']" />
           </div>
           <div class="tu-actions">
             <button type="button" class="tu-btn tu-btn--ghost" @click="editing = null">Cancel</button>
@@ -170,6 +174,8 @@
 </template>
 
 <script setup lang="ts">
+import FieldError from '../../components/interfaces/FieldError.vue'
+import { useInlineValidation } from '../../composables/useInlineValidation'
 import { cohortProgram, type CohortProgramKey } from '../../utils/cohortPrograms'
 
 const props = defineProps<{ program: CohortProgramKey }>()
@@ -189,6 +195,9 @@ import type {
   TeamUpSession,
   UpdateTeamUpEnrollmentRequest,
 } from '../../interfaces/teamup'
+
+// Built-in field rules (required, min/max…) shown inline instead of browser pop-ups.
+const iv = useInlineValidation()
 
 
 const route = useRoute()

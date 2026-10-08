@@ -20,8 +20,8 @@
       <div class="session-info-card">
         <div class="info-row">
           <div class="field">
-            <label class="field-label">Session Date</label>
-            <input v-model="date" type="date" class="field-input" :disabled="sessionSaved" />
+            <label :for="`${fid}-1`" class="field-label">Session Date</label>
+            <input :id="`${fid}-1`" v-model="date" type="date" class="field-input" :disabled="sessionSaved" />
           </div>
           <div class="day-badge">
             <span class="day-name">{{ dayName }}</span>
@@ -182,6 +182,7 @@
 </template>
 
 <script setup lang="ts">
+import { useId } from 'vue'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { activityApi } from '../../../services/activityApi'
@@ -189,6 +190,9 @@ import type { AttendanceBeneficiary } from '../../../services/activityApi'
 import { getBeneficiariesOffline, saveSessionOffline, saveAttendanceRecordsOffline } from '../../../services/offlineDb'
 import { useAuthStore } from '../../../stores/auth'
 import { v4 as uuidv4 } from 'uuid'
+
+// Links each label to its field.
+const fid = useId()
 
 definePageMeta({ layout: false, middleware: ['auth'] })
 
@@ -436,37 +440,16 @@ onMounted(() => {
 .field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
-.field-label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-}
 
-.field-input {
-  padding: 9px 12px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: 0.82rem;
-  font-family: inherit;
-}
 
-.field-input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-dim);
-}
 
-.field-input:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+
+
+
+
 
 /* ── Success Banner ──────────────────────────────────────────────────────── */
 .success-banner {

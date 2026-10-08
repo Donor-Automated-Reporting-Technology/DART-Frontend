@@ -48,8 +48,8 @@
     <div v-if="modelActive && showBreakdown" class="breakdown">
       <div class="breakdown-grid">
         <div class="bk-field">
-          <label class="bk-label">Girls</label>
-          <input
+          <label :for="`${fid}-1`" class="bk-label">Girls</label>
+          <input :id="`${fid}-1`"
             type="number"
             class="bk-input"
             :value="targetGirls"
@@ -59,8 +59,8 @@
           />
         </div>
         <div class="bk-field">
-          <label class="bk-label">Boys</label>
-          <input
+          <label :for="`${fid}-2`" class="bk-label">Boys</label>
+          <input :id="`${fid}-2`"
             type="number"
             class="bk-input"
             :value="targetBoys"
@@ -70,8 +70,8 @@
           />
         </div>
         <div class="bk-field">
-          <label class="bk-label">Girls w/ disability</label>
-          <input
+          <label :for="`${fid}-3`" class="bk-label">Girls w/ disability</label>
+          <input :id="`${fid}-3`"
             type="number"
             class="bk-input"
             :value="targetGirlsDisability"
@@ -81,8 +81,8 @@
           />
         </div>
         <div class="bk-field">
-          <label class="bk-label">Boys w/ disability</label>
-          <input
+          <label :for="`${fid}-4`" class="bk-label">Boys w/ disability</label>
+          <input :id="`${fid}-4`"
             type="number"
             class="bk-input"
             :value="targetBoysDisability"
@@ -97,7 +97,11 @@
 </template>
 
 <script setup lang="ts">
+import { useId } from 'vue'
 import { ref } from 'vue'
+
+// Links each label to its field.
+const fid = useId()
 
 const props = defineProps<{
   name: string
@@ -243,25 +247,25 @@ function onBreakdownChange(field: string, value: number) {
   width: 80px;
   padding: 8px 10px;
   background: var(--bg-input);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--input-border-hover);
   border-radius: 8px;
   color: var(--text-primary);
   font-size: 0.8rem;
   text-align: right;
   font-family: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .target-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--primary-dim);
+  box-shadow: 0 0 0 3px var(--field-ring);
 }
 
 .target-unit {
   padding: 8px 28px 8px 10px;
   background: var(--bg-input);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--input-border-hover);
   border-radius: 8px;
   color: var(--text-primary);
   font-size: 0.8rem;
@@ -273,13 +277,13 @@ function onBreakdownChange(field: string, value: number) {
   background-repeat: no-repeat;
   background-size: 16px;
   min-width: 110px;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .target-unit:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--primary-dim);
+  box-shadow: 0 0 0 3px var(--field-ring);
 }
 
 .target-unit:hover {
@@ -333,19 +337,19 @@ function onBreakdownChange(field: string, value: number) {
   width: 100%;
   padding: 6px 8px;
   background: var(--bg-input);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--input-border-hover);
   border-radius: 6px;
   color: var(--text-primary);
   font-size: 0.78rem;
   text-align: right;
   font-family: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .bk-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--primary-dim);
+  box-shadow: 0 0 0 3px var(--field-ring);
 }
 
 @keyframes slideDown {

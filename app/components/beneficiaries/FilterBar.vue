@@ -161,22 +161,22 @@ function hideSuggestions() {
   height: 36px;
   padding: 0 36px 0 38px;
   background: var(--bg-input);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--input-border-hover);
   border-radius: 8px;
   color: var(--text-primary);
   font-size: 0.84rem;
   font-family: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
   box-sizing: border-box;
 }
 
 .search-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  box-shadow: 0 0 0 3px var(--field-ring);
 }
 
-.search-input::placeholder { color: var(--text-placeholder); }
+.search-input::placeholder { color: var(--text-secondary); }
 
 .search-input::-webkit-search-cancel-button { display: none; }
 

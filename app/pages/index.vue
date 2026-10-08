@@ -260,24 +260,45 @@
             <h3>You're on the list.</h3>
             <p>Thank you. We'll email you when your testing place is ready.</p>
           </div>
-          <form v-else class="form" @submit.prevent="joinWaitlist">
+          <form v-else class="form" novalidate @focusout="wv.onBlur" @input="wv.onInput" @submit.prevent="wv.submit($event, joinWaitlist)">
             <div class="grid2">
-              <label class="field">Full name<input v-model="waitlist.form.full_name" type="text" autocomplete="name" required maxlength="120"></label>
-              <label class="field">Work email<input v-model="waitlist.form.email" type="email" autocomplete="email" required maxlength="160"></label>
+              <div class="field">
+                <label for="wl-full_name">Full name</label>
+                <input id="wl-full_name" v-model="waitlist.form.full_name" name="full_name" type="text" autocomplete="name" required maxlength="120" v-bind="wv.aria('full_name', 'wl')">
+                <FieldError id="wl-full_name-error" :message="wv.messages.full_name" />
+              </div>
+              <div class="field">
+                <label for="wl-email">Work email</label>
+                <input id="wl-email" v-model="waitlist.form.email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" required maxlength="160" v-bind="wv.aria('email', 'wl')">
+                <FieldError id="wl-email-error" :message="wv.messages.email" />
+              </div>
             </div>
             <div class="grid2">
-              <label class="field">Organisation<input v-model="waitlist.form.organisation" type="text" autocomplete="organization" required maxlength="160"></label>
-              <label class="field">Country<input v-model="waitlist.form.country" type="text" autocomplete="country-name" maxlength="80"></label>
+              <div class="field">
+                <label for="wl-organisation">Organisation</label>
+                <input id="wl-organisation" v-model="waitlist.form.organisation" name="organisation" type="text" autocomplete="organization" required maxlength="160" v-bind="wv.aria('organisation', 'wl')">
+                <FieldError id="wl-organisation-error" :message="wv.messages.organisation" />
+              </div>
+              <div class="field">
+                <label for="wl-country">Country <span class="optional">(optional)</span></label>
+                <input id="wl-country" v-model="waitlist.form.country" name="country" type="text" autocomplete="country-name" maxlength="80" v-bind="wv.aria('country', 'wl')">
+                <FieldError id="wl-country-error" :message="wv.messages.country" />
+              </div>
             </div>
-            <label class="field">Your role
-              <select v-model="waitlist.form.role">
+            <div class="field">
+              <label for="wl-role">Your role</label>
+              <select id="wl-role" v-model="waitlist.form.role" name="role">
                 <option v-for="r in roles" :key="r" :value="r">{{ r }}</option>
               </select>
-            </label>
+            </div>
             <!-- Honeypot: hidden from people, bots fill it -->
             <input v-model="waitlist.form.website" class="hp" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
-            <p v-if="waitlist.error" class="form-error" role="alert">{{ waitlist.error }}</p>
-            <button type="submit" class="btn btn-primary" :disabled="waitlist.sending">
+            <p v-if="waitlist.error" class="form-error" role="alert">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
+              <span>{{ waitlist.error }}</span>
+            </p>
+            <button type="submit" class="btn btn-primary" :disabled="waitlist.sending" :aria-busy="waitlist.sending ? 'true' : undefined">
+              <span v-if="waitlist.sending" class="ui-spinner" aria-hidden="true" />
               {{ waitlist.sending ? 'Joining…' : 'Join the waitlist' }}
             </button>
             <p class="fineprint">We only use your details to contact you about testing.</p>
@@ -310,16 +331,40 @@
             <h3>Message sent.</h3>
             <p>Thank you. We'll reply to your email soon.</p>
           </div>
-          <form v-else class="form light" @submit.prevent="sendContact">
+          <form v-else class="form light" novalidate @focusout="cv.onBlur" @input="cv.onInput" @submit.prevent="cv.submit($event, sendContact)">
             <div class="grid2">
-              <label class="field">Name<input v-model="contact.form.name" type="text" autocomplete="name" required maxlength="120"></label>
-              <label class="field">Email<input v-model="contact.form.email" type="email" autocomplete="email" required maxlength="160"></label>
+              <div class="field">
+                <label for="ct-name">Name</label>
+                <input id="ct-name" v-model="contact.form.name" name="name" type="text" autocomplete="name" required maxlength="120" v-bind="cv.aria('name', 'ct')">
+                <FieldError id="ct-name-error" :message="cv.messages.name" />
+              </div>
+              <div class="field">
+                <label for="ct-email">Email</label>
+                <input id="ct-email" v-model="contact.form.email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" required maxlength="160" v-bind="cv.aria('email', 'ct')">
+                <FieldError id="ct-email-error" :message="cv.messages.email" />
+              </div>
             </div>
-            <label class="field"><span>Organisation <span class="optional">(optional)</span></span><input v-model="contact.form.organisation" type="text" autocomplete="organization" maxlength="160"></label>
-            <label class="field">Message<textarea v-model="contact.form.message" rows="5" required maxlength="4000" /></label>
+            <div class="field">
+              <label for="ct-organisation">Organisation <span class="optional">(optional)</span></label>
+              <input id="ct-organisation" v-model="contact.form.organisation" name="organisation" type="text" autocomplete="organization" maxlength="160" v-bind="cv.aria('organisation', 'ct')">
+              <FieldError id="ct-organisation-error" :message="cv.messages.organisation" />
+            </div>
+            <div class="field">
+              <label for="ct-message">Message</label>
+              <textarea id="ct-message" v-model="contact.form.message" name="message" rows="5" required maxlength="4000" v-bind="cv.aria('message', 'ct')" />
+              <FieldError id="ct-message-error" :message="cv.messages.message" />
+            </div>
             <input v-model="contact.form.website" class="hp" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
-            <p v-if="contact.error" class="form-error" role="alert">{{ contact.error }}</p>
-            <div><button type="submit" class="btn btn-ink" :disabled="contact.sending">{{ contact.sending ? 'Sending…' : 'Send message' }}</button></div>
+            <p v-if="contact.error" class="form-error" role="alert">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
+              <span>{{ contact.error }}</span>
+            </p>
+            <div>
+              <button type="submit" class="btn btn-primary" :disabled="contact.sending" :aria-busy="contact.sending ? 'true' : undefined">
+                <span v-if="contact.sending" class="ui-spinner" aria-hidden="true" />
+                {{ contact.sending ? 'Sending…' : 'Send message' }}
+              </button>
+            </div>
           </form>
         </div>
       </div>
@@ -386,6 +431,8 @@
 import { reactive, ref, onMounted } from 'vue'
 import WellReachMark from '../components/brand/WellReachMark.vue'
 import ThemeToggle from '../components/brand/ThemeToggle.vue'
+import FieldError from '../components/interfaces/FieldError.vue'
+import { useInlineValidation } from '../composables/useInlineValidation'
 
 definePageMeta({ layout: false })
 
@@ -538,6 +585,9 @@ const perks = [
   'Set-up help: your logframe, locations and staff',
   'A direct say in what we build next',
 ]
+const wv = useInlineValidation()
+const cv = useInlineValidation()
+
 const roles = ['Programme manager', 'M&E / data manager', 'Director', 'Field supervisor or facilitator', 'Donor or UN agency', 'Other']
 
 const waitlist = reactive({
@@ -625,6 +675,8 @@ async function sendContact() {
   --on-accent: #FFFFFF;
   --error-bg: #FEF2F2;
   --error-text: #991B1B;
+  --on-band-error: #f87171;
+  --lp-error: #991B1B;
   --input-bg: #FFFFFF;
   --input-border: #CBD6D3;
   --btn-ink-bg: #0B2A27;
@@ -670,6 +722,7 @@ async function sendContact() {
   --btn-ink-bg: #EEF3F1;
   --btn-ink-text: #0B2A27;
   --glass-line: rgba(255, 255, 255, 0.1);
+  --lp-error: #f87171;
 }
 
 .lp h1, .lp h2, .lp h3 { font-family: Sora, system-ui, sans-serif; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); margin: 0; }
@@ -848,25 +901,37 @@ td.tool { color: var(--ink); width: 26%; }
 .checklist li:last-child { border-bottom: 1px solid var(--line); }
 .checklist svg { flex: none; margin-top: 4px; color: var(--teal-text); }
 
-/* Waitlist + forms */
+/* Waitlist + forms (labels above, 8px to the input, 24px between fields) */
 .perks { list-style: none; margin: 24px 0 0; padding: 0; display: flex; flex-direction: column; gap: 16px; color: var(--on-band-2); font-size: 15px; }
 .perks li { display: flex; gap: 16px; }
 .perks svg { flex: none; margin-top: 4px; color: var(--mint); }
 .form-card { padding: 32px; box-sizing: border-box; }
-.form { display: flex; flex-direction: column; gap: 16px; }
-.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
-.field { display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: var(--on-band-2); }
-.field input, .field select, .field textarea { min-height: 48px; border-radius: var(--r-md); padding: 0 16px; font: 400 15px Manrope, sans-serif; box-sizing: border-box; width: 100%; background: color-mix(in srgb, var(--on-band) 8%, transparent); border: 1px solid color-mix(in srgb, var(--on-band) 20%, transparent); color: var(--on-band); transition: border-color var(--ease), background-color var(--ease); }
-.field select option { color: var(--deep); }
-.field textarea { padding: 16px; min-height: 128px; resize: vertical; }
-.field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--mint); outline-offset: 1px; }
-.form.light .field { color: var(--text); }
+.form { display: flex; flex-direction: column; gap: 24px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 24px 16px; }
+.field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.field label { font-size: 14px; font-weight: 400; color: var(--on-band-2); }
+.field input, .field select, .field textarea { min-height: 48px; border-radius: var(--r-md); padding: 0 16px; font: 400 15px Manrope, sans-serif; box-sizing: border-box; width: 100%; background: color-mix(in srgb, var(--on-band) 8%, transparent); border: 1px solid color-mix(in srgb, var(--on-band) 24%, transparent); color: var(--on-band); outline: none; transition: border-color var(--ease), background-color var(--ease); }
+.field select { appearance: none; -webkit-appearance: none; padding-right: 40px; cursor: pointer; background-image: linear-gradient(45deg, transparent 50%, var(--on-band-text) 50%), linear-gradient(135deg, var(--on-band-text) 50%, transparent 50%); background-position: calc(100% - 20px) 50%, calc(100% - 15px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
+.field select option { color: var(--deep); background: var(--on-band); }
+.field textarea { padding: 12px 16px; min-height: 128px; resize: vertical; }
+.field input:hover, .field select:hover, .field textarea:hover { border-color: color-mix(in srgb, var(--on-band) 40%, transparent); }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--mint); box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 22%, transparent); }
+.field [aria-invalid='true'] { border-color: var(--on-band-error); }
+.field [aria-invalid='true']:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--on-band-error) 22%, transparent); }
+.field :deep(.ui-error) { color: var(--on-band-error); }
+.form.light .field label { color: var(--text); }
 .form.light .field input, .form.light .field textarea { background: var(--input-bg); border: 1px solid var(--input-border); color: var(--ink); }
-.form.light .field input:focus, .form.light .field textarea:focus { outline-color: var(--teal); }
+.form.light .field input:hover, .form.light .field textarea:hover { border-color: var(--muted); }
+.form.light .field input:focus, .form.light .field textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px color-mix(in srgb, var(--teal) 18%, transparent); }
+.form.light .field [aria-invalid='true'] { border-color: var(--lp-error); }
+.form.light .field :deep(.ui-error) { color: var(--lp-error); }
 .optional { color: var(--muted); }
+.field .optional { color: inherit; opacity: 1; }
 .hp { position: absolute; left: -10000px; width: 1px; height: 1px; opacity: 0; }
-.form-error { margin: 0; padding: 8px 16px; border-radius: var(--r-md); background: var(--error-bg); color: var(--error-text); font-size: 14px; }
-.fineprint { margin: 0; font-size: 12px; color: var(--on-band-muted); }
+.form-error { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 16px; border-radius: var(--r-md); background: var(--error-bg); color: var(--error-text); font-size: 14px; line-height: 1.45; }
+.form-error svg { flex: none; margin-top: 2px; }
+.fineprint { margin: 0; font-size: 13px; color: var(--on-band-muted); }
+.btn .ui-spinner { width: 16px; height: 16px; }
 .sent { text-align: center; padding: 32px 8px; }
 .sent-icon { width: 48px; height: 48px; margin: 0 auto; border-radius: 50%; background: color-mix(in srgb, var(--mint) 15%, transparent); display: flex; align-items: center; justify-content: center; color: var(--mint); }
 .sent h3 { color: var(--on-band); font-size: 21px; margin-top: 16px; }
@@ -907,6 +972,7 @@ td.tool { color: var(--ink); width: 26%; }
 /* Mobile */
 @media (max-width: 760px) {
   .section { padding: 48px 0; }
+  .field input, .field select, .field textarea { font-size: 16px; }
   .wrap { padding: 0 16px; }
   .hero-body { gap: 32px; padding-top: 32px; padding-bottom: 48px; }
   .compare { padding: 8px 16px; }

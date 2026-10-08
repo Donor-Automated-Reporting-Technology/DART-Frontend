@@ -8,11 +8,11 @@
 
 .tu-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .tu-title { font-size: 1.35rem; font-weight: 750; color: var(--text-primary); margin: 0 0 2px; letter-spacing: -0.02em; }
-.tu-subtitle { font-size: 0.8rem; color: var(--text-muted); margin: 0; }
+.tu-subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 0; }
 .tu-step { display: inline-block; font-size: 0.7rem; font-weight: 650; color: var(--primary); background: var(--primary-dim); padding: 3px 9px; border-radius: 999px; margin-bottom: 6px; }
 
-.tu-label { font-size: 0.72rem; font-weight: 650; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); padding-left: 2px; margin: 0; }
-.tu-muted { font-size: 0.78rem; color: var(--text-muted); }
+.tu-label { font-size: 0.75rem; font-weight: 400; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); padding-left: 2px; margin: 0; }
+.tu-muted { font-size: 0.8125rem; color: var(--text-secondary); }
 
 .tu-card { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
 .tu-card--link { text-decoration: none; color: var(--text-primary); transition: border-color 0.15s; }
@@ -32,27 +32,27 @@
 .tu-bar { height: 6px; border-radius: 999px; background: var(--bg-input); overflow: hidden; }
 .tu-bar > span { display: block; height: 100%; background: var(--primary); }
 
-.tu-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 10px; border: none; background: var(--primary); color: #fff; font: inherit; font-size: 0.88rem; font-weight: 650; text-decoration: none; cursor: pointer; }
-.tu-btn:hover { opacity: 0.92; }
+.tu-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--field-h, 46px); padding: 0 24px; border-radius: 10px; border: 1px solid transparent; background: var(--primary); color: var(--on-primary); font: inherit; font-size: 0.9375rem; font-weight: 600; text-decoration: none; cursor: pointer; transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease; }
+.tu-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--primary) 88%, var(--text-primary)); text-decoration: none; }
+.tu-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .tu-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.tu-btn--ghost { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-color); }
-.tu-btn--danger { background: transparent; color: var(--error, #b91c1c); border: 1px solid color-mix(in srgb, var(--error, #b91c1c) 40%, transparent); }
+.tu-btn--ghost, .tu-btn--ghost:hover:not(:disabled) { background: transparent; color: var(--text-primary); border: 1px solid var(--input-border-hover); font-weight: 400; }
+.tu-btn--ghost:hover:not(:disabled) { border-color: var(--primary); }
+.tu-btn--danger, .tu-btn--danger:hover:not(:disabled) { background: transparent; color: var(--error-text); border: 1px solid color-mix(in srgb, var(--error-text) 40%, transparent); font-weight: 400; }
 .tu-btn--block { width: 100%; }
 .tu-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .tu-actions > * { flex: 1 1 160px; }
 
-.tu-field { display: flex; flex-direction: column; gap: 6px; }
-.tu-field label, .tu-field .tu-field-label { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
-.tu-input, .tu-select, .tu-textarea { width: 100%; box-sizing: border-box; min-height: 44px; padding: 0 12px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-input); color: var(--text-primary); font: inherit; font-size: 0.9rem; }
-.tu-textarea { padding: 10px 12px; min-height: 72px; resize: vertical; }
-.tu-input:focus, .tu-select:focus, .tu-textarea:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
+.tu-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.tu-field label, .tu-field .tu-field-label { font-size: 0.875rem; font-weight: 400; color: var(--text-primary); }
+/* .tu-input / .tu-select / .tu-textarea: styled in forms.css */
 
 .tu-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .tu-chip { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-primary); font: inherit; font-size: 0.85rem; cursor: pointer; }
 .tu-chip--on { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 650; }
 
-.tu-alert { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; font-size: 0.8rem; }
-.tu-alert--error { background: color-mix(in srgb, var(--error, #b91c1c) 10%, transparent); color: var(--error, #b91c1c); }
+.tu-alert { display: flex; gap: 8px; align-items: flex-start; padding: 16px; border-radius: 10px; font-size: 0.875rem; line-height: 1.45; }
+.tu-alert--error { background: var(--bg-panel); color: var(--error-text); border: 1px solid color-mix(in srgb, var(--error-text) 45%, transparent); }
 .tu-alert--warn { background: #fffbeb; color: #78350f; border: 1px solid #fcd34d; }
 .tu-alert--ok { background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--text-primary); }
 

@@ -17,7 +17,7 @@
         <NuxtLink to="/settings/projects" class="btn-back">&larr; Back to projects</NuxtLink>
       </header>
 
-      <form class="section-card" @submit.prevent="submit">
+      <form class="section-card" novalidate @submit.prevent="submit">
         <div class="card-head">
           <div class="card-head-text">
             <h2 class="card-title">Project details</h2>
@@ -27,25 +27,28 @@
 
         <div class="field">
           <label class="field-label" for="np-name">Project name *</label>
-          <input id="np-name" v-model="form.project_name" type="text" class="field-input" placeholder="e.g. DRA SSJR 2024-2026" />
+          <input id="np-name" v-model="form.project_name" type="text" class="field-input" placeholder="e.g. DRA SSJR 2024-2026" :aria-invalid="errorAt('name') ? 'true' : undefined" :aria-describedby="errorAt('name') ? 'np-name-error' : undefined" />
+          <FieldError id="np-name-error" :message="errorAt('name')" />
         </div>
         <div class="form-grid">
           <div class="field">
             <label class="field-label" for="np-start">Period start *</label>
-            <input id="np-start" v-model="form.period_start" type="date" class="field-input" />
+            <input id="np-start" v-model="form.period_start" type="date" class="field-input" :aria-invalid="errorAt('start') ? 'true' : undefined" :aria-describedby="errorAt('start') ? 'np-start-error' : undefined" />
+            <FieldError id="np-start-error" :message="errorAt('start')" />
           </div>
           <div class="field">
             <label class="field-label" for="np-end">Period end *</label>
-            <input id="np-end" v-model="form.period_end" type="date" class="field-input" />
+            <input id="np-end" v-model="form.period_end" type="date" class="field-input" :aria-invalid="errorAt('end') ? 'true' : undefined" :aria-describedby="errorAt('end') ? 'np-end-error' : undefined" />
+            <FieldError id="np-end-error" :message="errorAt('end')" />
           </div>
         </div>
 
-        <div v-if="error" class="api-err">{{ error }}</div>
+        <p v-if="error && !errorField" class="api-err" role="alert">{{ error }}</p>
 
         <div class="actions">
           <NuxtLink to="/settings/projects" class="btn-ghost">Cancel</NuxtLink>
           <button type="submit" class="btn-primary" :disabled="saving">
-            <span v-if="saving" class="btn-spinner" />
+            <span v-if="saving" class="btn-spinner" aria-hidden="true" />
             {{ saving ? 'Creating…' : 'Create project' }}
           </button>
         </div>
@@ -55,10 +58,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { frameworkApi } from '../../../services/frameworkApi'
 import { ApiError } from '../../../services/api'
+import FieldError from '../../../components/interfaces/FieldError.vue'
 
 /**
  * A project is created without an M&E framework; the backend still requires a
@@ -107,6 +111,17 @@ async function submit() {
     saving.value = false
   }
 }
+
+// Show the validation message under the field it is about (display only;
+// the checks in the submit handler are unchanged).
+const errorField = computed(() => {
+  const m = error.value
+  if (m === 'Project name is required') return 'name'
+  if (m === 'Period start and end are required') return !form.period_start ? 'start' : 'end'
+  if (m === 'End date must be after start date') return 'end'
+  return ''
+})
+const errorAt = (field: string) => (errorField.value === field ? error.value : '')
 </script>
 
 <style scoped>

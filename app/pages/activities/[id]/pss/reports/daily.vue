@@ -1095,30 +1095,10 @@ onMounted(() => {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
 }
-.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.field-label {
-  font-size: 0.7rem;
-  font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-}
-.field-input {
-  background: var(--input-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 8px 12px;
-  color: var(--text-primary);
-  font: inherit;
-  font-size: 0.86rem;
-  min-height: 36px;
-  width: 100%;
-}
-.field-input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--focus-ring);
-}
+.field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+
+
 
 .btn-primary {
   display: inline-flex;

@@ -791,19 +791,19 @@ onMounted(async () => {
   font-family: inherit;
   color: var(--text-primary);
   background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--input-border-hover);
   border-radius: var(--radius-md);
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .enrolled-search::placeholder {
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 .enrolled-search:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-dim);
+  box-shadow: 0 0 0 3px var(--field-ring);
 }
 
 .api-err {
