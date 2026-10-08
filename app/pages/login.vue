@@ -4,7 +4,7 @@
       <div class="ui-field">
         <label class="ui-label" for="email">Work email</label>
         <input
-          id="email"
+          id="email" placeholder="you@organisation.org"
           v-model="email"
           class="ui-input"
           type="email"
@@ -26,7 +26,7 @@
         <label class="ui-label" for="password">Password</label>
         <div class="ui-password">
           <input
-            id="password"
+            id="password" placeholder="Your password"
             v-model="password"
             class="ui-input"
             :type="showPassword ? 'text' : 'password'"

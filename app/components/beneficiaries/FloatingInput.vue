@@ -14,6 +14,7 @@
         :type="textarea ? undefined : type"
         :inputmode="!textarea && type === 'number' ? 'numeric' : undefined"
         :value="modelValue"
+        :placeholder="placeholder"
         :rows="textarea ? rows : undefined"
         :min="min"
         :max="max"
@@ -38,6 +39,7 @@ import FieldError from '../interfaces/FieldError.vue'
 defineProps<{
   modelValue: string | number | null
   label: string
+  placeholder?: string
   type?: string
   textarea?: boolean
   rows?: number

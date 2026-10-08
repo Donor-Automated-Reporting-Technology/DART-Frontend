@@ -32,32 +32,32 @@
     <div class="counts-grid">
       <div class="count-field">
         <label :for="`${fid}-5`" class="field-label">Girls</label>
-        <input :id="`${fid}-5`" v-model.number="form.girls" type="number" class="field-input" min="0" :name="`${fid}-5`" v-bind="iv.aria(`${fid}-5`, 'iv')" />
+        <input :id="`${fid}-5`" v-model.number="form.girls" placeholder="0" type="number" class="field-input" min="0" :name="`${fid}-5`" v-bind="iv.aria(`${fid}-5`, 'iv')" />
         <FieldError :id="'iv-' + `${fid}-5` + '-error'" :message="iv.messages[`${fid}-5`]" />
       </div>
       <div class="count-field">
         <label :for="`${fid}-6`" class="field-label">Boys</label>
-        <input :id="`${fid}-6`" v-model.number="form.boys" type="number" class="field-input" min="0" :name="`${fid}-6`" v-bind="iv.aria(`${fid}-6`, 'iv')" />
+        <input :id="`${fid}-6`" v-model.number="form.boys" placeholder="0" type="number" class="field-input" min="0" :name="`${fid}-6`" v-bind="iv.aria(`${fid}-6`, 'iv')" />
         <FieldError :id="'iv-' + `${fid}-6` + '-error'" :message="iv.messages[`${fid}-6`]" />
       </div>
       <div class="count-field">
         <label :for="`${fid}-7`" class="field-label">Women</label>
-        <input :id="`${fid}-7`" v-model.number="form.women" type="number" class="field-input" min="0" :name="`${fid}-7`" v-bind="iv.aria(`${fid}-7`, 'iv')" />
+        <input :id="`${fid}-7`" v-model.number="form.women" placeholder="0" type="number" class="field-input" min="0" :name="`${fid}-7`" v-bind="iv.aria(`${fid}-7`, 'iv')" />
         <FieldError :id="'iv-' + `${fid}-7` + '-error'" :message="iv.messages[`${fid}-7`]" />
       </div>
       <div class="count-field">
         <label :for="`${fid}-8`" class="field-label">Men</label>
-        <input :id="`${fid}-8`" v-model.number="form.men" type="number" class="field-input" min="0" :name="`${fid}-8`" v-bind="iv.aria(`${fid}-8`, 'iv')" />
+        <input :id="`${fid}-8`" v-model.number="form.men" placeholder="0" type="number" class="field-input" min="0" :name="`${fid}-8`" v-bind="iv.aria(`${fid}-8`, 'iv')" />
         <FieldError :id="'iv-' + `${fid}-8` + '-error'" :message="iv.messages[`${fid}-8`]" />
       </div>
       <div class="count-field">
         <label :for="`${fid}-9`" class="field-label">Disability (M)</label>
-        <input :id="`${fid}-9`" v-model.number="form.disability_male" type="number" class="field-input" min="0" :name="`${fid}-9`" v-bind="iv.aria(`${fid}-9`, 'iv')" />
+        <input :id="`${fid}-9`" v-model.number="form.disability_male" placeholder="0" type="number" class="field-input" min="0" :name="`${fid}-9`" v-bind="iv.aria(`${fid}-9`, 'iv')" />
         <FieldError :id="'iv-' + `${fid}-9` + '-error'" :message="iv.messages[`${fid}-9`]" />
       </div>
       <div class="count-field">
         <label :for="`${fid}-10`" class="field-label">Disability (F)</label>
-        <input :id="`${fid}-10`" v-model.number="form.disability_female" type="number" class="field-input" min="0" :name="`${fid}-10`" v-bind="iv.aria(`${fid}-10`, 'iv')" />
+        <input :id="`${fid}-10`" v-model.number="form.disability_female" placeholder="0" type="number" class="field-input" min="0" :name="`${fid}-10`" v-bind="iv.aria(`${fid}-10`, 'iv')" />
         <FieldError :id="'iv-' + `${fid}-10` + '-error'" :message="iv.messages[`${fid}-10`]" />
       </div>
     </div>

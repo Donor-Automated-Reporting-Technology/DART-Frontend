@@ -38,31 +38,31 @@
               />
               <div class="stage__grid">
                 <BeneficiariesFloatingInput
-                  v-model="form.personal_name"
+                  v-model="form.personal_name" placeholder="e.g. Akol"
                   label="Personal Name"
                   :required="true"
                   :error="errors.personal_name"
                   :success="!!form.personal_name.trim() && !errors.personal_name"
                 />
                 <BeneficiariesFloatingInput
-                  v-model="form.father_name"
+                  v-model="form.father_name" placeholder="e.g. Deng"
                   label="Father Name"
                   :required="true"
                   :error="errors.father_name"
                   :success="!!form.father_name.trim() && !errors.father_name"
                 />
                 <BeneficiariesFloatingInput
-                  v-model="form.grandfather_name"
+                  v-model="form.grandfather_name" placeholder="e.g. Garang"
                   label="Grandfather Name"
                   :optional="true"
                 />
                 <BeneficiariesFloatingInput
-                  v-model="form.family_name"
+                  v-model="form.family_name" placeholder="Family or clan name"
                   label="Family / Tribe Name"
                   :optional="true"
                 />
                 <BeneficiariesFloatingInput
-                  v-model="form.age_at_registration"
+                  v-model="form.age_at_registration" placeholder="e.g. 9"
                   label="Age at Registration"
                   type="number"
                   :min="0"
@@ -133,20 +133,20 @@
               <div class="stage__grid">
                 <BeneficiariesFloatingInput
                   v-if="isChild"
-                  v-model="form.guardian_name"
+                  v-model="form.guardian_name" placeholder="Full name"
                   label="Guardian / Mother / Father Name"
                   :required="true"
                   :error="errors.guardian_name"
                   :success="!!form.guardian_name.trim() && !errors.guardian_name"
                 />
                 <BeneficiariesFloatingInput
-                  v-model="form.guardian_phone"
+                  v-model="form.guardian_phone" placeholder="e.g. +211 912 345 678"
                   :label="isChild ? 'Home Phone Number' : 'Phone Number'"
                   type="tel"
                   :optional="true"
                 />
                 <BeneficiariesFloatingInput
-                  v-model="form.mailing_address"
+                  v-model="form.mailing_address" placeholder="Village, boma or block"
                   label="Residential Address"
                   :optional="true"
                 />
@@ -164,7 +164,7 @@
                 />
                 <div class="stage__grid">
                   <BeneficiariesFloatingInput
-                    v-model="form.other_children_count"
+                    v-model="form.other_children_count" placeholder="0"
                     label="Other children at home (under 18)"
                     type="number"
                     :min="0"
@@ -172,20 +172,20 @@
                     :optional="true"
                   />
                   <BeneficiariesFloatingInput
-                    v-model="form.adults_at_home"
+                    v-model="form.adults_at_home" placeholder="e.g. Mother, grandmother"
                     label="Adults at home (e.g. father, aunt)"
                     :optional="true"
                   />
                 </div>
                 <BeneficiariesFloatingInput
-                  v-model="form.known_medical_issues"
+                  v-model="form.known_medical_issues" placeholder="Leave blank if none are known"
                   label="Known Medical Issues"
                   :textarea="true"
                   :rows="2"
                   :optional="true"
                 />
                 <BeneficiariesFloatingInput
-                  v-model="form.known_learning_difficulties"
+                  v-model="form.known_learning_difficulties" placeholder="Leave blank if none are known"
                   label="Known Learning Difficulties"
                   :textarea="true"
                   :rows="2"
@@ -194,7 +194,7 @@
               </template>
 
               <BeneficiariesFloatingInput
-                v-model="form.additional_notes"
+                v-model="form.additional_notes" placeholder="Anything else the team should know"
                 label="Additional Notes"
                 :textarea="true"
                 :rows="2"

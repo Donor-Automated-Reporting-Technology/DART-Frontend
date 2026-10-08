@@ -264,24 +264,24 @@
             <div class="grid2">
               <div class="field">
                 <label for="wl-full_name">Full name</label>
-                <input id="wl-full_name" v-model="waitlist.form.full_name" name="full_name" type="text" autocomplete="name" required maxlength="120" v-bind="wv.aria('full_name', 'wl')">
+                <input id="wl-full_name" v-model="waitlist.form.full_name" placeholder="Your name" name="full_name" type="text" autocomplete="name" required maxlength="120" v-bind="wv.aria('full_name', 'wl')">
                 <FieldError id="wl-full_name-error" :message="wv.messages.full_name" />
               </div>
               <div class="field">
                 <label for="wl-email">Work email</label>
-                <input id="wl-email" v-model="waitlist.form.email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" required maxlength="160" v-bind="wv.aria('email', 'wl')">
+                <input id="wl-email" v-model="waitlist.form.email" placeholder="you@organisation.org" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" required maxlength="160" v-bind="wv.aria('email', 'wl')">
                 <FieldError id="wl-email-error" :message="wv.messages.email" />
               </div>
             </div>
             <div class="grid2">
               <div class="field">
                 <label for="wl-organisation">Organisation</label>
-                <input id="wl-organisation" v-model="waitlist.form.organisation" name="organisation" type="text" autocomplete="organization" required maxlength="160" v-bind="wv.aria('organisation', 'wl')">
+                <input id="wl-organisation" v-model="waitlist.form.organisation" placeholder="e.g. Hope for Children" name="organisation" type="text" autocomplete="organization" required maxlength="160" v-bind="wv.aria('organisation', 'wl')">
                 <FieldError id="wl-organisation-error" :message="wv.messages.organisation" />
               </div>
               <div class="field">
                 <label for="wl-country">Country <span class="optional">(optional)</span></label>
-                <input id="wl-country" v-model="waitlist.form.country" name="country" type="text" autocomplete="country-name" maxlength="80" v-bind="wv.aria('country', 'wl')">
+                <input id="wl-country" v-model="waitlist.form.country" placeholder="e.g. South Sudan" name="country" type="text" autocomplete="country-name" maxlength="80" v-bind="wv.aria('country', 'wl')">
                 <FieldError id="wl-country-error" :message="wv.messages.country" />
               </div>
             </div>
@@ -335,23 +335,23 @@
             <div class="grid2">
               <div class="field">
                 <label for="ct-name">Name</label>
-                <input id="ct-name" v-model="contact.form.name" name="name" type="text" autocomplete="name" required maxlength="120" v-bind="cv.aria('name', 'ct')">
+                <input id="ct-name" v-model="contact.form.name" placeholder="Your name" name="name" type="text" autocomplete="name" required maxlength="120" v-bind="cv.aria('name', 'ct')">
                 <FieldError id="ct-name-error" :message="cv.messages.name" />
               </div>
               <div class="field">
                 <label for="ct-email">Email</label>
-                <input id="ct-email" v-model="contact.form.email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" required maxlength="160" v-bind="cv.aria('email', 'ct')">
+                <input id="ct-email" v-model="contact.form.email" placeholder="you@organisation.org" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" required maxlength="160" v-bind="cv.aria('email', 'ct')">
                 <FieldError id="ct-email-error" :message="cv.messages.email" />
               </div>
             </div>
             <div class="field">
               <label for="ct-organisation">Organisation <span class="optional">(optional)</span></label>
-              <input id="ct-organisation" v-model="contact.form.organisation" name="organisation" type="text" autocomplete="organization" maxlength="160" v-bind="cv.aria('organisation', 'ct')">
+              <input id="ct-organisation" v-model="contact.form.organisation" placeholder="Your organisation" name="organisation" type="text" autocomplete="organization" maxlength="160" v-bind="cv.aria('organisation', 'ct')">
               <FieldError id="ct-organisation-error" :message="cv.messages.organisation" />
             </div>
             <div class="field">
               <label for="ct-message">Message</label>
-              <textarea id="ct-message" v-model="contact.form.message" name="message" rows="5" required maxlength="4000" v-bind="cv.aria('message', 'ct')" />
+              <textarea id="ct-message" v-model="contact.form.message" placeholder="How can we help?" name="message" rows="5" required maxlength="4000" v-bind="cv.aria('message', 'ct')" />
               <FieldError id="ct-message-error" :message="cv.messages.message" />
             </div>
             <input v-model="contact.form.website" class="hp" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -913,6 +913,8 @@ td.tool { color: var(--ink); width: 26%; }
 .field input, .field select, .field textarea { min-height: 48px; border-radius: var(--r-md); padding: 0 16px; font: 400 15px Manrope, sans-serif; box-sizing: border-box; width: 100%; background: color-mix(in srgb, var(--on-band) 8%, transparent); border: 1px solid color-mix(in srgb, var(--on-band) 24%, transparent); color: var(--on-band); outline: none; transition: border-color var(--ease), background-color var(--ease); }
 .field select { appearance: none; -webkit-appearance: none; padding-right: 40px; cursor: pointer; background-image: linear-gradient(45deg, transparent 50%, var(--on-band-text) 50%), linear-gradient(135deg, var(--on-band-text) 50%, transparent 50%); background-position: calc(100% - 20px) 50%, calc(100% - 15px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
 .field select option { color: var(--deep); background: var(--on-band); }
+.field input::placeholder, .field textarea::placeholder { color: var(--on-band-muted); opacity: 1; }
+.form.light .field input::placeholder, .form.light .field textarea::placeholder { color: var(--muted); }
 .field textarea { padding: 12px 16px; min-height: 128px; resize: vertical; }
 .field input:hover, .field select:hover, .field textarea:hover { border-color: color-mix(in srgb, var(--on-band) 40%, transparent); }
 .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--mint); box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 22%, transparent); }

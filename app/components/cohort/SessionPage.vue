@@ -170,7 +170,7 @@
             </div>
             <div class="tu-field">
               <label for="tu-obs">Key observations</label>
-              <textarea id="tu-obs" v-model="notes.key_observations" class="tu-textarea" rows="2" />
+              <textarea id="tu-obs" v-model="notes.key_observations" placeholder="What stood out in this session" class="tu-textarea" rows="2" />
             </div>
             <div class="tu-field">
               <label for="tu-prot">Protection concerns</label>
@@ -178,7 +178,7 @@
             </div>
             <div class="tu-field">
               <label for="tu-fu">Follow-up</label>
-              <textarea id="tu-fu" v-model="notes.follow_up" class="tu-textarea" rows="2" />
+              <textarea id="tu-fu" v-model="notes.follow_up" placeholder="Anything to follow up before the next session" class="tu-textarea" rows="2" />
             </div>
             <div v-if="(session!.flags ?? []).length" class="tu-alert tu-alert--warn">
               <AppIcon name="alert-circle" :size="14" />
@@ -209,7 +209,7 @@
           </div>
           <div class="tu-field">
             <label for="tu-flag-concern">What did you notice?</label>
-            <textarea id="tu-flag-concern" v-model="flagForm.concern" class="tu-textarea" rows="3" required name="tu-flag-concern" v-bind="iv.aria('tu-flag-concern', 'iv')" />
+            <textarea id="tu-flag-concern" v-model="flagForm.concern" placeholder="Describe what you saw or heard" class="tu-textarea" rows="3" required name="tu-flag-concern" v-bind="iv.aria('tu-flag-concern', 'iv')" />
             <FieldError :id="'iv-' + 'tu-flag-concern' + '-error'" :message="iv.messages['tu-flag-concern']" />
           </div>
           <div class="tu-actions">

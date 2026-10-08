@@ -110,7 +110,7 @@
           <span class="tu-muted">Suggested for {{ nextSession?.module_name }}. Edit or add your own.</span>
           <div v-for="(o, i) in objectives" :key="i" class="tu-row">
             <label :for="`tu-obj-${i}`" class="tu-muted" style="width: 14px">{{ i + 1 }}</label>
-            <input :id="`tu-obj-${i}`" v-model="objectives[i]" class="tu-input">
+            <input :id="`tu-obj-${i}`" v-model="objectives[i]" placeholder="e.g. Children can name three feelings" class="tu-input">
             <button type="button" class="tu-btn tu-btn--ghost" aria-label="Remove objective" @click="objectives.splice(i, 1)">
               <AppIcon name="x" :size="14" />
             </button>
@@ -142,12 +142,12 @@
           <div class="tu-grid2">
             <div class="tu-field">
               <label for="tu-base">Baseline score</label>
-              <input id="tu-base" v-model.number="editForm.baseline" type="number" min="0" class="tu-input" name="tu-base" v-bind="iv.aria('tu-base', 'iv')">
+              <input id="tu-base" v-model.number="editForm.baseline" placeholder="0" type="number" min="0" class="tu-input" name="tu-base" v-bind="iv.aria('tu-base', 'iv')">
               <FieldError :id="'iv-' + 'tu-base' + '-error'" :message="iv.messages['tu-base']" />
             </div>
             <div class="tu-field">
               <label for="tu-end">Endline score</label>
-              <input id="tu-end" v-model.number="editForm.endline" type="number" min="0" class="tu-input" name="tu-end" v-bind="iv.aria('tu-end', 'iv')">
+              <input id="tu-end" v-model.number="editForm.endline" placeholder="0" type="number" min="0" class="tu-input" name="tu-end" v-bind="iv.aria('tu-end', 'iv')">
               <FieldError :id="'iv-' + 'tu-end' + '-error'" :message="iv.messages['tu-end']" />
             </div>
           </div>

@@ -69,17 +69,17 @@
         </div>
         <div class="tu-field">
           <label for="cur-name">Curriculum name</label>
-          <input id="cur-name" v-model="draft.name" class="tu-input" required maxlength="200" name="cur-name" v-bind="iv.aria('cur-name', 'iv')">
+          <input id="cur-name" v-model="draft.name" placeholder="e.g. TeamUp core curriculum" class="tu-input" required maxlength="200" name="cur-name" v-bind="iv.aria('cur-name', 'iv')">
           <FieldError :id="'iv-' + 'cur-name' + '-error'" :message="iv.messages['cur-name']" />
         </div>
         <div class="tu-grid2">
           <div class="tu-field">
             <label for="cur-desc">Description (optional)</label>
-            <input id="cur-desc" v-model="draft.description" class="tu-input">
+            <input id="cur-desc" v-model="draft.description" placeholder="What this curriculum covers" class="tu-input">
           </div>
           <div class="tu-field">
             <label for="cur-min">Minimum sessions to count as reached (0 = none)</label>
-            <input id="cur-min" v-model.number="draft.min_dosage" type="number" min="0" :max="totalSessions" class="tu-input" name="cur-min" v-bind="iv.aria('cur-min', 'iv')">
+            <input id="cur-min" v-model.number="draft.min_dosage" placeholder="e.g. 8" type="number" min="0" :max="totalSessions" class="tu-input" name="cur-min" v-bind="iv.aria('cur-min', 'iv')">
             <FieldError :id="'iv-' + 'cur-min' + '-error'" :message="iv.messages['cur-min']" />
           </div>
         </div>
@@ -98,7 +98,7 @@
             <div class="tu-row">
               <div class="tu-field" style="flex: 1">
                 <label :for="`cur-s-${mi}-${si}`">Session {{ sequenceOf(mi, si) }}</label>
-                <input :id="`cur-s-${mi}-${si}`" v-model="s.name" class="tu-input" required :name="`cur-s-${mi}-${si}`" v-bind="iv.aria(`cur-s-${mi}-${si}`, 'iv')">
+                <input :id="`cur-s-${mi}-${si}`" v-model="s.name" placeholder="e.g. Getting to know each other" class="tu-input" required :name="`cur-s-${mi}-${si}`" v-bind="iv.aria(`cur-s-${mi}-${si}`, 'iv')">
                 <FieldError :id="'iv-' + `cur-s-${mi}-${si}` + '-error'" :message="iv.messages[`cur-s-${mi}-${si}`]" />
               </div>
               <button v-if="!lockedShape && m.sessions.length > 1" type="button" class="tu-btn tu-btn--ghost" :aria-label="`Remove session ${sequenceOf(mi, si)}`" @click="m.sessions.splice(si, 1)">
@@ -107,7 +107,7 @@
             </div>
             <div class="tu-field">
               <label :for="`cur-o-${mi}-${si}`" class="tu-muted">Suggested objectives (one per line)</label>
-              <textarea :id="`cur-o-${mi}-${si}`" v-model="s.objectivesText" class="tu-textarea" rows="2" />
+              <textarea :id="`cur-o-${mi}-${si}`" v-model="s.objectivesText" placeholder="One objective per line" class="tu-textarea" rows="2" />
             </div>
           </div>
           <button v-if="!lockedShape" type="button" class="tu-btn tu-btn--ghost" @click="m.sessions.push({ name: '', objectivesText: '' })">

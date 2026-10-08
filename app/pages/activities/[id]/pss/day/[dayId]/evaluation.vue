@@ -89,7 +89,7 @@
               type="number"
               inputmode="numeric"
               min="0"
-              :value="blank"
+              :value="blank" placeholder="0"
               :disabled="saving"
               aria-label="Blank count"
               @input="onBlankInput($event)"

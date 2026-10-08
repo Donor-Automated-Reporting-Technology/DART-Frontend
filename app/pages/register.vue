@@ -16,7 +16,7 @@
       <div v-show="step === 1" class="ui-form" role="group" aria-label="Your organisation">
         <InputField
           id="orgName"
-          v-model="form.organisation.name"
+          v-model="form.organisation.name" placeholder="e.g. Hope for Children"
           label="Organisation name"
           autocomplete="organization"
           :error="errors['organisation.name']"
@@ -37,7 +37,7 @@
         <TextAreaField
           v-if="showDescription"
           id="orgDesc"
-          v-model="form.organisation.description"
+          v-model="form.organisation.description" placeholder="What your organisation does, in a sentence or two"
           :rows="3"
           label="Short description"
           optional
@@ -54,7 +54,7 @@
       <div v-show="step === 2" class="ui-form" role="group" aria-label="Your account">
         <InputField
           id="fullName"
-          v-model="form.user.full_name"
+          v-model="form.user.full_name" placeholder="Your full name"
           label="Full name"
           autocomplete="name"
           :error="errors['user.full_name']"
@@ -64,7 +64,7 @@
 
         <InputField
           id="email"
-          v-model="form.user.email"
+          v-model="form.user.email" placeholder="you@organisation.org"
           type="email"
           inputmode="email"
           label="Work email"
@@ -76,7 +76,7 @@
 
         <PasswordInput
           id="password"
-          v-model="form.user.password"
+          v-model="form.user.password" placeholder="At least 8 characters, with a number"
           label="Password"
           autocomplete="new-password"
           :error="errors['user.password']"
@@ -87,7 +87,7 @@
 
         <PasswordInput
           id="confirmPassword"
-          v-model="form.user.confirm_password"
+          v-model="form.user.confirm_password" placeholder="Type the password again"
           label="Confirm password"
           autocomplete="new-password"
           :error="errors['user.confirm_password']"

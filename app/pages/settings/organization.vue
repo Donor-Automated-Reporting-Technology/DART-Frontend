@@ -41,7 +41,7 @@
             <label class="ui-label" for="org-name">Organisation name</label>
             <input
               id="org-name"
-              v-model="form.name"
+              v-model="form.name" placeholder="e.g. Hope for Children"
               name="name"
               type="text"
               class="ui-input"
@@ -81,7 +81,7 @@
             <label class="ui-label" for="org-desc">Description <span class="ui-optional">(optional)</span></label>
             <textarea
               id="org-desc"
-              v-model="form.description"
+              v-model="form.description" placeholder="What your organisation does, in a sentence or two"
               name="description"
               class="ui-textarea"
               maxlength="1000"

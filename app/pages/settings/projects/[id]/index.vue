@@ -36,7 +36,7 @@
 
         <div class="field">
           <label class="field-label" for="pe-name">Project name *</label>
-          <input id="pe-name" v-model="form.project_name" type="text" class="field-input" :aria-invalid="errorAt('name') ? 'true' : undefined" :aria-describedby="errorAt('name') ? 'pe-name-error' : undefined" />
+          <input id="pe-name" v-model="form.project_name" placeholder="e.g. DRA SSJR 2024-2026" type="text" class="field-input" :aria-invalid="errorAt('name') ? 'true' : undefined" :aria-describedby="errorAt('name') ? 'pe-name-error' : undefined" />
           <FieldError id="pe-name-error" :message="errorAt('name')" />
         </div>
         <div class="form-grid">

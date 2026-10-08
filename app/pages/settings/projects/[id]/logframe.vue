@@ -130,15 +130,15 @@
             <form v-else @submit.prevent="saveMeta">
               <div class="field">
                 <label class="field-label" for="lfem-name">Logframe name *</label>
-                <input id="lfem-name" v-model="metaForm.name" type="text" class="field-input" />
+                <input id="lfem-name" v-model="metaForm.name" placeholder="e.g. DRA SSJR logframe" type="text" class="field-input" />
               </div>
               <div class="field">
                 <label class="field-label" for="lfem-desc">Description</label>
-                <textarea id="lfem-desc" v-model="metaForm.description" rows="2" class="field-input"></textarea>
+                <textarea id="lfem-desc" v-model="metaForm.description" placeholder="A short summary of the logframe" rows="2" class="field-input"></textarea>
               </div>
               <div class="field">
                 <label class="field-label" for="lfem-donor">Donor framework</label>
-                <input id="lfem-donor" v-model="metaForm.donor_framework" type="text" class="field-input" />
+                <input id="lfem-donor" v-model="metaForm.donor_framework" placeholder="e.g. DRA results framework" type="text" class="field-input" />
               </div>
               <CustomFieldsEditor v-model="metaForm.custom_fields" label="Custom fields" hint="Add your own logframe-level fields." />
               <div v-if="metaError" class="api-err">{{ metaError }}</div>
@@ -261,39 +261,39 @@
             </div>
             <div class="field">
               <label class="field-label" for="lfi-def">Definition</label>
-              <textarea id="lfi-def" v-model="indicatorForm.definition" rows="2" class="field-input"></textarea>
+              <textarea id="lfi-def" v-model="indicatorForm.definition" placeholder="How this indicator is measured" rows="2" class="field-input"></textarea>
             </div>
             <div class="form-grid">
               <div class="field">
                 <label class="field-label" for="lfi-bv">Baseline value</label>
-                <input id="lfi-bv" v-model.number="indicatorForm.baseline_value" type="number" step="any" class="field-input" />
+                <input id="lfi-bv" v-model.number="indicatorForm.baseline_value" placeholder="e.g. 0" type="number" step="any" class="field-input" />
               </div>
               <div class="field">
                 <label class="field-label" for="lfi-by">Baseline year</label>
-                <input id="lfi-by" v-model.number="indicatorForm.baseline_year" type="number" min="1900" max="2100" class="field-input" name="lfi-by" v-bind="iv.aria('lfi-by', 'iv')" />
+                <input id="lfi-by" v-model.number="indicatorForm.baseline_year" placeholder="e.g. 2024" type="number" min="1900" max="2100" class="field-input" name="lfi-by" v-bind="iv.aria('lfi-by', 'iv')" />
                 <FieldError :id="'iv-' + 'lfi-by' + '-error'" :message="iv.messages['lfi-by']" />
               </div>
               <div class="field">
                 <label class="field-label" for="lfi-tv">Target value</label>
-                <input id="lfi-tv" v-model.number="indicatorForm.target_value" type="number" step="any" class="field-input" />
+                <input id="lfi-tv" v-model.number="indicatorForm.target_value" placeholder="e.g. 500" type="number" step="any" class="field-input" />
               </div>
               <div class="field">
                 <label class="field-label" for="lfi-ty">Target year</label>
-                <input id="lfi-ty" v-model.number="indicatorForm.target_year" type="number" min="1900" max="2100" class="field-input" name="lfi-ty" v-bind="iv.aria('lfi-ty', 'iv')" />
+                <input id="lfi-ty" v-model.number="indicatorForm.target_year" placeholder="e.g. 2026" type="number" min="1900" max="2100" class="field-input" name="lfi-ty" v-bind="iv.aria('lfi-ty', 'iv')" />
                 <FieldError :id="'iv-' + 'lfi-ty' + '-error'" :message="iv.messages['lfi-ty']" />
               </div>
             </div>
             <div class="field">
               <label class="field-label" for="lfi-bn">Baseline notes</label>
-              <textarea id="lfi-bn" v-model="indicatorForm.baseline_notes" rows="2" class="field-input"></textarea>
+              <textarea id="lfi-bn" v-model="indicatorForm.baseline_notes" placeholder="Where the baseline figure comes from" rows="2" class="field-input"></textarea>
             </div>
             <div class="field">
               <label class="field-label" for="lfi-mov">Means of verification</label>
-              <textarea id="lfi-mov" v-model="indicatorForm.means_of_verification" rows="2" class="field-input"></textarea>
+              <textarea id="lfi-mov" v-model="indicatorForm.means_of_verification" placeholder="e.g. Attendance registers, survey" rows="2" class="field-input"></textarea>
             </div>
             <div class="field">
               <label class="field-label" for="lfi-ass">Assumptions</label>
-              <textarea id="lfi-ass" v-model="indicatorForm.assumptions" rows="2" class="field-input"></textarea>
+              <textarea id="lfi-ass" v-model="indicatorForm.assumptions" placeholder="What must hold true for the target to be met" rows="2" class="field-input"></textarea>
             </div>
             <div class="field">
               <label class="field-label" for="lfi-ds">Data source</label>

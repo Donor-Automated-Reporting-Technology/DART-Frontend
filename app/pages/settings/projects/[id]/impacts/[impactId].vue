@@ -114,15 +114,15 @@
               </div>
               <div class="field">
                 <label class="field-label" for="im-ty">Target year</label>
-                <input id="im-ty" v-model.number="form.target_year" type="number" min="1900" max="2100" class="field-input" />
+                <input id="im-ty" v-model.number="form.target_year" placeholder="e.g. 2026" type="number" min="1900" max="2100" class="field-input" />
               </div>
               <div class="field">
                 <label class="field-label" for="im-bv">Baseline value</label>
-                <input id="im-bv" v-model.number="form.baseline_value" type="number" step="any" class="field-input" />
+                <input id="im-bv" v-model.number="form.baseline_value" placeholder="e.g. 120" type="number" step="any" class="field-input" />
               </div>
               <div class="field">
                 <label class="field-label" for="im-by">Baseline year</label>
-                <input id="im-by" v-model.number="form.baseline_year" type="number" min="1900" max="2100" class="field-input" />
+                <input id="im-by" v-model.number="form.baseline_year" placeholder="e.g. 2024" type="number" min="1900" max="2100" class="field-input" />
               </div>
             </div>
 
