@@ -105,7 +105,7 @@ useHead({
 .wordmark span { color: #7FD1BC; }
 .panel-middle { position: relative; display: flex; flex-direction: column; gap: 36px; }
 .panel-copy { position: relative; }
-.panel-copy h2 { margin: 0; font-family: Sora, sans-serif; font-weight: 700; font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; color: #fff; }
+.panel-copy h2 { margin: 0; font-family: Sora, sans-serif; font-weight: 600; font-size: 30px; line-height: 1.15; letter-spacing: -0.02em; color: #fff; }
 .panel-copy p { margin: 12px 0 0; max-width: 360px; font-size: 16px; line-height: 1.6; color: #C3C9C8; }
 
 .glass-card {

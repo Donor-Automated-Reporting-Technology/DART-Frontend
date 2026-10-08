@@ -156,7 +156,7 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-.title { margin: 0; font-family: Sora, system-ui, sans-serif; font-weight: 700; font-size: 26px; letter-spacing: -0.02em; color: var(--text-primary); }
+.title { margin: 0; font-family: Sora, system-ui, sans-serif; font-weight: 600; font-size: 26px; letter-spacing: -0.015em; color: var(--text-primary); }
 .subtitle { margin: 6px 0 28px; font-size: 15px; color: var(--text-secondary); }
 .auth-form { display: flex; flex-direction: column; gap: 4px; }
 .submit {
@@ -170,7 +170,7 @@ const handleLogin = async () => {
   border-radius: 12px;
   background: var(--primary);
   color: #fff;
-  font: 700 15px Manrope, system-ui, sans-serif;
+  font: 600 15px Manrope, system-ui, sans-serif;
   cursor: pointer;
   box-shadow: 0 8px 22px rgba(14, 124, 102, 0.22);
   transition: transform 0.1s, filter 0.15s;
@@ -181,6 +181,6 @@ const handleLogin = async () => {
 .spinner { width: 16px; height: 16px; border: 2px solid rgba(255, 255, 255, 0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .switch { margin: 24px 0 0; font-size: 14px; color: var(--text-secondary); }
-.switch a { color: var(--primary); font-weight: 700; text-decoration: none; }
+.switch a { color: var(--primary); font-weight: 600; text-decoration: none; }
 .switch a:hover { text-decoration: underline; }
 </style>

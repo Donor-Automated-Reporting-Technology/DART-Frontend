@@ -171,21 +171,38 @@
       </div>
     </section>
 
-    <!-- ═══ What changes ═══ -->
+    <!-- ═══ What changes: before / after comparison ═══ -->
     <section class="section dark">
       <div class="glow" style="width: 560px; height: 560px; right: -120px; top: -160px; background: rgba(14, 124, 102, 0.16)" />
       <div class="glow" style="width: 420px; height: 420px; left: -120px; bottom: -180px; background: rgba(242, 165, 65, 0.05)" />
-      <div class="wrap">
-        <p class="eyebrow amber">What changes</p>
-        <h2 class="narrow on-dark">Less time compiling. More time with children.</h2>
-        <div class="changes glass-dark">
-          <div v-for="c in changes" :key="c.task" class="change">
-            <p class="eyebrow muted">{{ c.task }}</p>
-            <p class="before">{{ c.before }}</p>
-            <p class="after">{{ c.after }}</p>
+      <div class="wrap changes-layout">
+        <div class="changes-intro">
+          <p class="eyebrow amber">What changes</p>
+          <h2 class="on-dark">Less time compiling. More time with children.</h2>
+          <p class="lead">What field teams and managers get back once the paperwork stops.</p>
+          <p class="footnote">Pilot targets set with SSWOCO.</p>
+        </div>
+
+        <div class="compare glass-dark" role="table" aria-label="Today compared with WellReach">
+          <div class="compare-head" role="row">
+            <span role="columnheader">Task</span>
+            <span role="columnheader">Today</span>
+            <span aria-hidden="true" />
+            <span role="columnheader" class="now-head">With WellReach</span>
+          </div>
+          <div v-for="c in changes" :key="c.task" class="compare-row" role="row">
+            <span class="task" role="cell">{{ c.task }}</span>
+            <span class="was" role="cell">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              {{ c.before }}
+            </span>
+            <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            <span class="now" role="cell">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+              {{ c.after }}
+            </span>
           </div>
         </div>
-        <p class="footnote">Pilot targets set with SSWOCO.</p>
       </div>
     </section>
 
@@ -714,13 +731,24 @@ section[id] { scroll-margin-top: 16px; }
 .feature-list strong { display: block; color: var(--ink); }
 .feature-list span span { color: var(--muted); }
 
-/* What changes */
-.changes { margin-top: 44px; padding: 6px 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0 36px; }
-.change { padding: 20px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
-.change p { margin: 0; }
-.before { margin-top: 6px !important; color: #8D9795; text-decoration: line-through; font-size: 14px; }
-.after { margin-top: 2px !important; font: 700 19px Sora, sans-serif; color: var(--mint); }
-.footnote { margin: 14px 0 0; font-size: 13px; color: #8D9795; }
+/* What changes: before / after comparison */
+.changes-layout { display: flex; flex-wrap: wrap; gap: 40px 64px; align-items: center; }
+.changes-intro { flex: 1 1 300px; min-width: 0; }
+.changes-intro h2 { max-width: 420px; font-size: clamp(24px, 2.5vw, 32px); }
+.changes-intro .lead { max-width: 380px; }
+.compare { flex: 2 1 600px; min-width: 0; padding: 6px 28px 10px; }
+.compare-head, .compare-row { display: grid; grid-template-columns: minmax(120px, 0.85fr) 1fr 16px 1fr; gap: 18px; align-items: center; }
+.compare-head { padding: 16px 0 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.12); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: #8D9795; }
+.compare-head .now-head { color: var(--mint); }
+.compare-row { padding: 16px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.07); }
+.compare-row:last-child { border-bottom: 0; }
+.task { font-size: 15px; font-weight: 600; color: #fff; }
+.was { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #8D9795; }
+.was svg { flex: none; color: #5E6A68; }
+.arrow { color: rgba(255, 255, 255, 0.28); }
+.now { display: flex; align-items: center; gap: 8px; font: 600 15px Sora, sans-serif; color: var(--mint); }
+.now svg { flex: none; }
+.footnote { margin: 18px 0 0; font-size: 13px; color: #8D9795; }
 
 /* Why table */
 .table-scroll { overflow-x: auto; margin-top: 36px; }
@@ -783,6 +811,13 @@ td.tool { font-weight: 700; color: var(--ink); width: 26%; }
 .footer-bottom-row { display: flex; flex-wrap: wrap; gap: 10px 24px; justify-content: space-between; padding-top: 18px; padding-bottom: 22px; font-size: 13px; color: #8D9795; }
 
 @media (max-width: 760px) {
+  .compare { padding: 4px 20px 8px; }
+  .compare-head { display: none; }
+  .compare-row { grid-template-columns: 1fr 1fr; grid-template-areas: 'task task' 'was now'; gap: 8px 14px; }
+  .task { grid-area: task; }
+  .was { grid-area: was; }
+  .now { grid-area: now; font-size: 14px; }
+  .arrow { display: none; }
   .nav-links { display: none; }
   .nav { flex-wrap: nowrap; }
   .actions .btn { flex: 1 1 100%; }
