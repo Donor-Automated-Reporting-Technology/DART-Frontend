@@ -169,7 +169,7 @@ const handleLogin = async () => {
   padding: 22px 16px 8px;
   border-radius: 14px;
   border: 1px solid var(--border-color);
-  background: var(--bg-dark);
+  background: var(--bg-panel);
   color: var(--text-primary);
   font: 400 15px Manrope, system-ui, sans-serif;
   transition: border-color 0.15s, box-shadow 0.15s;

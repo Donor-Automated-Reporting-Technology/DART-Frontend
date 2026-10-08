@@ -747,7 +747,7 @@ section[id] { scroll-margin-top: 16px; }
 .was { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #8D9795; }
 .was svg { flex: none; color: #5E6A68; }
 .arrow { color: rgba(255, 255, 255, 0.28); }
-.now { justify-self: start; display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px 6px 10px; border-radius: 999px; background: rgba(138, 240, 210, 0.12); box-shadow: inset 0 0 0 1px rgba(138, 240, 210, 0.22); font: 600 14px Sora, sans-serif; color: var(--mint); white-space: nowrap; }
+.now { justify-self: start; display: inline-flex; align-items: center; gap: 7px; padding: 6px 13px 6px 10px; border-radius: 999px; background: #8AF0D2; font: 600 14px Sora, sans-serif; color: #0B2A27; white-space: nowrap; }
 .now svg { flex: none; }
 .footnote { margin: 18px 0 0; font-size: 13px; color: #8D9795; }
 

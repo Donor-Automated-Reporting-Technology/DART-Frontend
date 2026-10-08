@@ -151,23 +151,17 @@ useHead({
   .form-side { padding: 20px; }
 }
 
-/* Centred mode (login): no brand panel; one frosted card on a faint glow. */
-.auth.centered { position: relative; overflow: hidden; }
-.auth.centered::before,
-.auth.centered::after { content: ''; position: absolute; border-radius: 50%; filter: blur(100px); pointer-events: none; }
-.auth.centered::before { width: 560px; height: 560px; left: 50%; top: -260px; margin-left: -420px; background: rgba(14, 124, 102, 0.14); }
-.auth.centered::after { width: 460px; height: 460px; left: 50%; bottom: -260px; margin-left: 40px; background: rgba(242, 165, 65, 0.1); }
-.auth.centered .form-side { position: relative; z-index: 1; }
+/* Centred mode (login): no brand panel, no coloured glows. The page and the
+   card share almost the same neutral tone; a hairline and soft shadow separate them. */
+.auth.centered { background: color-mix(in srgb, var(--bg-panel) 55%, var(--bg-dark)); }
 .auth.centered .form-wrap { max-width: 420px; }
 .auth.centered .mobile-brand { display: inline-flex; margin-bottom: 22px; }
 .card {
   padding: 36px 32px 30px;
   border-radius: 24px;
-  background: color-mix(in srgb, var(--bg-panel) 82%, transparent);
+  background: var(--bg-panel);
   border: 1px solid var(--border-color);
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 24px 60px rgba(11, 42, 39, 0.1);
+  box-shadow: 0 12px 40px rgba(11, 42, 39, 0.06);
 }
 @media (max-width: 480px) {
   .card { padding: 28px 20px 24px; border-radius: 20px; }
