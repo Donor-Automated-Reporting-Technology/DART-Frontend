@@ -25,6 +25,7 @@ const STORAGE_KEYS = {
   orgId: "dart_org_id",
   userId: "dart_user_id",
   userRole: "dart_user_role",
+  orgRole: "dart_org_role",
   activities: "dart_activities",
   cfsLocationName: "dart_cfs_location_name",
   // why: DART-72 — facilitator's active CFS location UUID, persisted so
@@ -88,6 +89,25 @@ function getTokenExp(token: string): number | null {
  * If the token has no decodable `exp` claim (opaque token), it is
  * considered valid — the server will reject it if it's actually expired.
  */
+/** The user's organisation role, as returned by GET /me. */
+export interface OrgRoleInfo {
+  id: string;
+  name: string;
+  level: number;
+  scope: 'own_location' | 'supervised_locations' | 'organisation';
+  base_role: string;
+  permissions: string[];
+}
+
+function parseStored<T>(key: string): T | null {
+  try {
+    const raw = getStored(key);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function isTokenValid(token: string | null): boolean {
   if (!token) return false;
   const exp = getTokenExp(token);
@@ -123,6 +143,12 @@ export const useAuthStore = defineStore("auth", () => {
    *                  'case_worker' | 'finance_officer'
    */
   const userRole = ref<string | null>(getStored(STORAGE_KEYS.userRole));
+
+  /**
+   * The user's organisation role (name, level, data scope, permissions),
+   * from GET /me. Persisted so menus render correctly offline.
+   */
+  const orgRole = ref<OrgRoleInfo | null>(parseStored<OrgRoleInfo>(STORAGE_KEYS.orgRole));
 
   /** Active activities selected for the organisation — persisted to localStorage */
   const activities = ref<string[]>(JSON.parse(getStored(STORAGE_KEYS.activities) || '[]'));
@@ -258,6 +284,20 @@ export const useAuthStore = defineStore("auth", () => {
     return isTokenValid(accessToken.value);
   }
 
+  /** Store the role from GET /me and refresh the cached name and email. */
+  function setMe(me: { full_name: string; email: string; role: OrgRoleInfo | null }): void {
+    setUserName(me.full_name);
+    if (me.email) setUserEmail(me.email);
+    orgRole.value = me.role;
+    if (me.role) setStored(STORAGE_KEYS.orgRole, JSON.stringify(me.role));
+    else removeStored(STORAGE_KEYS.orgRole);
+  }
+
+  /** Whether the user's role grants a permission (e.g. 'people.manage'). */
+  function can(permission: string): boolean {
+    return !!orgRole.value?.permissions.includes(permission);
+  }
+
   /** Clear all session state and remove every persisted key */
   function clearSession(): void {
     accessToken.value = null;
@@ -267,6 +307,7 @@ export const useAuthStore = defineStore("auth", () => {
     orgId.value = null;
     userId.value = null;
     userRole.value = null;
+    orgRole.value = null;
     activities.value = [];
     cfsLocationName.value = null;
     cfsLocationId.value = null;
@@ -301,6 +342,7 @@ export const useAuthStore = defineStore("auth", () => {
       orgId.value     = getStored(STORAGE_KEYS.orgId) || orgId.value;
       userId.value    = getStored(STORAGE_KEYS.userId) || userId.value;
       userRole.value  = getStored(STORAGE_KEYS.userRole) || userRole.value;
+      orgRole.value   = parseStored<OrgRoleInfo>(STORAGE_KEYS.orgRole) ?? orgRole.value;
       cfsLocationName.value = getStored(STORAGE_KEYS.cfsLocationName) || cfsLocationName.value;
       cfsLocationId.value   = getStored(STORAGE_KEYS.cfsLocationId)   || cfsLocationId.value;
       
@@ -342,6 +384,7 @@ export const useAuthStore = defineStore("auth", () => {
     orgId,
     userId,
     userRole,
+    orgRole,
     activities,
     cfsLocationName,
     cfsLocationId,
@@ -352,7 +395,9 @@ export const useAuthStore = defineStore("auth", () => {
     getInitials,
     hasValidToken,
     hasActivity,
+    can,
     // setters
+    setMe,
     setToken,
     setUserName,
     setOrgName,

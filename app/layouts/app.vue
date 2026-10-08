@@ -116,18 +116,30 @@
         </div>
 
         <!-- System ──────────────────────────────────────────────── -->
-        <div class="nav-group" v-if="isAdmin || isManager">
+        <div class="nav-group">
           <span class="nav-group-label">System</span>
           <NuxtLink
+            v-if="isAdmin || isManager"
             to="/settings"
             class="nav-item"
-            active-class="nav-item--active"
+            :class="{ 'nav-item--active': route.path.startsWith('/settings') && route.path !== '/settings/account' }"
             title="Settings"
             @click="closeSidebarOnMobile"
           >
             <span class="nav-item-indicator" />
             <AppIcon name="settings" :size="16" class="nav-icon" />
             <span class="nav-label">Settings</span>
+          </NuxtLink>
+          <NuxtLink
+            to="/settings/account"
+            class="nav-item"
+            active-class="nav-item--active"
+            title="My account"
+            @click="closeSidebarOnMobile"
+          >
+            <span class="nav-item-indicator" />
+            <AppIcon name="user" :size="16" class="nav-icon" />
+            <span class="nav-label">My account</span>
           </NuxtLink>
         </div>
 
@@ -155,9 +167,11 @@
           <span class="nav-label">Log out</span>
         </button>
 
-        <div
+        <NuxtLink
+          to="/settings/account"
           class="user-chip"
-          :title="displayName"
+          :title="`${displayName} — my account`"
+          @click="closeSidebarOnMobile"
         >
           <!-- Avatar circle with initials -->
           <div class="user-avatar" aria-hidden="true">{{ userInitials }}</div>
@@ -167,7 +181,7 @@
             <span class="user-display-name truncate">{{ displayName }}</span>
             <span class="user-display-sub truncate">{{ displaySub }}</span>
           </div>
-        </div>
+        </NuxtLink>
       </div>
 
     </aside>
@@ -280,6 +294,7 @@
 import WellReachMark from '../components/brand/WellReachMark.vue';
 import ThemeToggle from '../components/brand/ThemeToggle.vue';
 import { ref, computed, watch, onMounted } from 'vue';
+import { meApi } from '../services/meApi';
 import { useAuthStore }       from '../stores/auth';
 import { useOnboardingStore } from '../stores/onboarding';
 import { useTheme }           from '../composables/useTheme';
@@ -316,7 +331,7 @@ const displayOrg = computed(() => authStore.orgName ?? 'WellReach');
  * then a generic placeholder.
  */
 const displaySub = computed(
-  () => authStore.userEmail ?? authStore.orgName ?? 'WellReach',
+  () => authStore.orgRole?.name ?? authStore.userEmail ?? authStore.orgName ?? 'WellReach',
 );
 
 // ─── Role-based access control ────────────────────────────────────────────────
@@ -357,6 +372,8 @@ onMounted(() => {
   if (authStore.userRole === 'org_admin') {
     onboardingStore.fetchStatus();
   }
+  // Role, permissions and the latest name/email for menus and My account.
+  meApi.get().then(me => authStore.setMe(me)).catch(() => { /* offline: keep the cached role */ });
 });
 
 /**
@@ -429,6 +446,7 @@ function toggleSidebar(): void {
 // ─── Logout ───────────────────────────────────────────────────────────────────
 
 const router = useRouter();
+const route = useRoute();
 
 async function handleLogout(): Promise<void> {
   authStore.clearSession();
@@ -707,7 +725,12 @@ async function handleLogout(): Promise<void> {
 }
 
 /* Full-width row that looks like a user display */
+.user-chip:hover { background: var(--hover-bg); text-decoration: none; }
+.user-chip:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .user-chip {
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
   display: flex;
   align-items: center;
   gap: 10px;
