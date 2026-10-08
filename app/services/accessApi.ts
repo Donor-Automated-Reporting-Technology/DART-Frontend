@@ -37,6 +37,13 @@ export interface OrgUser {
   location_name: string | null
 }
 
+/** email_sent false: the temporary password is returned once to share another way. */
+export interface InviteResult {
+  user: OrgUser
+  email_sent: boolean
+  temporary_password?: string
+}
+
 export interface RoleInput {
   name: string
   description: string
@@ -73,6 +80,10 @@ export const accessApi = {
   deleteRole: (id: string) => request<void>(`${BASE_URL}/roles/${id}`, { method: 'DELETE' }),
   users: () => request<{ users: OrgUser[]; can_manage: boolean; my_level: number; scope: Scope }>(`${BASE_URL}/users`),
   setUserRole: (id: string, roleId: string) => request<OrgUser>(`${BASE_URL}/users/${id}/role`, { method: 'PUT', body: JSON.stringify({ role_id: roleId }) }),
+  invite: (body: { full_name: string; email: string; role_id: string; cfs_location_ids: string[] }) =>
+    request<InviteResult>(`${BASE_URL}/users`, { method: 'POST', body: JSON.stringify(body) }),
+  resetPassword: (id: string) =>
+    request<InviteResult>(`${BASE_URL}/users/${id}/reset-password`, { method: 'POST' }),
   setUserActive: (id: string, active: boolean) => request<OrgUser>(`${BASE_URL}/users/${id}/active`, { method: 'PUT', body: JSON.stringify({ is_active: active }) }),
 }
 

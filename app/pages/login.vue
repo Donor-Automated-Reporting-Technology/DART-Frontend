@@ -213,6 +213,14 @@ const handleLogin = async () => {
 
     done.value = true;
 
+    // Temporary password (new account or reset): choose your own first.
+    if (payload?.user?.must_change_password) {
+      authStore.setMustChangePassword(true, password.value);
+      router.push('/set-password');
+      return;
+    }
+    authStore.setMustChangePassword(false);
+
     // Redirect based on user role
     if (userRole === 'org_admin') {
       router.push('/dashboard');

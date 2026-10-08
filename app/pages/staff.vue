@@ -70,178 +70,8 @@
         <p class="sf-empty__text">Click "Add Staff" to register your first team member.</p>
       </div>
 
-      <!-- ── Create modal (Multi-step Liquid Glass) ──────────────── -->
-      <Transition name="sf-overlay">
-        <div v-if="showCreate" class="sf-overlay" @click.self="handleCreateClose">
-          <Transition name="sf-modal" appear>
-            <div class="sf-modal" @click.stop>
-              <div class="sf-modal__header">
-                <div>
-                  <h3 class="sf-modal__title">Register Staff</h3>
-                  <p class="sf-modal__subtitle">Step {{ step + 1 }} of {{ stepLabels.length }}</p>
-                </div>
-                <button class="sf-modal__close" @click="handleCreateClose" aria-label="Close">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-              </div>
-
-              <!-- Progress bar -->
-              <div class="sf-progress">
-                <div class="sf-progress__track">
-                  <div class="sf-progress__fill" :style="{ width: `${((step + 1) / stepLabels.length) * 100}%` }" />
-                </div>
-                <div class="sf-progress__labels">
-                  <span
-                    v-for="(label, i) in stepLabels"
-                    :key="i"
-                    class="sf-progress__label"
-                    :class="{
-                      'sf-progress__label--active': i === step,
-                      'sf-progress__label--done': i < step,
-                    }"
-                  >{{ label }}</span>
-                </div>
-              </div>
-
-              <div class="sf-modal__body">
-                <!-- Step transitions -->
-                <TransitionGroup
-                  :name="slideDirection === 'forward' ? 'sf-slide-forward' : 'sf-slide-back'"
-                  tag="div"
-                  class="sf-step-container"
-                >
-                  <!-- Step 0: Identity -->
-                  <div v-if="step === 0" key="identity" class="sf-step">
-                    <div class="sf-field" :class="{ 'sf-field--error': fieldErrors.full_name }">
-                      <label class="sf-field__label" for="sf-full-name">Full Name</label>
-                      <input
-                        id="sf-full-name"
-                        v-model="form.full_name"
-                        type="text"
-                        autocomplete="off"
-                        :aria-invalid="fieldErrors.full_name ? 'true' : undefined"
-                        :aria-describedby="fieldErrors.full_name ? 'sf-full-name-error' : undefined"
-                        class="sf-field__input"
-                        placeholder="e.g. Amara Diallo"
-                        @input="clearFieldError('full_name')"
-                      />
-                      <FieldError id="sf-full-name-error" :message="fieldErrors.full_name" />
-                    </div>
-                    <div class="sf-field" :class="{ 'sf-field--error': fieldErrors.email }">
-                      <label class="sf-field__label" for="sf-email">Email Address</label>
-                      <input
-                        id="sf-email"
-                        v-model="form.email"
-                        type="email"
-                        autocomplete="off" inputmode="email" autocapitalize="none" spellcheck="false"
-                        :aria-invalid="fieldErrors.email ? 'true' : undefined"
-                        :aria-describedby="fieldErrors.email ? 'sf-email-error' : undefined"
-                        class="sf-field__input"
-                        placeholder="amara@organisation.org"
-                        @input="clearFieldError('email')"
-                      />
-                      <FieldError id="sf-email-error" :message="fieldErrors.email" />
-                    </div>
-                  </div>
-
-                  <!-- Step 1: Role -->
-                  <div v-if="step === 1" key="role" class="sf-step">
-                    <div class="sf-field" :class="{ 'sf-field--error': fieldErrors.role }">
-                      <p id="sf-role-label" class="sf-field__label">Role</p>
-                      <div class="sf-role-grid" role="group" aria-labelledby="sf-role-label" :aria-describedby="fieldErrors.role ? 'sf-role-error' : undefined">
-                        <button
-                          v-for="r in roleOptions"
-                          :key="r.value"
-                          type="button"
-                          class="sf-role-card"
-                          :class="{ 'sf-role-card--active': form.role === r.value }"
-                          :aria-pressed="form.role === r.value"
-                          @click="form.role = r.value; clearFieldError('role')"
-                        >
-                          <div class="sf-role-card__icon" v-html="r.icon" />
-                          <span class="sf-role-card__label">{{ r.label }}</span>
-                          <span class="sf-role-card__desc">{{ r.desc }}</span>
-                        </button>
-                      </div>
-                      <FieldError id="sf-role-error" :message="fieldErrors.role" />
-                    </div>
-                  </div>
-
-                  <!-- Step 2: Credentials -->
-                  <div v-if="step === 2" key="credentials" class="sf-step">
-                    <div class="sf-field" :class="{ 'sf-field--error': fieldErrors.password }">
-                      <label class="sf-field__label" for="sf-password">Temporary Password</label>
-                      <div class="sf-field__input-wrap">
-                        <input
-                          id="sf-password"
-                          v-model="form.password"
-                          autocomplete="new-password"
-                          :aria-invalid="fieldErrors.password ? 'true' : undefined"
-                          aria-describedby="sf-password-rules sf-password-error"
-                          :type="showPassword ? 'text' : 'password'"
-                          class="sf-field__input"
-                          placeholder="Min 8 characters"
-                          @input="clearFieldError('password')"
-                        />
-                        <button
-                          type="button"
-                          class="sf-field__toggle"
-                          aria-controls="sf-password"
-                          :aria-pressed="showPassword"
-                          @click="showPassword = !showPassword"
-                          :aria-label="showPassword ? 'Hide password' : 'Show password'"
-                        >
-                          <svg v-if="!showPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                          <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                        </button>
-                      </div>
-                      <FieldError id="sf-password-error" :message="fieldErrors.password" />
-                    </div>
-                    <div id="sf-password-rules" class="sf-password-hints">
-                      <span class="sf-hint" :class="{ 'sf-hint--pass': form.password.length >= 8 }">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        8+ characters
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Step 3: Location Assignment -->
-                  <div v-if="step === 3" key="locations" class="sf-step">
-                    <StaffAssignmentForm
-                      :service-points="servicePoints"
-                      v-model="form.locations"
-                    />
-                  </div>
-                </TransitionGroup>
-              </div>
-
-              <div class="sf-modal__footer">
-                <button
-                  v-if="step > 0"
-                  type="button" class="ui-btn ui-btn--outline"
-                  @click="prevStep"
-                >Back</button>
-                <div class="sf-modal__footer-spacer" />
-                <button
-                  v-if="step < stepLabels.length - 1"
-                  type="button" class="ui-btn ui-btn--primary"
-                  @click="nextStep"
-                >Continue</button>
-                <button
-                  v-else
-                  type="button" class="ui-btn ui-btn--primary"
-                  :disabled="creating"
-                  :aria-busy="creating ? 'true' : undefined"
-                  @click="handleCreate"
-                >
-                  <span v-if="creating" class="ui-spinner" aria-hidden="true" />
-                  {{ creating ? 'Creating...' : 'Create Staff' }}
-                </button>
-              </div>
-            </div>
-          </Transition>
-        </div>
-      </Transition>
+      <!-- ── Add staff (shared with Settings → People) ─────────────── -->
+      <InviteStaffDialog v-if="showCreate" @close="showCreate = false" @created="onInvited" />
 
       <!-- ── Edit modal (Liquid Glass) ───────────────────────────── -->
       <Transition name="sf-overlay">
@@ -300,12 +130,13 @@
 </template>
 
 <script setup lang="ts">
-import FieldError from '../components/interfaces/FieldError.vue'
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { staffApi } from '../services/staffApi'
 import type { StaffMember } from '../services/staffApi'
 import { useLocationStore } from '../stores/location'
 import StaffAssignmentForm from '../components/staff/StaffAssignmentForm.vue'
+import InviteStaffDialog from '../components/people/InviteStaffDialog.vue'
+import type { InviteResult } from '../services/accessApi'
 
 definePageMeta({ layout: false, middleware: ['auth'] })
 
@@ -318,96 +149,10 @@ const creating = ref(false)
 const error = ref<string | null>(null)
 const showCreate = ref(false)
 const showEdit = ref(false)
-const showPassword = ref(false)
 const editTarget = ref<StaffMember | null>(null)
 const editLocations = ref<string[]>([])
 const editOriginalLocations = ref<string[]>([])
 const toastMsg = ref('')
-
-// Multi-step
-const step = ref(0)
-const slideDirection = ref<'forward' | 'back'>('forward')
-const stepLabels = ['Identity', 'Role', 'Credentials', 'Locations']
-
-const fieldErrors = reactive<Record<string, string>>({
-  full_name: '',
-  email: '',
-  role: '',
-  password: '',
-})
-
-const roleOptions = [
-  {
-    value: 'facilitator',
-    label: 'Facilitator',
-    desc: 'Leads sessions and activities',
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>',
-  },
-  {
-    value: 'case_worker',
-    label: 'Case Worker',
-    desc: 'Manages individual cases',
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
-  },
-]
-
-const form = reactive({
-  full_name: '',
-  email: '',
-  role: '',
-  password: '',
-  locations: [] as string[],
-})
-
-function clearFieldError(field: string) {
-  fieldErrors[field] = ''
-  error.value = null
-}
-
-function validateStep(): boolean {
-  let valid = true
-  if (step.value === 0) {
-    if (!form.full_name.trim()) {
-      fieldErrors.full_name = 'Name is required'
-      valid = false
-    }
-    if (!form.email.trim()) {
-      fieldErrors.email = 'Email is required'
-      valid = false
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      fieldErrors.email = 'Enter a valid email address'
-      valid = false
-    }
-  } else if (step.value === 1) {
-    if (!form.role) {
-      fieldErrors.role = 'Select a role'
-      valid = false
-    }
-  } else if (step.value === 2) {
-    if (form.password.length < 8) {
-      fieldErrors.password = 'Password must be at least 8 characters'
-      valid = false
-    }
-  }
-  return valid
-}
-
-function nextStep() {
-  if (!validateStep()) return
-  slideDirection.value = 'forward'
-  step.value++
-}
-
-function prevStep() {
-  slideDirection.value = 'back'
-  step.value--
-}
-
-function handleCreateClose() {
-  showCreate.value = false
-  step.value = 0
-  Object.keys(fieldErrors).forEach(k => fieldErrors[k] = '')
-}
 
 function showToast(msg: string) {
   toastMsg.value = msg
@@ -418,8 +163,9 @@ function initials(name: string): string {
   return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
 }
 
+// Organisation role names are shown as written; old system keys are tidied.
 function formatRole(role: string): string {
-  return role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+  return role.includes('_') ? role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : role
 }
 
 async function fetchStaff() {
@@ -455,35 +201,9 @@ async function fetchStaff() {
   }
 }
 
-async function handleCreate() {
-  if (!validateStep()) return
-  creating.value = true
-  error.value = null
-  try {
-    const staff = await staffApi.create({
-      full_name: form.full_name,
-      email: form.email,
-      password: form.password,
-      role: form.role,
-    }) as StaffMember
-
-    for (const locId of form.locations) {
-      await staffApi.assign({
-        user_id: staff.id,
-        cfs_location_id: locId,
-        start_date: new Date().toISOString().slice(0, 10),
-      })
-    }
-
-    handleCreateClose()
-    form.full_name = ''; form.email = ''; form.role = ''; form.password = ''; form.locations = []
-    showToast('Staff member created')
-    await fetchStaff()
-  } catch (e: any) {
-    error.value = e?.message ?? 'Failed to create staff'
-  } finally {
-    creating.value = false
-  }
+function onInvited(res: InviteResult) {
+  showToast(res.email_sent ? `Invitation sent to ${res.user.email}` : `${res.user.full_name} added`)
+  fetchStaff()
 }
 
 function locationName(id: string): string {

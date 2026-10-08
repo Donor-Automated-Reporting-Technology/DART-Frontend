@@ -238,10 +238,12 @@ async function save() {
     permissions: form.permissions, ...(editing.value.id ? {} : { based_on: form.based_on }),
   }
   try {
-    const saved = editing.value.id ? await accessApi.updateRole(editing.value.id, body) : await accessApi.createRole(body)
-    notice.value = editing.value.id ? `“${saved.name}” saved.` : `“${saved.name}” created. Give it to people in Settings → People.`
-    editing.value = null
+    const wasEdit = !!editing.value.id
+    const saved = wasEdit ? await accessApi.updateRole(editing.value.id!, body) : await accessApi.createRole(body)
+    // Refresh first so the list never shows without the new role.
     await load()
+    notice.value = wasEdit ? `“${saved.name}” saved.` : `“${saved.name}” created. Give it to people in Settings → People.`
+    editing.value = null
   } catch (e) {
     if (e instanceof ApiError && e.data?.errors) Object.assign(errs, e.data.errors)
     else formAlert.value = e instanceof ApiError ? e.message : 'Connection failed — check your internet connection and try again.'
@@ -254,10 +256,11 @@ async function remove() {
   if (!editing.value?.id) return
   saving.value = true
   try {
+    const name = editing.value.originalName
     await accessApi.deleteRole(editing.value.id)
-    notice.value = `“${editing.value.originalName}” deleted.`
-    editing.value = null
     await load()
+    notice.value = `“${name}” deleted.`
+    editing.value = null
   } catch (e) {
     formAlert.value = e instanceof ApiError ? e.message : 'Connection failed — try again.'
     confirmDelete.value = false

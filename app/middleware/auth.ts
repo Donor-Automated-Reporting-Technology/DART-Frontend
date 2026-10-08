@@ -21,7 +21,7 @@
  */
 import { useAuthStore } from '../stores/auth';
 
-export default defineNuxtRouteMiddleware(() => {
+export default defineNuxtRouteMiddleware((to) => {
   // Skip during SSR — token is client-only memory.
   if (process.server) return;
 
@@ -30,5 +30,10 @@ export default defineNuxtRouteMiddleware(() => {
   // Authenticated = valid non-expired token (survives refresh + offline).
   if (!authStore.hasValidToken()) {
     return navigateTo('/login');
+  }
+
+  // Signed in with a temporary password: choose your own before anything else.
+  if (authStore.mustChangePassword && to.path !== '/set-password') {
+    return navigateTo('/set-password');
   }
 });

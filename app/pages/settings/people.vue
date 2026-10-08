@@ -15,7 +15,7 @@
             <template v-if="canManage">You can change people ranked below you.</template>
           </p>
         </div>
-        <NuxtLink v-if="auth.userRole === 'org_admin'" to="/staff" class="ui-btn ui-btn--outline">Add staff</NuxtLink>
+        <button v-if="canManage" type="button" class="ui-btn ui-btn--primary" @click="showInvite = true">Add staff</button>
       </header>
 
       <p v-if="loadError" class="ui-alert" role="alert"><AppIcon name="alert-circle" :size="16" /><span>{{ loadError }}</span></p>
@@ -49,12 +49,18 @@
               <button type="button" class="ui-btn ui-btn--outline" :disabled="busy[u.id]" @click="toggleActive(u)">
                 {{ u.is_active ? 'Deactivate' : 'Reactivate' }}
               </button>
+              <button v-if="u.is_active && u.email" type="button" class="ui-btn ui-btn--text" :disabled="busy[u.id]" @click="sendPassword(u)">
+                Send new password
+              </button>
             </template>
             <span v-else class="role-pill">{{ u.role_name ?? 'No role' }}</span>
             <span :id="`status-${u.id}`" class="row-status" :class="{ err: rowError[u.id] }" aria-live="polite">{{ rowError[u.id] || rowNote[u.id] || '' }}</span>
+            <span v-if="tempShown[u.id]" class="temp-pass">Email couldn't be sent. Temporary password (shown once): <code>{{ tempShown[u.id] }}</code></span>
           </span>
         </li>
       </ul>
+
+      <InviteStaffDialog v-if="showInvite" @close="showInvite = false" @created="onInvited" />
 
       <p v-if="canManage && !loading && !loadError" class="ui-help">
         Changing someone's role or deactivating them signs them out, so the change applies straight away.
@@ -68,6 +74,8 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { accessApi, type OrgRole, type OrgUser, type Scope } from '../../services/accessApi'
 import { ApiError } from '../../services/api'
 import { useAuthStore } from '../../stores/auth'
+import InviteStaffDialog from '../../components/people/InviteStaffDialog.vue'
+import type { InviteResult } from '../../services/accessApi'
 
 definePageMeta({ layout: false, middleware: ['auth', 'role-guard'], allowedRoles: ['org_admin', 'program_manager'], permission: 'people.view' })
 useHead({ title: 'People · WellReach' })
@@ -86,6 +94,29 @@ const rowNote = reactive<Record<string, string>>({})
 const rowError = reactive<Record<string, string>>({})
 // Bumped to re-render a row's select back to the saved role after an error.
 const rev = reactive<Record<string, number>>({})
+const tempShown = reactive<Record<string, string>>({})
+const showInvite = ref(false)
+
+function onInvited(res: InviteResult) {
+  users.value = [res.user, ...users.value.filter(u => u.id !== res.user.id)]
+}
+
+async function sendPassword(u: OrgUser) {
+  busy[u.id] = true
+  rowError[u.id] = ''
+  rowNote[u.id] = 'Sending…'
+  delete tempShown[u.id]
+  try {
+    const res = await accessApi.resetPassword(u.id)
+    rowNote[u.id] = res.email_sent ? `New password emailed to ${u.email}` : ''
+    if (!res.email_sent && res.temporary_password) tempShown[u.id] = res.temporary_password
+  } catch (e) {
+    rowNote[u.id] = ''
+    rowError[u.id] = errorText(e)
+  } finally {
+    busy[u.id] = false
+  }
+}
 
 const assignable = computed(() => roles.value.filter(r => r.level < myLevel.value))
 const manageable = (u: OrgUser) => canManage.value && u.id !== auth.userId && (u.role_level ?? 0) < myLevel.value
@@ -185,6 +216,8 @@ onMounted(async () => {
 .row-status { flex-basis: 100%; text-align: right; font-size: 0.8125rem; color: var(--text-secondary); min-height: 0; }
 .row-status:empty { display: none; }
 .row-status.err { color: var(--error-text); }
+.temp-pass { flex-basis: 100%; text-align: right; font-size: 0.8125rem; color: var(--text-primary); }
+.temp-pass code { font-size: 0.9375rem; letter-spacing: 0.05em; }
 
 @media (max-width: 640px) {
   .controls { width: 100%; justify-content: stretch; }

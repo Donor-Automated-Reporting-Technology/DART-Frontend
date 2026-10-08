@@ -24,6 +24,7 @@ export interface Me {
   organisation: { id: string; name: string }
   role: MeRole | null
   locations: { id: string; name: string }[]
+  must_change_password: boolean
 }
 
 function resolveToken(): string | undefined {

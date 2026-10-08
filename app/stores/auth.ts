@@ -26,6 +26,7 @@ const STORAGE_KEYS = {
   userId: "dart_user_id",
   userRole: "dart_user_role",
   orgRole: "dart_org_role",
+  mustChangePassword: "dart_must_change_password",
   activities: "dart_activities",
   cfsLocationName: "dart_cfs_location_name",
   // why: DART-72 — facilitator's active CFS location UUID, persisted so
@@ -149,6 +150,13 @@ export const useAuthStore = defineStore("auth", () => {
    * from GET /me. Persisted so menus render correctly offline.
    */
   const orgRole = ref<OrgRoleInfo | null>(parseStored<OrgRoleInfo>(STORAGE_KEYS.orgRole));
+
+  /** Signed in with a temporary password; must choose their own first. */
+  const mustChangePassword = ref<boolean>(getStored(STORAGE_KEYS.mustChangePassword) === '1');
+
+  /** The temporary password typed at login, kept in memory only so the
+   *  "choose your password" screen doesn't ask for it again. */
+  const temporaryPassword = ref<string | null>(null);
 
   /** Active activities selected for the organisation — persisted to localStorage */
   const activities = ref<string[]>(JSON.parse(getStored(STORAGE_KEYS.activities) || '[]'));
@@ -284,8 +292,18 @@ export const useAuthStore = defineStore("auth", () => {
     return isTokenValid(accessToken.value);
   }
 
+  function setMustChangePassword(value: boolean, tempPassword: string | null = null): void {
+    mustChangePassword.value = value;
+    temporaryPassword.value = value ? tempPassword : null;
+    if (value) setStored(STORAGE_KEYS.mustChangePassword, '1');
+    else removeStored(STORAGE_KEYS.mustChangePassword);
+  }
+
   /** Store the role from GET /me and refresh the cached name and email. */
-  function setMe(me: { full_name: string; email: string; role: OrgRoleInfo | null }): void {
+  function setMe(me: { full_name: string; email: string; role: OrgRoleInfo | null; must_change_password?: boolean }): void {
+    if (me.must_change_password !== undefined && me.must_change_password !== mustChangePassword.value) {
+      setMustChangePassword(me.must_change_password, temporaryPassword.value);
+    }
     setUserName(me.full_name);
     if (me.email) setUserEmail(me.email);
     orgRole.value = me.role;
@@ -308,6 +326,8 @@ export const useAuthStore = defineStore("auth", () => {
     userId.value = null;
     userRole.value = null;
     orgRole.value = null;
+    mustChangePassword.value = false;
+    temporaryPassword.value = null;
     activities.value = [];
     cfsLocationName.value = null;
     cfsLocationId.value = null;
@@ -385,6 +405,8 @@ export const useAuthStore = defineStore("auth", () => {
     userId,
     userRole,
     orgRole,
+    mustChangePassword,
+    temporaryPassword,
     activities,
     cfsLocationName,
     cfsLocationId,
@@ -398,6 +420,7 @@ export const useAuthStore = defineStore("auth", () => {
     can,
     // setters
     setMe,
+    setMustChangePassword,
     setToken,
     setUserName,
     setOrgName,
