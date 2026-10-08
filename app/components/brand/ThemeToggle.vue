@@ -1,7 +1,7 @@
 <template>
   <!-- Light/dark switch shared by the app, landing and auth pages. The choice
        is stored once (useTheme → localStorage "dart-theme"). Shows a moon in
-       light mode and a sun in dark mode; the icons swap with a small turn. -->
+       light mode and a sun in dark mode. -->
   <button
     class="theme-btn"
     type="button"
@@ -27,7 +27,6 @@ const { isDark, toggleTheme } = useTheme()
 
 <style scoped>
 .theme-btn {
-  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -40,28 +39,20 @@ const { isDark, toggleTheme } = useTheme()
   background: var(--bg-panel, transparent);
   color: var(--text-primary, currentColor);
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
 }
 .theme-btn:hover {
   border-color: var(--primary, #0E7C66);
   color: var(--primary, #0E7C66);
 }
-.theme-btn:active {
-  transform: scale(0.94);
-}
 .theme-btn:focus-visible {
   outline: 2px solid var(--primary, #0E7C66);
   outline-offset: 2px;
 }
-.icon {
-  position: absolute;
-  transition: opacity 0.25s ease, transform 0.35s ease;
-}
 .icon.hidden {
-  opacity: 0;
-  transform: rotate(-90deg) scale(0.6);
+  display: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .icon { transition: none; }
+  .theme-btn { transition: none; }
 }
 </style>
