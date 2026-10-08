@@ -1,133 +1,109 @@
 <template>
-  <div class="register-page">
-    <div class="auth-toggle"><ThemeToggle /></div>
-    <div class="form-section">
-      <div class="form-container">
-        
-        <div class="brand-header">
-          <NuxtLink to="/" class="logo-link" aria-label="WellReach home">
-            <WellReachMark :size="52" />
-            <h1 class="logo">Well<span>Reach</span></h1>
-          </NuxtLink>
-          <h2 class="tagline">Trusted data for children&apos;s wellbeing</h2>
-        </div>
+  <AuthShell wide headline="Start reporting in minutes." lead="Create your organisation's account, set up your programme and work offline from day one.">
+    <h1 class="title">Get started</h1>
+    <p class="subtitle">Create your organisation's account. It's free while we test.</p>
 
-        <div class="form-box">
-          <div class="form-header">
-            <h3>Let's get started</h3>
-            <h2>Create new account</h2>
-          </div>
-          
-          <ErrorModal 
-            :is-open="!!apiError" 
-            :message="apiError" 
-            @update:is-open="$event ? null : apiError = ''" 
-          />
-          
-          <form @submit.prevent="handleRegister" class="register-form" novalidate>
-            <!-- Organisation Fields -->
-            <div class="section-title">Organisation Details</div>
-            
-            <InputField
-              id="orgName"
-              v-model="form.organisation.name"
-              label="Organisation Name"
-              placeholder="Enter organisation name"
-              :error="errors['organisation.name']"
-              required
-              autofocus
-            />
-            
-            <TextAreaField
-              id="orgDesc"
-              v-model="form.organisation.description"
-              label="Organisation Description"
-              placeholder="Brief description of your organisation (optional)"
-              :error="errors['organisation.description']"
-              :maxlength="1000"
-            />
-            
-            <CountrySelect
-              id="country"
-              v-model="form.organisation.country"
-              label="Country"
-              :error="errors['organisation.country']"
-              required
-            />
-            
-            <hr class="divider" />
-            
-            <!-- User Fields -->
-            <div class="section-title">Admin User Details</div>
-            
-            <InputField
-              id="fullName"
-              v-model="form.user.full_name"
-              label="Your Full Name"
-              placeholder="John Doe"
-              :error="errors['user.full_name']"
-              required
-            />
-            
-            <InputField
-              id="email"
-              type="email"
-              v-model="form.user.email"
-              label="Email Address"
-              placeholder="you@organisation.org"
-              :error="errors['user.email']"
-              required
-            />
-            
-            <div class="form-row">
-              <PasswordInput
-                id="password"
-                v-model="form.user.password"
-                label="Password"
-                placeholder="********"
-                :error="errors['user.password']"
-                required
-                showStrength
-                class="flex-1"
-              />
-              
-              <PasswordInput
-                id="confirmPassword"
-                v-model="form.user.confirm_password"
-                label="Confirm Password"
-                placeholder="********"
-                :error="errors['user.confirm_password']"
-                required
-                class="flex-1"
-              />
-            </div>
-            
-            <button 
-              type="submit" 
-              class="submit-btn" 
-              :disabled="isSubmitting"
-            >
-              <span v-if="isSubmitting" class="spinner"></span>
-              {{ isSubmitting ? 'Creating Account...' : 'Create Account' }}
-            </button>
-          </form>
-          
-          <p class="login-link">
-            Already have an account? <NuxtLink to="/login">Login</NuxtLink>
-          </p>
-        </div>
+    <ErrorModal 
+      :is-open="!!apiError" 
+      :message="apiError" 
+      @update:is-open="$event ? null : apiError = ''" 
+    />
+    
+    <form @submit.prevent="handleRegister" class="register-form" novalidate>
+      <!-- Organisation Fields -->
+      <div class="section-title">Organisation Details</div>
+      
+      <InputField
+        id="orgName"
+        v-model="form.organisation.name"
+        label="Organisation Name"
+        placeholder="Enter organisation name"
+        :error="errors['organisation.name']"
+        required
+        autofocus
+      />
+      
+      <TextAreaField
+      :rows="2"
+        id="orgDesc"
+        v-model="form.organisation.description"
+        label="Organisation Description"
+        placeholder="Brief description of your organisation (optional)"
+        :error="errors['organisation.description']"
+        :maxlength="1000"
+      />
+      
+      <CountrySelect
+        id="country"
+        v-model="form.organisation.country"
+        label="Country"
+        :error="errors['organisation.country']"
+        required
+      />
+      
+      <hr class="divider" />
+      
+      <!-- User Fields -->
+      <div class="section-title">Admin User Details</div>
+      
+      <InputField
+        id="fullName"
+        v-model="form.user.full_name"
+        label="Your Full Name"
+        placeholder="John Doe"
+        :error="errors['user.full_name']"
+        required
+      />
+      
+      <InputField
+        id="email"
+        type="email"
+        v-model="form.user.email"
+        label="Email Address"
+        placeholder="you@organisation.org"
+        :error="errors['user.email']"
+        required
+      />
+      
+      <div class="form-row">
+        <PasswordInput
+          id="password"
+          v-model="form.user.password"
+          label="Password"
+          placeholder="********"
+          :error="errors['user.password']"
+          required
+          showStrength
+          class="flex-1"
+        />
         
-        <div class="footer-copy">
-          &copy; 2026 WellReach. All rights reserved.
-        </div>
+        <PasswordInput
+          id="confirmPassword"
+          v-model="form.user.confirm_password"
+          label="Confirm Password"
+          placeholder="********"
+          :error="errors['user.confirm_password']"
+          required
+          class="flex-1"
+        />
       </div>
-    </div>
-  </div>
+      
+      <button 
+        type="submit" 
+        class="submit-btn" 
+        :disabled="isSubmitting"
+      >
+        <span v-if="isSubmitting" class="spinner"></span>
+        {{ isSubmitting ? 'Creating Account...' : 'Create Account' }}
+      </button>
+    </form>
+
+    <p class="switch">Already have an account? <NuxtLink to="/login">Log in</NuxtLink></p>
+  </AuthShell>
 </template>
 
 <script setup lang="ts">
-import WellReachMark from '../components/brand/WellReachMark.vue';
-import ThemeToggle from '../components/brand/ThemeToggle.vue';
+import AuthShell from '../components/brand/AuthShell.vue';
 import { useRegistration } from '../composables/useRegistration';
 import { useRouter } from 'vue-router';
 import InputField from '../components/interfaces/InputField.vue';
@@ -149,103 +125,18 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
-.register-page {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  background-color: var(--bg-dark);
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1rem;
-}
-
-.form-section {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
-.form-container {
-  width: 100%;
-  max-width: 550px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.brand-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.auth-toggle {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-}
-
-.logo-link {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  text-decoration: none;
-}
-
-.logo {
-  font-size: 2.4rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin: 0 0 0.25rem 0;
-  letter-spacing: -0.02em;
-}
-
-.logo span {
-  color: var(--primary);
-}
-
-.tagline {
-  font-size: 1.25rem;
-  font-weight: 500;
-  color: var(--primary);
-  margin: 0;
-}
-
-.form-box {
-  background-color: var(--bg-panel);
-  border: 1px solid var(--border-color);
-  padding: 2.5rem;
-  border-radius: 12px;
-  width: 100%;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-}
-
-.form-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.form-header h3 {
-  font-size: 1rem;
-  color: var(--text-secondary);
-  font-weight: 400;
-  margin-bottom: 0.5rem;
-}
-
-.form-header h2 {
-  font-size: 1.75rem;
-  color: var(--text-primary);
-  font-weight: 600;
-  margin: 0;
-}
-
+.title { margin: 0; font-family: Sora, system-ui, sans-serif; font-weight: 700; font-size: 26px; letter-spacing: -0.02em; color: var(--text-primary); }
+.subtitle { margin: 6px 0 24px; font-size: 15px; color: var(--text-secondary); }
+.switch { margin: 24px 0 0; font-size: 14px; color: var(--text-secondary); }
+.switch a { color: var(--primary); font-weight: 700; text-decoration: none; }
+.switch a:hover { text-decoration: underline; }
 .section-title {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--third);
-  margin-bottom: 1rem;
-  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+  font-weight: 700;
 }
 
 .divider {
@@ -260,12 +151,6 @@ const handleRegister = async () => {
   flex-direction: column;
 }
 
-@media (min-width: 600px) {
-  .form-row {
-    flex-direction: row;
-  }
-}
-
 .flex-1 {
   flex: 1;
   min-width: 0;
@@ -273,25 +158,22 @@ const handleRegister = async () => {
 
 .submit-btn {
   width: 100%;
-  padding: 1rem;
-  background-color: var(--primary);
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
-  margin-top: 1.5rem;
-  display: flex;
+  margin-top: 12px;
+  min-height: 46px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 8px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #fff;
+  font: 700 15px Manrope, system-ui, sans-serif;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(14, 124, 102, 0.22);
 }
 
-.submit-btn:hover:not(:disabled) {
-  filter: brightness(0.9);
-}
+.submit-btn:hover:not(:disabled) { filter: brightness(1.05); }
 
 .submit-btn:disabled {
   background-color: #555;
@@ -308,21 +190,23 @@ const handleRegister = async () => {
   animation: spin 1s linear infinite;
 }
 
+@media (min-width: 600px) {
+  .form-row {
+    flex-direction: row;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
 @keyframes spin {
   to { transform: rotate(360deg); }
-}
-
-.login-link {
-  text-align: center;
-  margin-top: 2rem;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-
-.footer-copy {
-  text-align: center;
-  margin-top: 2rem;
-  font-size: 0.75rem;
-  color: #555;
 }
 </style>

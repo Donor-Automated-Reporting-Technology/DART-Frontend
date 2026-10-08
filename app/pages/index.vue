@@ -19,7 +19,7 @@
         </nav>
         <div class="nav-actions">
           <ThemeToggle class="nav-theme" />
-          <NuxtLink to="/login" class="btn btn-ink">Sign in</NuxtLink>
+          <NuxtLink to="/register" class="btn btn-ink">Get started</NuxtLink>
         </div>
       </header>
 

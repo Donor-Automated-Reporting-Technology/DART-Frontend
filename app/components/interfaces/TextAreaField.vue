@@ -9,7 +9,7 @@
         :placeholder="placeholder"
         :disabled="disabled"
         :maxlength="maxlength"
-        rows="4"
+        :rows="rows ?? 4"
         @blur="$emit('blur', $event)"
       ></textarea>
     </div>
@@ -35,6 +35,7 @@ const props = defineProps<{
   required?: boolean;
   error?: string;
   maxlength?: number;
+  rows?: number;
 }>();
 
 const emit = defineEmits(['update:modelValue', 'blur']);

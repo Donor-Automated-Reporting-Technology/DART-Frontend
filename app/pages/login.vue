@@ -1,76 +1,45 @@
 <template>
-  <div class="login-page">
-    <div class="auth-toggle"><ThemeToggle /></div>
-    <div class="form-section">
-      <div class="form-container">
+  <AuthShell headline="Welcome back." lead="Pick up where your team left off: sessions, attendance and donor reports in one place.">
+    <h1 class="title">Log in</h1>
+    <p class="subtitle">Use the work email your organisation registered with.</p>
 
-        <div class="brand-header">
-          <NuxtLink to="/" class="logo-link" aria-label="WellReach home">
-            <WellReachMark :size="52" />
-            <h1 class="logo">Well<span>Reach</span></h1>
-          </NuxtLink>
-          <h2 class="tagline">Welcome Back!</h2>
-        </div>
+    <ErrorModal
+      :is-open="!!apiError"
+      :message="apiError"
+      @update:is-open="$event ? null : apiError = ''"
+    />
 
-        <div class="form-box">
-          <div class="form-header">
-            <h3>Good to see you again</h3>
-            <h2>Log In to your Account</h2>
-          </div>
+    <form class="auth-form" novalidate @submit.prevent="handleLogin">
+      <InputField
+        id="email"
+        v-model="email"
+        type="email"
+        label="Email"
+        placeholder="you@organisation.org"
+        :error="errors.email"
+        required
+        autofocus
+      />
+      <PasswordInput
+        id="password"
+        v-model="password"
+        label="Password"
+        placeholder="Your password"
+        :error="errors.password"
+        required
+      />
+      <button type="submit" class="submit" :disabled="isSubmitting">
+        <span v-if="isSubmitting" class="spinner" />
+        {{ isSubmitting ? 'Logging in…' : 'Log in' }}
+      </button>
+    </form>
 
-          <ErrorModal
-            :is-open="!!apiError"
-            :message="apiError"
-            @update:is-open="$event ? null : apiError = ''"
-          />
-
-          <form @submit.prevent="handleLogin" class="login-form" novalidate>
-            <InputField
-              id="email"
-              type="email"
-              v-model="email"
-              label="Email Address"
-              placeholder="you@organisation.org"
-              :error="errors.email"
-              required
-              autofocus
-            />
-
-            <PasswordInput
-              id="password"
-              v-model="password"
-              label="Password"
-              placeholder="********"
-              :error="errors.password"
-              required
-            />
-
-            <button
-              type="submit"
-              class="submit-btn"
-              :disabled="isSubmitting"
-            >
-              <span v-if="isSubmitting" class="spinner"></span>
-              {{ isSubmitting ? 'Logging in...' : 'Log In' }}
-            </button>
-          </form>
-
-          <p class="register-link">
-            Don't have an account? <NuxtLink to="/register">Create one</NuxtLink>
-          </p>
-        </div>
-
-        <div class="footer-copy">
-          &copy; 2026 WellReach. All rights reserved.
-        </div>
-      </div>
-    </div>
-  </div>
+    <p class="switch">New to WellReach? <NuxtLink to="/register">Get started</NuxtLink></p>
+  </AuthShell>
 </template>
 
 <script setup lang="ts">
-import WellReachMark from '../components/brand/WellReachMark.vue';
-import ThemeToggle from '../components/brand/ThemeToggle.vue';
+import AuthShell from '../components/brand/AuthShell.vue';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
@@ -187,148 +156,31 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-.login-page {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  background-color: var(--bg-dark);
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1rem;
-}
-
-.form-section {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
-.form-container {
-  width: 100%;
-  max-width: 450px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.brand-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.auth-toggle {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-}
-
-.logo-link {
+.title { margin: 0; font-family: Sora, system-ui, sans-serif; font-weight: 700; font-size: 26px; letter-spacing: -0.02em; color: var(--text-primary); }
+.subtitle { margin: 6px 0 28px; font-size: 15px; color: var(--text-secondary); }
+.auth-form { display: flex; flex-direction: column; gap: 4px; }
+.submit {
+  margin-top: 10px;
+  min-height: 46px;
   display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  text-decoration: none;
-}
-
-.logo {
-  font-size: 2.4rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin: 0 0 0.25rem 0;
-  letter-spacing: -0.02em;
-}
-
-.logo span {
-  color: var(--primary);
-}
-
-.tagline {
-  font-size: 1.25rem;
-  font-weight: 500;
-  color: var(--primary);
-  margin: 0;
-}
-
-.form-box {
-  background-color: var(--bg-panel);
-  border: 1px solid var(--border-color);
-  padding: 2.5rem;
-  border-radius: 12px;
-  width: 100%;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-}
-
-.form-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.form-header h3 {
-  font-size: 1rem;
-  color: var(--text-secondary);
-  font-weight: 400;
-  margin-bottom: 0.5rem;
-}
-
-.form-header h2 {
-  font-size: 1.75rem;
-  color: var(--text-primary);
-  font-weight: 600;
-  margin: 0;
-}
-
-.submit-btn {
-  width: 100%;
-  padding: 1rem;
-  background-color: var(--primary);
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
-  margin-top: 1.5rem;
-  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 8px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #fff;
+  font: 700 15px Manrope, system-ui, sans-serif;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(14, 124, 102, 0.22);
+  transition: transform 0.1s, filter 0.15s;
 }
-
-.submit-btn:hover:not(:disabled) {
-  filter: brightness(0.9);
-}
-
-.submit-btn:disabled {
-  background-color: #555;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-left-color: #fff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.register-link {
-  text-align: center;
-  margin-top: 2rem;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-
-.footer-copy {
-  text-align: center;
-  margin-top: 2rem;
-  font-size: 0.75rem;
-  color: #555;
-}
+.submit:hover:not(:disabled) { filter: brightness(1.05); }
+.submit:active:not(:disabled) { transform: translateY(1px); }
+.submit:disabled { opacity: 0.7; cursor: wait; }
+.spinner { width: 16px; height: 16px; border: 2px solid rgba(255, 255, 255, 0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.switch { margin: 24px 0 0; font-size: 14px; color: var(--text-secondary); }
+.switch a { color: var(--primary); font-weight: 700; text-decoration: none; }
+.switch a:hover { text-decoration: underline; }
 </style>
