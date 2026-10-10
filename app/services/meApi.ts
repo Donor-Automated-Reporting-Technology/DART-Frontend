@@ -25,6 +25,8 @@ export interface Me {
   role: MeRole | null
   locations: { id: string; name: string }[]
   must_change_password: boolean
+  /** Has a tablet PIN (used on the shared CFS tablet). */
+  has_pin: boolean
 }
 
 function resolveToken(): string | undefined {
@@ -58,6 +60,8 @@ export const meApi = {
     request<Me>(`${BASE_URL}/me/email`, { method: 'PUT', body: JSON.stringify(body) }),
   changePassword: (body: { current_password: string; new_password: string; confirm_password: string }) =>
     request<void>(`${BASE_URL}/me/password`, { method: 'PUT', body: JSON.stringify(body) }),
+  changePin: (body: { current_password: string; pin: string }) =>
+    request<void>(`${BASE_URL}/me/pin`, { method: 'PUT', body: JSON.stringify(body) }),
 }
 
 /** Human labels for a role's data scope. */

@@ -38,6 +38,13 @@
           </div>
           <p class="done-text">They sign in with <strong>{{ result.user.email }}</strong> and will be asked to choose their own password.</p>
         </template>
+        <div v-if="result.pin" class="temp">
+          <span class="temp-label">Tablet PIN</span>
+          <code class="temp-value">{{ result.pin }}</code>
+        </div>
+        <p v-if="result.pin" class="done-text">
+          On the CFS tablet they tap their name and enter this PIN before they record.{{ result.email_sent ? ' It is in their email too.' : '' }}
+        </p>
       </div>
 
       <!-- ── Form ─────────────────────────────────────────────────── -->

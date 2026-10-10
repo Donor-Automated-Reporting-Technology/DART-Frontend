@@ -40,6 +40,8 @@ export interface OrgUser {
   location_name: string | null
   /** Still using a temporary password. */
   must_change_password: boolean
+  /** Has a tablet PIN (used on the shared CFS tablet). */
+  has_pin: boolean
 }
 
 /** One person's profile and what the signed-in user may do with it. */
@@ -56,6 +58,15 @@ export interface InviteResult {
   user: OrgUser
   email_sent: boolean
   temporary_password?: string
+  /** New accounts: their tablet PIN, shown to whoever added them. */
+  pin?: string
+}
+
+/** A new tablet PIN, shown once; also emailed when possible. */
+export interface PinResult {
+  user: OrgUser
+  pin: string
+  email_sent: boolean
 }
 
 export interface RoleInput {
@@ -99,6 +110,8 @@ export const accessApi = {
   /** show: do not email the new password; return it once to pass on in person. */
   resetPassword: (id: string, show = false) =>
     request<InviteResult>(`${BASE_URL}/users/${id}/reset-password`, { method: 'POST', body: JSON.stringify({ show }) }),
+  /** New random tablet PIN for someone you manage. */
+  resetPin: (id: string) => request<PinResult>(`${BASE_URL}/users/${id}/reset-pin`, { method: 'POST' }),
   user: (id: string) => request<UserProfile>(`${BASE_URL}/users/${id}`),
   updateUser: (id: string, body: { full_name: string; email: string; phone: string }) =>
     request<UserProfile>(`${BASE_URL}/users/${id}`, { method: 'PUT', body: JSON.stringify(body) }),

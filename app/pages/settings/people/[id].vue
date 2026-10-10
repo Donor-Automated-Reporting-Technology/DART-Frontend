@@ -33,6 +33,7 @@
             <div><dt>Account</dt><dd>{{ user.is_active ? 'Active' : 'Deactivated' }}</dd></div>
             <div><dt>Last signed in</dt><dd>{{ user.last_login_at ? formatDate(user.last_login_at) : 'Not yet' }}</dd></div>
             <div v-if="user.must_change_password"><dt>Password</dt><dd>Temporary — they choose their own at next sign-in</dd></div>
+            <div><dt>Tablet PIN</dt><dd>{{ user.has_pin ? 'Set' : 'Not set' }}</dd></div>
           </dl>
           <p v-if="!profile?.can_edit" class="ui-help note">
             {{ isSelf ? 'This is you. Change your own details in My account.' : 'You can view this person but not change them.' }}
@@ -133,6 +134,37 @@
             <p class="ui-help">They sign in with {{ user.email ?? 'their email' }} and this password, then choose their own.</p>
           </div>
           <p v-else-if="pwNote" class="ui-help" role="status">{{ pwNote }}</p>
+        </section>
+
+        <!-- Tablet PIN -->
+        <section v-if="profile?.can_edit" class="card ui-form" aria-labelledby="pin-h">
+          <div class="ui-section-head">
+            <h2 id="pin-h">Tablet PIN</h2>
+            <p>The 4-digit PIN they enter on the shared CFS tablet before recording, so the work is saved under their name. It does not sign in to the website.</p>
+          </div>
+
+          <p v-if="pinAlert" class="ui-alert" role="alert"><AppIcon name="alert-circle" :size="16" /><span>{{ pinAlert }}</span></p>
+
+          <div class="choices">
+            <div class="choice">
+              <div>
+                <p class="choice-title">{{ user.has_pin ? 'Give them a new PIN' : 'Give them a PIN' }}</p>
+                <p class="ui-help">For a forgotten PIN, or one someone else knows. Shown here once{{ user.email ? ' and emailed to them' : '' }}. Tablets use it after their next sync.</p>
+              </div>
+              <button type="button" class="ui-btn ui-btn--outline" :disabled="pinBusy" @click="resetPin">
+                New tablet PIN
+              </button>
+            </div>
+          </div>
+
+          <div v-if="newPin" class="temp" role="status">
+            <p class="choice-title">Tablet PIN (shown once)</p>
+            <code class="temp-code">{{ newPin }}</code>
+            <div class="temp-actions">
+              <button type="button" class="ui-btn ui-btn--text" @click="newPin = ''">Hide</button>
+            </div>
+            <p class="ui-help">{{ pinEmailed ? `Also emailed to ${user.email}.` : 'Give it to them in person or by phone.' }}</p>
+          </div>
         </section>
 
         <!-- Access -->
@@ -292,6 +324,30 @@ async function copyTemp() {
     copied.value = true
   } catch {
     // Clipboard blocked: the password is on screen to read out.
+  }
+}
+
+// ── Tablet PIN ───────────────────────────────────────────────────────────────
+const pinBusy = ref(false)
+const pinAlert = ref('')
+const newPin = ref('')
+const pinEmailed = ref(false)
+
+async function resetPin() {
+  if (!user.value) return
+  if (user.value.has_pin && !window.confirm(`Give ${user.value.full_name} a new tablet PIN? Their old PIN stops working on the tablet after its next sync.`)) return
+  pinBusy.value = true
+  pinAlert.value = ''
+  newPin.value = ''
+  try {
+    const res = await accessApi.resetPin(id.value)
+    setUser(res.user)
+    newPin.value = res.pin
+    pinEmailed.value = res.email_sent
+  } catch (e) {
+    pinAlert.value = message(e)
+  } finally {
+    pinBusy.value = false
   }
 }
 

@@ -3,7 +3,7 @@
     <div class="account">
       <header class="head">
         <h1 class="title">My account</h1>
-        <p class="subtitle">Your details, sign-in email and password.</p>
+        <p class="subtitle">Your details, sign-in email, password and tablet PIN.</p>
       </header>
 
       <div v-if="loading" class="card skeleton" aria-busy="true" aria-label="Loading your account" />
@@ -159,6 +159,52 @@
 
           <div class="actions">
             <SaveButton :busy="pwSaving" :done="pwDone" label="Change password" done-label="Password changed" />
+          </div>
+        </form>
+
+        <!-- Tablet PIN -->
+        <!-- Only for people working at a CFS, where the tablet is. -->
+        <form v-if="me.locations.length || me.has_pin" class="card ui-form" novalidate aria-labelledby="pin-h" @submit.prevent="savePin">
+          <div class="ui-section-head">
+            <h2 id="pin-h">Tablet PIN</h2>
+            <p>
+              The 4-digit PIN you enter on the shared CFS tablet before recording, so the work is saved under your name.
+              {{ me.has_pin ? 'You have a PIN.' : 'You don’t have one yet.' }} Tablets use a new PIN after their next sync.
+            </p>
+          </div>
+
+          <div class="ui-field">
+            <label class="ui-label" for="pin-new">New PIN</label>
+            <input
+              id="pin-new" v-model="pin.pin" class="ui-input pin-input" type="password" inputmode="numeric" pattern="[0-9]*"
+              maxlength="4" autocomplete="off" placeholder="4 digits"
+              :aria-invalid="pinErr.pin ? 'true' : undefined" aria-describedby="pin-new-help pin-new-error"
+              @blur="pnv.onBlur('pin')"
+            >
+            <p id="pin-new-help" class="ui-help">Not all the same digit and not a run like 1234.</p>
+            <FieldError id="pin-new-error" :message="pinErr.pin" />
+          </div>
+
+          <div class="ui-field">
+            <label class="ui-label" for="pin-pass">Current password</label>
+            <div class="ui-password">
+              <input
+                id="pin-pass" v-model="pin.current_password" class="ui-input"
+                :type="showPinPass ? 'text' : 'password'" name="current_password"
+                autocomplete="current-password" placeholder="To confirm it's you"
+                :aria-invalid="pinErr.current_password ? 'true' : undefined"
+                :aria-describedby="pinErr.current_password ? 'pin-pass-error' : undefined"
+                @blur="pnv.onBlur('current_password')"
+              >
+              <RevealButton v-model="showPinPass" controls="pin-pass" />
+            </div>
+            <FieldError id="pin-pass-error" :message="pinErr.current_password" />
+          </div>
+
+          <p v-if="pinAlert" class="ui-alert" role="alert"><AppIcon name="alert-circle" :size="16" /><span>{{ pinAlert }}</span></p>
+
+          <div class="actions">
+            <SaveButton :busy="pinSaving" :done="pinDone" :label="me.has_pin ? 'Change PIN' : 'Set PIN'" done-label="PIN saved" />
           </div>
         </form>
       </template>
@@ -362,6 +408,49 @@ async function savePassword() {
   }
 }
 
+// ── Tablet PIN ───────────────────────────────────────────────────────────────
+const pin = reactive({ pin: '', current_password: '' })
+const pinErr = reactive<Record<string, string>>({})
+const pinAlert = ref('')
+const pinSaving = ref(false)
+const pinDone = ref(false)
+const showPinPass = ref(false)
+
+// Same rule as the API: 4 digits, not all the same, not a straight run.
+function validPin(v: string) {
+  if (!/^\d{4}$/.test(v)) return false
+  const steps = [1, 2, 3].map(i => v.charCodeAt(i) - v.charCodeAt(i - 1))
+  return !steps.every(d => d === 0) && !steps.every(d => d === 1) && !steps.every(d => d === -1)
+}
+function validatePin() {
+  replace(pinErr, {})
+  if (!validPin(pin.pin)) pinErr.pin = 'Use 4 digits that are not all the same or in a row (like 1234)'
+  if (!pin.current_password) pinErr.current_password = 'Enter your current password'
+  return Object.keys(pinErr).length === 0
+}
+const pnv = useBlurValidation({
+  get: () => pinErr, set: n => replace(pinErr, n), validate: validatePin,
+  value: f => pin[f as keyof typeof pin], fields: ['pin', 'current_password'],
+})
+
+async function savePin() {
+  pinAlert.value = ''
+  if (!validatePin()) return
+  pinSaving.value = true
+  try {
+    await meApi.changePin({ ...pin })
+    if (me.value) me.value = { ...me.value, has_pin: true }
+    pin.pin = ''
+    pin.current_password = ''
+    replace(pinErr, {})
+    flash(pinDone)
+  } catch (e) {
+    pinAlert.value = applyServerError(e, pinErr, ['pin', 'current_password'])
+  } finally {
+    pinSaving.value = false
+  }
+}
+
 // ── Load ─────────────────────────────────────────────────────────────────────
 onMounted(async () => {
   try {
@@ -382,6 +471,7 @@ onMounted(async () => {
 <style scoped>
 .account { max-width: 640px; display: flex; flex-direction: column; gap: 24px; padding-bottom: 48px; }
 .head { margin-bottom: 8px; }
+.pin-input { max-width: 160px; letter-spacing: 0.4em; }
 .title { margin: 0; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; color: var(--text-primary); }
 .subtitle { margin: 4px 0 0; font-size: 0.9375rem; color: var(--text-quiet); }
 
