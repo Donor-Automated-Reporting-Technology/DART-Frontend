@@ -79,7 +79,7 @@
           <legend class="ui-label">{{ locLegend }}</legend>
           <p id="inv-loc-help" class="ui-help">{{ locHelp }}</p>
           <p v-if="loadingLocs" class="ui-help">Loading CFS…</p>
-          <p v-else-if="!locations.length" class="ui-help">No CFS yet. Add them in Settings → Locations.</p>
+          <p v-else-if="!locations.length" class="ui-help">{{ ownCfsOnly ? 'You are not assigned to a CFS yet. Ask an admin to assign you.' : 'No CFS yet. Add them in Settings → Locations.' }}</p>
           <div v-if="locations.length > 6" class="ui-field">
             <label class="visually-hidden" for="inv-loc-search">Find a CFS</label>
             <input id="inv-loc-search" v-model="locQuery" class="ui-input" type="search" placeholder="Find a CFS" autocomplete="off">
@@ -92,6 +92,9 @@
             </label>
           </div>
           <p v-if="multiLoc && form.cfs_location_ids.length" class="ui-help">{{ form.cfs_location_ids.length }} selected</p>
+          <p v-if="scope === 'supervised_locations' && form.cfs_location_ids.length > 1" class="ui-help">
+            We advise one CFS per supervisor, so each CFS has someone who is there every day. More than one still works.
+          </p>
           <FieldError id="inv-loc-error" :message="errs.cfs_location_ids" />
         </fieldset>
 
@@ -120,6 +123,7 @@
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { accessApi, type InviteResult, type OrgRole, type Scope } from '../../services/accessApi'
 import { beneficiaryApi, type OrgLocation } from '../../services/beneficiaryApi'
+import { meApi } from '../../services/meApi'
 import { ApiError } from '../../services/api'
 import { useAuthStore } from '../../stores/auth'
 import FieldError from '../interfaces/FieldError.vue'
@@ -143,6 +147,9 @@ const loadingLocs = ref(true)
 const locQuery = ref('')
 
 const myLevel = computed(() => auth.orgRole?.level ?? 100)
+// Supervisors (and any role that is not organisation-wide) can only add
+// people to the CFS they work with, so only those CFS are offered.
+const ownCfsOnly = computed(() => !!auth.orgRole && auth.orgRole.scope !== 'organisation')
 const assignableRoles = computed(() => roles.value.filter(r => r.level < myLevel.value))
 const role = computed(() => roles.value.find(r => r.id === form.role_id))
 const scope = computed<Scope | undefined>(() => role.value?.scope)
@@ -259,7 +266,15 @@ function close() {
 onMounted(async () => {
   focusFirst()
   accessApi.roles().then(d => { roles.value = d.roles }).catch(() => { alert.value = 'Could not load roles.' }).finally(() => { loadingRoles.value = false })
-  beneficiaryApi.listLocations().then(l => { locations.value = l }).catch(() => {}).finally(() => { loadingLocs.value = false })
+  try {
+    const [all, me] = await Promise.all([beneficiaryApi.listLocations(), ownCfsOnly.value ? meApi.get() : null])
+    const mine = me ? new Set(me.locations.map(l => l.id)) : null
+    locations.value = mine ? all.filter(l => mine.has(l.id)) : all
+  } catch {
+    // The CFS step shows its empty message.
+  } finally {
+    loadingLocs.value = false
+  }
 })
 </script>
 

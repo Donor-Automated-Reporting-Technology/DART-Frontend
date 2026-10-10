@@ -405,7 +405,7 @@ definePageMeta({
   // Remount when moving between levels (impact → outcome → output).
   key: (r) => r.fullPath,
   middleware: ['auth', 'role-guard'],
-  allowedRoles: ['org_admin', 'data_manager', 'program_manager', 'supervisor', 'case_worker', 'facilitator', 'director'],
+  allowedRoles: ['org_admin', 'data_manager', 'program_manager', 'case_worker', 'facilitator', 'director'],
   permission: 'logframe.view',
 })
 

@@ -10,7 +10,7 @@
             <p class="page-subtitle">{{ list.total.value }} registered</p>
           </div>
           <div class="header-actions">
-            <button class="btn-secondary" @click="list.exportExcel" title="Export to Excel">
+            <button v-if="canExport" class="btn-secondary" @click="list.exportExcel" title="Export to Excel">
               <AppIcon name="download" :size="14" />
               <span class="btn-text">Export</span>
             </button>
@@ -22,7 +22,7 @@
               <AppIcon name="users" :size="14" />
               <span class="btn-text">Enroll to PSS</span>
             </NuxtLink>
-            <NuxtLink to="/beneficiaries/register" class="btn-primary">
+            <NuxtLink v-if="canRegister" to="/beneficiaries/register" class="btn-primary">
               <AppIcon name="user-plus" :size="14" />
               <span class="btn-text">Register New</span>
             </NuxtLink>
@@ -114,6 +114,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useBeneficiaryList } from '../../composables/useBeneficiaryList'
 import { useLocationStore } from '../../stores/location'
+import { useAuthStore } from '../../stores/auth'
 import BeneficiaryTable from '../../components/beneficiaries/BeneficiaryTable.vue'
 import BeneficiarySkeleton from '../../components/beneficiaries/BeneficiarySkeleton.vue'
 import FilterBar from '../../components/beneficiaries/FilterBar.vue'
@@ -125,6 +126,12 @@ definePageMeta({
 })
 
 const list = useBeneficiaryList()
+
+// Buttons follow the role's permissions (Settings → Roles). Before the role
+// has loaded once, they stay visible and the server decides.
+const authStore = useAuthStore()
+const canRegister = computed(() => !authStore.orgRole || authStore.can('beneficiaries.register'))
+const canExport = computed(() => !authStore.orgRole || authStore.can('data.export'))
 const locationStore = useLocationStore()
 
 // ── Drawer state ──────────────────────────────────────────────────────────────

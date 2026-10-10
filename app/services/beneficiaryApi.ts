@@ -34,6 +34,48 @@ async function request<T>(url: string, options: RequestInit = {}, token?: string
   return (data?.data !== undefined ? data.data : data) as T
 }
 
+/** Full beneficiary record from `GET /cfs/beneficiaries/:id`. */
+export interface BeneficiaryProfile {
+  id: string
+  personal_name: string
+  father_name: string
+  grandfather_name?: string | null
+  family_name?: string | null
+  age_at_registration: number
+  sex: string
+  language: string
+  disability_status: string
+  beneficiary_type: string
+  guardian_name?: string | null
+  guardian_phone?: string | null
+  known_medical_issues?: string | null
+  known_learning_difficulties?: string | null
+  additional_notes?: string | null
+  primero_case_id?: string | null
+  cfs_location?: { id: string; name: string } | null
+  registration_date: string
+  is_enrolled: boolean
+  updated_at: string
+}
+
+/** The fields the profile screen can change (`PUT /cfs/beneficiaries/:id`). */
+export interface BeneficiaryProfileInput {
+  personal_name: string
+  father_name: string
+  grandfather_name?: string
+  family_name?: string
+  age_at_registration: number
+  sex: string
+  language: string
+  disability_status: string
+  guardian_name: string
+  guardian_phone?: string
+  known_medical_issues?: string
+  known_learning_difficulties?: string
+  additional_notes?: string
+  primero_case_id?: string
+}
+
 export interface OrgLocation {
   id: string
   name: string
@@ -42,6 +84,16 @@ export interface OrgLocation {
 }
 
 export const beneficiaryApi = {
+  /** One beneficiary's full profile, if the signed-in user can see them. */
+  async get(id: string, token?: string): Promise<BeneficiaryProfile> {
+    return request<BeneficiaryProfile>(`${BASE_URL}/cfs/beneficiaries/${id}`, { method: 'GET' }, token)
+  },
+
+  /** Corrects a beneficiary's profile. Needs the beneficiaries.edit permission. */
+  async update(id: string, payload: BeneficiaryProfileInput, token?: string): Promise<BeneficiaryProfile> {
+    return request<BeneficiaryProfile>(`${BASE_URL}/cfs/beneficiaries/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, token)
+  },
+
   /** Every location (CFS or other site) in the organisation — any role may read it. */
   async listLocations(token?: string): Promise<OrgLocation[]> {
     return request<OrgLocation[]>(`${BASE_URL}/cfs/org-locations`, { method: 'GET' }, token)

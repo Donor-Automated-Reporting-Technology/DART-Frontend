@@ -390,7 +390,7 @@ const iv = useInlineValidation()
 definePageMeta({
   layout: false,
   middleware: ['auth', 'role-guard'],
-  allowedRoles: ['org_admin', 'data_manager', 'program_manager', 'supervisor', 'case_worker', 'facilitator', 'director'],
+  allowedRoles: ['org_admin', 'data_manager', 'program_manager', 'case_worker', 'facilitator', 'director'],
   permission: 'logframe.view',
 })
 

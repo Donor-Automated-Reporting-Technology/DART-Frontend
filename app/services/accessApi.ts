@@ -33,8 +33,22 @@ export interface OrgUser {
   role_id: string | null
   role_name: string | null
   role_level: number | null
+  /** Every CFS the person is assigned to. One person is always one record. */
+  locations: { id: string; name: string }[]
+  /** The first of `locations` (older screens). */
   location_id: string | null
   location_name: string | null
+  /** Still using a temporary password. */
+  must_change_password: boolean
+}
+
+/** One person's profile and what the signed-in user may do with it. */
+export interface UserProfile {
+  user: OrgUser
+  /** Change name, phone, role and active state. */
+  can_edit: boolean
+  /** Change the sign-in email and set a temporary password shown on screen. */
+  can_recover: boolean
 }
 
 /** email_sent false: the temporary password is returned once to share another way. */
@@ -82,8 +96,12 @@ export const accessApi = {
   setUserRole: (id: string, roleId: string) => request<OrgUser>(`${BASE_URL}/users/${id}/role`, { method: 'PUT', body: JSON.stringify({ role_id: roleId }) }),
   invite: (body: { full_name: string; email: string; role_id: string; cfs_location_ids: string[] }) =>
     request<InviteResult>(`${BASE_URL}/users`, { method: 'POST', body: JSON.stringify(body) }),
-  resetPassword: (id: string) =>
-    request<InviteResult>(`${BASE_URL}/users/${id}/reset-password`, { method: 'POST' }),
+  /** show: do not email the new password; return it once to pass on in person. */
+  resetPassword: (id: string, show = false) =>
+    request<InviteResult>(`${BASE_URL}/users/${id}/reset-password`, { method: 'POST', body: JSON.stringify({ show }) }),
+  user: (id: string) => request<UserProfile>(`${BASE_URL}/users/${id}`),
+  updateUser: (id: string, body: { full_name: string; email: string; phone: string }) =>
+    request<UserProfile>(`${BASE_URL}/users/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   setUserActive: (id: string, active: boolean) => request<OrgUser>(`${BASE_URL}/users/${id}/active`, { method: 'PUT', body: JSON.stringify({ is_active: active }) }),
 }
 

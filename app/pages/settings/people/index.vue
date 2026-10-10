@@ -33,8 +33,8 @@
         <li v-for="u in filtered" :key="u.id" class="person" :class="{ inactive: !u.is_active }">
           <span class="avatar" aria-hidden="true">{{ initials(u.full_name) }}</span>
           <span class="who">
-            <span class="name">{{ u.full_name }}<span v-if="u.id === auth.userId" class="tag">You</span><span v-if="!u.is_active" class="tag">Deactivated</span></span>
-            <span class="meta">{{ u.email ?? u.phone ?? '' }}<template v-if="u.location_name"> · {{ u.location_name }}</template></span>
+            <span class="name"><NuxtLink :to="`/settings/people/${u.id}`" class="name-link">{{ u.full_name }}</NuxtLink><span v-if="u.id === auth.userId" class="tag">You</span><span v-if="!u.is_active" class="tag">Deactivated</span></span>
+            <span class="meta">{{ u.email ?? u.phone ?? '' }}<template v-if="u.locations.length"> · {{ locationNames(u) }}</template></span>
             <span class="meta">{{ u.last_login_at ? `Last signed in ${formatDate(u.last_login_at)}` : 'Has not signed in yet' }}</span>
           </span>
 
@@ -71,13 +71,13 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { accessApi, type OrgRole, type OrgUser, type Scope } from '../../services/accessApi'
-import { ApiError } from '../../services/api'
-import { useAuthStore } from '../../stores/auth'
-import InviteStaffDialog from '../../components/people/InviteStaffDialog.vue'
-import type { InviteResult } from '../../services/accessApi'
+import { accessApi, type OrgRole, type OrgUser, type Scope } from '../../../services/accessApi'
+import { ApiError } from '../../../services/api'
+import { useAuthStore } from '../../../stores/auth'
+import InviteStaffDialog from '../../../components/people/InviteStaffDialog.vue'
+import type { InviteResult } from '../../../services/accessApi'
 
-definePageMeta({ layout: false, middleware: ['auth', 'role-guard'], allowedRoles: ['org_admin', 'program_manager'], permission: 'people.view' })
+definePageMeta({ layout: false, middleware: ['auth', 'role-guard'], allowedRoles: ['org_admin', 'program_manager', 'supervisor'], permission: 'people.view' })
 useHead({ title: 'People · WellReach' })
 
 const auth = useAuthStore()
@@ -125,10 +125,11 @@ const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
   if (!q) return users.value
   return users.value.filter(u =>
-    [u.full_name, u.email, u.phone, u.role_name, u.location_name].some(v => v?.toLowerCase().includes(q)),
+    [u.full_name, u.email, u.phone, u.role_name, locationNames(u)].some(v => v?.toLowerCase().includes(q)),
   )
 })
 
+const locationNames = (u: OrgUser) => u.locations.map(l => l.name).join(', ')
 const initials = (n: string) => n.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]!.toUpperCase()).join('')
 const formatDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
 
@@ -210,6 +211,8 @@ onMounted(async () => {
 .meta { font-size: 0.8125rem; color: var(--text-secondary); overflow-wrap: anywhere; }
 .tag { margin-left: 8px; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; border: 1px solid var(--border-color); color: var(--text-secondary); }
 .controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.name-link { color: inherit; text-decoration: none; }
+.name-link:hover, .name-link:focus-visible { color: var(--primary); text-decoration: underline; }
 .role-select { width: 220px; min-height: 40px; }
 .controls .ui-btn { min-height: 40px; padding: 0 16px; }
 .role-pill { padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border-color); font-size: 0.875rem; color: var(--text-primary); }

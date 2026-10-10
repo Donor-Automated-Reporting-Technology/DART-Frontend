@@ -39,7 +39,7 @@
 
             <!-- Name -->
             <td class="cell-name">
-              <span class="name-primary" :title="formatName(b)">{{ formatName(b) }}</span>
+              <NuxtLink :to="`/beneficiaries/${b.id}`" class="name-primary name-link" :title="formatName(b)">{{ formatName(b) }}</NuxtLink>
               <span class="name-secondary" :title="b.guardian_name ? `Guardian: ${b.guardian_name}` : b.id">{{ b.guardian_name ? `Guardian: ${b.guardian_name}` : `ID: ${b.id.slice(0, 8)}` }}</span>
             </td>
 
@@ -86,7 +86,7 @@
             </div>
           </div>
           <div class="card-primary">
-            <span class="card-name">{{ formatName(b) }}</span>
+            <NuxtLink :to="`/beneficiaries/${b.id}`" class="card-name name-link">{{ formatName(b) }}</NuxtLink>
             <div class="card-meta">
               <span class="meta-tag">Age {{ b.age_at_registration }}</span>
               <span class="meta-tag meta-tag--gender">{{ formatGender(b.sex) }}</span>
@@ -247,6 +247,8 @@ function avatarColor(b: Beneficiary): string {
   max-width: 220px;
 }
 
+.name-link { text-decoration: none; }
+.name-link:hover, .name-link:focus-visible { text-decoration: underline; }
 .name-primary {
   font-size: 0.86rem;
   font-weight: 600;

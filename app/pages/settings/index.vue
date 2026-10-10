@@ -57,8 +57,9 @@ const legacy: Record<string, string[]> = {
   'org.manage': ['org_admin', 'program_manager'],
   'locations.manage': ['org_admin', 'program_manager'],
   'projects.manage': ['org_admin', 'program_manager'],
-  'logframe.view': ['org_admin', 'program_manager', 'data_manager', 'supervisor', 'director'],
-  'people.view': ['org_admin', 'program_manager'],
+  'logframe.view': ['org_admin', 'program_manager', 'data_manager', 'director'],
+  'people.view': ['org_admin', 'program_manager', 'supervisor'],
+  'people.assign_locations': ['org_admin', 'program_manager'],
   'roles.manage': ['org_admin'],
   'data.export': ['org_admin', 'program_manager', 'data_manager'],
 }
@@ -73,9 +74,10 @@ const groups: { key: string; title: string; cards: Card[] }[] = [
   ] },
   { key: 'people', title: 'People & access', cards: [
     { to: '/settings/people', icon: 'users', title: 'People', desc: 'Who has which role, and who can sign in.', any: ['people.view'] },
-    { to: '/staff', icon: 'user-plus', title: 'Staff', desc: 'Add staff and assign them to CFS locations.', any: ['people.manage'],
-      // The staff API is still admin-only; supervisors get it in the next phase.
-      show: () => auth.userRole === 'org_admin' },
+    { to: '/staff', icon: 'user-plus', title: 'Staff', desc: 'Add staff and assign them to CFS locations.', any: ['people.assign_locations'],
+      // The Staff page works across every CFS, so it needs a role that sees
+      // the whole organisation. Others add people in People, for their own CFS.
+      show: () => (auth.orgRole ? auth.orgRole.scope === 'organisation' : auth.userRole === 'org_admin') },
     { to: '/settings/roles', icon: 'shield', title: 'Roles & permissions', desc: 'Name your roles, set their level, data scope and permissions.', any: ['roles.manage'] },
   ] },
   { key: 'programmes', title: 'Programmes & M&E', cards: [
