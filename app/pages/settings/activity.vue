@@ -8,22 +8,24 @@
   >
     <div class="activity-page">
       <header class="head">
-        <h1 class="title">Activity log</h1>
-        <p class="subtitle">
-          Who did what, when, and from where. On a shared tablet it shows the person who entered their PIN.
-          Nothing here can be changed or deleted.
-        </p>
+        <div>
+          <h1 class="title">Activity log</h1>
+          <p class="subtitle">
+            Who did what, when, on which device and from which network. Select an entry to see the device and a map of the
+            internet provider. Entries cannot be changed or deleted.
+          </p>
+        </div>
       </header>
 
       <!-- Needs a look -->
       <section v-if="flags.length || reviewedOpen" class="flags" aria-labelledby="flags-title">
         <div class="section-head">
           <h2 id="flags-title" class="section-title">
-            <AppIcon name="flag" :size="18" />
+            <AppIcon name="flag" :size="16" />
             {{ reviewedOpen ? 'Reviewed' : 'Needs a look' }}
             <span v-if="!reviewedOpen" class="count">{{ flags.length }}</span>
           </h2>
-          <button type="button" class="ui-btn ui-btn--text" @click="toggleReviewed">
+          <button type="button" class="link-btn" @click="toggleReviewed">
             {{ reviewedOpen ? 'Back to what needs a look' : 'Show reviewed' }}
           </button>
         </div>
@@ -45,92 +47,132 @@
               </span>
             </span>
             <span class="controls">
-              <button v-if="f.user_id" type="button" class="ui-btn ui-btn--outline" @click="showFlagActivity(f)">See activity</button>
-              <button v-if="!f.reviewed_at" type="button" class="ui-btn ui-btn--primary" @click="askReview(f)">Mark reviewed</button>
+              <button v-if="f.user_id" type="button" class="ui-btn ui-btn--outline sm" @click="showFlagActivity(f)">See activity</button>
+              <button v-if="!f.reviewed_at" type="button" class="ui-btn ui-btn--primary sm" @click="askReview(f)">Mark reviewed</button>
             </span>
           </li>
         </ul>
       </section>
 
       <!-- Filters -->
-      <section class="filters" aria-label="Filter the activity log">
-        <div class="chips" role="group" aria-label="What">
+      <section class="toolbar" aria-label="Filter the activity log">
+        <div class="tabs" role="group" aria-label="What">
           <button
-            v-for="g in groupOptions" :key="g.value" type="button" class="chip"
+            v-for="g in groupOptions" :key="g.value" type="button" class="tab"
             :class="{ on: filters.group === g.value }" :aria-pressed="filters.group === g.value"
             @click="setGroup(g.value)"
           >{{ g.label }}</button>
         </div>
         <div class="filter-row">
-          <div class="ui-field">
-            <label class="ui-label" for="f-person">Person</label>
-            <select id="f-person" v-model="filters.user_id" class="ui-select" @change="reload">
+          <label class="field">
+            <span class="field-label">Person</span>
+            <select v-model="filters.user_id" class="ui-select" @change="reload">
               <option value="">Everyone</option>
               <option v-for="p in people" :key="p.id" :value="p.id">{{ p.full_name }}</option>
             </select>
-          </div>
-          <div v-if="tablets.length" class="ui-field">
-            <label class="ui-label" for="f-tablet">Tablet</label>
-            <select id="f-tablet" v-model="filters.device_id" class="ui-select" @change="reload">
+          </label>
+          <label v-if="tablets.length" class="field">
+            <span class="field-label">Tablet</span>
+            <select v-model="filters.device_id" class="ui-select" @change="reload">
               <option value="">Any</option>
               <option v-for="t in tablets" :key="t.id" :value="t.id">{{ t.name }}</option>
             </select>
-          </div>
-          <div class="ui-field">
-            <label class="ui-label" for="f-from">From</label>
-            <input id="f-from" v-model="filters.from" type="date" class="ui-input" @change="reload">
-          </div>
-          <div class="ui-field">
-            <label class="ui-label" for="f-to">To</label>
-            <input id="f-to" v-model="filters.to" type="date" class="ui-input" @change="reload">
-          </div>
-          <label class="check">
-            <input v-model="filters.out_of_hours" type="checkbox" @change="reload">
-            Outside working hours (before 7:00 or after 19:00)
+          </label>
+          <label class="field">
+            <span class="field-label">From</span>
+            <input v-model="filters.from" type="date" class="ui-input" :max="filters.to || undefined" @change="reload">
+          </label>
+          <label class="field">
+            <span class="field-label">To</span>
+            <input v-model="filters.to" type="date" class="ui-input" :min="filters.from || undefined" @change="reload">
           </label>
         </div>
-        <button v-if="filtered" type="button" class="ui-btn ui-btn--text clear" @click="clearFilters">Clear filters</button>
+        <div class="toolbar-foot">
+          <label class="toggle">
+            <input v-model="filters.out_of_hours" type="checkbox" @change="reload">
+            <span>Only outside working hours (before 7:00 or after 19:00)</span>
+          </label>
+          <button v-if="filtered" type="button" class="link-btn" @click="clearFilters">Clear filters</button>
+        </div>
       </section>
 
       <p v-if="loadError" class="ui-alert" role="alert"><AppIcon name="alert-circle" :size="16" /><span>{{ loadError }}</span></p>
 
-      <div v-if="loading && !entries.length" class="skeleton" aria-busy="true" aria-label="Loading the activity log" />
+      <div v-if="loading && !entries.length" class="skeleton" aria-busy="true" aria-label="Loading the activity log">
+        <span v-for="n in 6" :key="n" class="skeleton-row" />
+      </div>
 
-      <p v-else-if="!loadError && !entries.length" class="empty">Nothing matches these filters.</p>
+      <div v-else-if="!loadError && !entries.length" class="empty">
+        <AppIcon name="search" :size="20" />
+        <p>Nothing matches these filters.</p>
+      </div>
 
       <template v-else-if="!loadError">
-        <p class="total">{{ total.toLocaleString() }} {{ total === 1 ? 'entry' : 'entries' }}</p>
-        <ol class="log" :aria-busy="loading">
-          <li v-for="e in entries" :key="e.id" class="entry" :class="{ refused: refusedActions.has(e.action) }">
-            <span class="when">
-              <span class="day">{{ dayLabel(e.at) }}</span>
-              <span class="hour">{{ timeOnly(e.at) }}</span>
-            </span>
-            <span class="what">
-              <span class="label">
-                <AppIcon v-if="refusedActions.has(e.action)" name="alert-triangle" :size="14" />
-                {{ e.label }}
-              </span>
-              <span v-if="e.details" class="meta">{{ e.details }}</span>
-              <span class="meta">
-                <strong>{{ e.user_name ?? 'Deleted account' }}</strong>
-                <template v-if="e.recorded_by_name"> · recorded for {{ e.recorded_by_name }} (PIN)</template>
-              </span>
-            </span>
-            <span class="where">
-              <span>{{ e.client === 'app' ? (e.device_name ?? 'App') : e.client === 'web' ? 'Website' : '—' }}</span>
-              <span v-if="e.ip_address" class="ip">{{ e.ip_address }}</span>
-            </span>
-          </li>
-        </ol>
+        <p class="total">{{ total.toLocaleString() }} {{ total === 1 ? 'entry' : 'entries' }}<template v-if="pages > 1"> · page {{ page }} of {{ pages }}</template></p>
+
+        <div class="days" :aria-busy="loading">
+          <section v-for="day in days" :key="day.key" class="day" :aria-label="day.label">
+            <h2 class="day-label">{{ day.label }}</h2>
+            <ul class="log">
+              <li v-for="e in day.entries" :key="e.id">
+                <button type="button" class="entry" :class="tone(e)" @click="selected = e">
+                  <span class="entry-icon"><AppIcon :name="kindIcon(e)" :size="16" /></span>
+                  <span class="entry-main">
+                    <span class="entry-line">
+                      <strong>{{ e.user_name ?? 'Deleted account' }}</strong>{{ ' ' }}<span class="entry-label">{{ lower(e.label) }}</span>
+                    </span>
+                    <span class="entry-meta">
+                      <span v-if="e.recorded_by_name" class="pill">PIN: {{ e.recorded_by_name }}</span>
+                      <span v-if="e.details" class="detail">{{ e.details }}</span>
+                    </span>
+                    <span class="entry-source">
+                      <span class="src">
+                        <AppIcon :name="deviceIcon(e.device)" :size="13" />
+                        {{ e.device ? (e.device.kind === 'app' ? (e.device.tablet_name ?? 'WellReach app') : e.device.summary) : (e.client === 'app' ? (e.device_name ?? 'App') : 'Website') }}
+                      </span>
+                      <span v-if="e.location && placeShort(e.location)" class="src">
+                        <span v-if="countryFlag(e.location.country_code)" aria-hidden="true">{{ countryFlag(e.location.country_code) }}</span>
+                        <AppIcon v-else name="globe" :size="13" />
+                        {{ placeShort(e.location) }}
+                      </span>
+                      <span v-else-if="e.ip_address" class="src mono">{{ e.ip_address }}</span>
+                    </span>
+                  </span>
+                  <span class="entry-time">{{ timeOnly(e.at) }}</span>
+                  <AppIcon name="chevron-right" :size="16" class="entry-chev" />
+                </button>
+              </li>
+            </ul>
+          </section>
+        </div>
 
         <nav v-if="pages > 1" class="pager" aria-label="Pages">
-          <button type="button" class="ui-btn ui-btn--outline" :disabled="page <= 1 || loading" @click="go(page - 1)">Newer</button>
+          <button type="button" class="ui-btn ui-btn--outline" :disabled="page <= 1 || loading" @click="go(page - 1)">
+            <AppIcon name="chevron-left" :size="16" /> Newer
+          </button>
           <span>Page {{ page }} of {{ pages }}</span>
-          <button type="button" class="ui-btn ui-btn--outline" :disabled="page >= pages || loading" @click="go(page + 1)">Older</button>
+          <button type="button" class="ui-btn ui-btn--outline" :disabled="page >= pages || loading" @click="go(page + 1)">
+            Older <AppIcon name="chevron-right" :size="16" />
+          </button>
         </nav>
       </template>
     </div>
+
+    <!-- One entry -->
+    <DetailDrawer :open="!!selected" :title="selected ? selected.label : ''" eyebrow="Activity" @close="selected = null">
+      <template v-if="selected">
+        <dl class="summary">
+          <div><dt>Who</dt><dd>{{ selected.user_name ?? 'Deleted account' }}</dd></div>
+          <div v-if="selected.recorded_by_name"><dt>Recorded for (PIN)</dt><dd>{{ selected.recorded_by_name }}</dd></div>
+          <div><dt>When</dt><dd>{{ fullDate(selected.at) }}</dd></div>
+          <div v-if="selected.details" class="wide"><dt>Details</dt><dd>{{ selected.details }}</dd></div>
+        </dl>
+        <RequestSource :ip="selected.ip_address" :device="selected.device" :location="selected.location" />
+        <button v-if="selected.user_id" type="button" class="ui-btn ui-btn--outline" @click="onlyThisPerson(selected)">
+          See everything by {{ selected.user_name ?? 'this person' }}
+        </button>
+      </template>
+    </DetailDrawer>
 
     <!-- Mark reviewed -->
     <div v-if="reviewing" class="overlay" @mousedown.self="reviewing = null">
@@ -160,6 +202,9 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { activityLogApi, type ActivityEntry, type ActivityFlag, type ActivityGroup } from '../../services/activityLogApi'
 import { accessApi } from '../../services/accessApi'
 import { deviceApi } from '../../services/deviceApi'
+import DetailDrawer from '../../components/audit/DetailDrawer.vue'
+import RequestSource from '../../components/audit/RequestSource.vue'
+import { countryFlag, deviceIcon, placeShort } from '../../utils/requestSource'
 
 definePageMeta({ layout: false, middleware: ['auth', 'role-guard'], allowedRoles: ['org_admin'], permission: 'activity.view' })
 
@@ -191,6 +236,49 @@ const tablets = ref<{ id: string; name: string }[]>([])
 const flags = ref<ActivityFlag[]>([])
 const reviewedOpen = ref(false)
 
+// ── Entries ────────────────────────────────────────────────────────────────
+const selected = ref<ActivityEntry | null>(null)
+
+/** Entries of the page, one group per day, newest first. */
+const days = computed(() => {
+  const out: { key: string; label: string; entries: ActivityEntry[] }[] = []
+  for (const e of entries.value) {
+    const key = new Date(e.at).toDateString()
+    const last = out[out.length - 1]
+    if (last?.key === key) last.entries.push(e)
+    else out.push({ key, label: dayHeading(e.at), entries: [e] })
+  }
+  return out
+})
+
+const adminActions = /role|staff|invite|user|device|permission|password|access/
+function kindIcon(e: ActivityEntry): string {
+  if (refusedActions.has(e.action)) return 'alert-triangle'
+  if (e.action === 'login') return 'log-in'
+  if (e.action === 'logout') return 'log-out'
+  if (e.action.startsWith('viewed')) return 'eye'
+  if (e.action === 'data_exported') return 'download'
+  if (e.action === 'personal_details_removed' || e.action.includes('delete')) return 'trash'
+  if (adminActions.test(e.action)) return 'shield'
+  return 'pencil'
+}
+function tone(e: ActivityEntry): string {
+  if (refusedActions.has(e.action)) return 'tone-refused'
+  if (e.action === 'data_exported' || e.action === 'personal_details_removed') return 'tone-notice'
+  return ''
+}
+/** "Downloaded an Excel file" → "downloaded an Excel file", after the name. */
+const lower = (label: string) => label.charAt(0).toLowerCase() + label.slice(1)
+
+function onlyThisPerson(e: ActivityEntry) {
+  selected.value = null
+  if (e.user_id && !people.value.some(p => p.id === e.user_id)) {
+    people.value = [...people.value, { id: e.user_id, full_name: e.user_name ?? 'Unknown' }]
+  }
+  Object.assign(filters, { group: '', user_id: e.user_id ?? '', device_id: '' })
+  reload()
+}
+
 // ── Dates ──────────────────────────────────────────────────────────────────
 const timeOnly = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
 function dayLabel(iso: string) {
@@ -201,6 +289,14 @@ function dayLabel(iso: string) {
   if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
   return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: d.getFullYear() === today.getFullYear() ? undefined : 'numeric' })
 }
+function dayHeading(iso: string) {
+  const label = dayLabel(iso)
+  if (label === 'Today' || label === 'Yesterday') return label
+  return new Date(iso).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+}
+const fullDate = (iso: string) => new Date(iso).toLocaleString(undefined, {
+  weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short',
+})
 const when = (iso: string) => `${dayLabel(iso).toLowerCase() === 'today' ? 'today' : dayLabel(iso)} ${timeOnly(iso)}`
 const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
@@ -315,59 +411,107 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.activity-page { max-width: 1000px; display: flex; flex-direction: column; gap: 24px; padding-bottom: 48px; }
+.activity-page { max-width: 960px; display: flex; flex-direction: column; gap: 24px; padding-bottom: 48px; }
 .title { margin: 0; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; color: var(--text-primary); }
-.subtitle { margin: 4px 0 0; max-width: 65ch; font-size: 0.9375rem; color: var(--text-quiet); }
-.empty { margin: 0; padding: 24px; text-align: center; color: var(--text-quiet); background: var(--bg-panel); border: 1px dashed var(--border-color); border-radius: 12px; }
-.skeleton { height: 240px; border-radius: 12px; background: var(--bg-panel); border: 1px solid var(--border-color); }
-.meta { font-size: 0.875rem; color: var(--text-quiet); }
+.subtitle { margin: 6px 0 0; max-width: 68ch; font-size: 0.9375rem; line-height: 1.5; color: var(--text-secondary); }
+.meta { font-size: 0.8125rem; color: var(--text-secondary); }
+.link-btn { border: 0; background: none; padding: 4px 0; color: var(--link, var(--primary)); font-size: 0.875rem; cursor: pointer; }
+.link-btn:hover { text-decoration: underline; }
+.ui-btn.sm { min-height: 34px; padding: 0 12px; font-size: 0.8125rem; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+.empty {
+  margin: 0; padding: 40px 24px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+  color: var(--text-secondary); background: var(--bg-panel); border: 1px dashed var(--border-color); border-radius: 16px;
+}
+.empty p { margin: 0; }
 
 /* Needs a look */
-.section-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
-.section-title { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 1.0625rem; font-weight: 600; color: var(--text-primary); }
-.count { font-size: 0.75rem; font-weight: 700; min-width: 22px; padding: 2px 7px; text-align: center; border-radius: 999px; background: var(--error, #dc2626); color: #fff; }
+.flags { display: flex; flex-direction: column; gap: 10px; }
+.section-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.section-title { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 1rem; font-weight: 600; color: var(--text-primary); }
+.count { font-size: 0.75rem; font-weight: 700; min-width: 22px; padding: 2px 7px; text-align: center; border-radius: 999px; background: var(--error-text); color: #fff; }
 .flag-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.flag { display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap; padding: 14px 16px; background: var(--bg-panel); border: 1px solid var(--border-color); border-left-width: 4px; border-radius: 12px; }
-.flag.high { border-left-color: var(--error, #dc2626); }
-.flag.medium { border-left-color: var(--warning, #b45309); }
-.flag.low { border-left-color: var(--border-color); }
-.sev { flex: none; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--hover-bg); color: var(--text-quiet); }
-.sev.high { background: rgba(220, 38, 38, 0.12); color: var(--error, #dc2626); }
-.sev.medium { background: var(--warning-bg, rgba(245, 158, 11, 0.12)); color: var(--warning, #b45309); }
+.flag { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 16px; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 14px; }
+.flag.high { background: color-mix(in srgb, var(--error) 6%, var(--bg-panel)); border-color: color-mix(in srgb, var(--error) 30%, var(--border-color)); }
+.flag.medium { background: color-mix(in srgb, var(--warning) 6%, var(--bg-panel)); border-color: color-mix(in srgb, var(--warning) 30%, var(--border-color)); }
+.sev { flex: none; align-self: flex-start; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: var(--hover-bg); color: var(--text-secondary); }
+.sev.high { background: color-mix(in srgb, var(--error) 14%, transparent); color: var(--error-text); }
+.sev.medium { background: var(--warning-bg); color: color-mix(in srgb, var(--warning) 70%, var(--text-primary)); }
 .flag-body { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 2px; }
 .flag-title { font-weight: 600; color: var(--text-primary); }
 .flag-text { color: var(--text-primary); font-size: 0.9375rem; }
 .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
 /* Filters */
-.filters { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; }
-.chips { display: flex; gap: 6px; flex-wrap: wrap; }
-.chip { border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); padding: 6px 12px; border-radius: 999px; font-size: 0.875rem; cursor: pointer; }
-.chip.on { background: var(--primary); border-color: var(--primary); color: #fff; }
-.filter-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; }
-.filter-row .ui-field { margin: 0; }
-.check { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: var(--text-primary); grid-column: 1 / -1; }
-.clear { align-self: flex-start; }
+.toolbar { display: flex; flex-direction: column; gap: 14px; padding: 16px; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 16px; }
+.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding: 3px; margin: -3px; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex: none; border: 1px solid transparent; background: transparent; color: var(--text-secondary);
+  padding: 7px 12px; border-radius: 10px; font-size: 0.875rem; cursor: pointer; white-space: nowrap;
+}
+.tab:hover { background: var(--hover-bg); color: var(--text-primary); }
+.tab.on { background: var(--primary-dim); color: var(--link, var(--primary)); border-color: color-mix(in srgb, var(--primary) 30%, transparent); font-weight: 600; }
+.tab:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.filter-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field-label { font-size: 0.8125rem; color: var(--text-secondary); }
+.toolbar-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 0.875rem; color: var(--text-primary); cursor: pointer; }
 
 /* Log */
-.total { margin: 0; font-size: 0.875rem; color: var(--text-quiet); }
-.log { list-style: none; margin: 0; padding: 0; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; }
-.log[aria-busy='true'] { opacity: 0.6; }
-.entry { display: grid; grid-template-columns: 96px 1fr minmax(120px, 200px); gap: 16px; padding: 12px 16px; border-top: 1px solid var(--border-color); }
-.entry:first-child { border-top: 0; }
-.when { display: flex; flex-direction: column; font-size: 0.8125rem; color: var(--text-quiet); }
-.hour { font-variant-numeric: tabular-nums; color: var(--text-primary); font-weight: 500; }
-.what { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.label { color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
-.entry.refused .label { color: var(--error, #dc2626); }
-.where { display: flex; flex-direction: column; font-size: 0.8125rem; color: var(--text-quiet); text-align: right; overflow-wrap: anywhere; }
-.ip { font-variant-numeric: tabular-nums; }
-.pager { display: flex; justify-content: center; align-items: center; gap: 16px; color: var(--text-quiet); font-size: 0.875rem; }
+.total { margin: 0; font-size: 0.8125rem; color: var(--text-secondary); }
+.skeleton { display: flex; flex-direction: column; gap: 1px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border-color); }
+.skeleton-row { height: 68px; background: var(--bg-panel); opacity: 0.7; animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.35; } }
+.days { display: flex; flex-direction: column; gap: 20px; }
+.days[aria-busy='true'] { opacity: 0.6; }
+.day { display: flex; flex-direction: column; gap: 8px; }
+.day-label { margin: 0; padding: 0 4px; font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); }
+.log { list-style: none; margin: 0; padding: 0; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden; }
+.log li + li .entry { border-top: 1px solid var(--border-color); }
+.entry {
+  width: 100%; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto 16px; align-items: center; gap: 14px;
+  padding: 14px 16px; border: 0; background: transparent; text-align: left; color: inherit; font: inherit; cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.entry:hover { background: var(--hover-bg); }
+.entry:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.entry-icon {
+  width: 36px; height: 36px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--hover-bg); color: var(--text-secondary);
+}
+.tone-refused .entry-icon { background: color-mix(in srgb, var(--error) 12%, transparent); color: var(--error-text); }
+.tone-notice .entry-icon { background: var(--primary-dim); color: var(--link, var(--primary)); }
+.entry-main { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.entry-line { font-size: 0.9375rem; color: var(--text-primary); line-height: 1.35; }
+.entry-line strong { font-weight: 600; }
+.tone-refused .entry-label { color: var(--error-text); }
+.entry-meta:empty { display: none; }
+.entry-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 0.8125rem; color: var(--text-secondary); }
+.pill { padding: 1px 8px; border-radius: 999px; background: var(--hover-bg); font-size: 0.75rem; }
+.detail { overflow-wrap: anywhere; }
+.entry-source { display: flex; gap: 6px 14px; flex-wrap: wrap; font-size: 0.8125rem; color: var(--text-secondary); }
+.src { display: inline-flex; align-items: center; gap: 5px; min-width: 0; overflow-wrap: anywhere; }
+.entry-time { font-size: 0.8125rem; font-variant-numeric: tabular-nums; color: var(--text-secondary); align-self: start; padding-top: 2px; }
+.entry-chev { color: var(--text-secondary); opacity: 0.6; }
+.pager { display: flex; justify-content: center; align-items: center; gap: 16px; color: var(--text-secondary); font-size: 0.875rem; }
+.pager .ui-btn { display: inline-flex; align-items: center; gap: 4px; }
+
+/* Drawer content */
+.summary { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+.summary .wide { grid-column: 1 / -1; }
+.summary dt { font-size: 0.8125rem; color: var(--text-secondary); }
+.summary dd { margin: 2px 0 0; font-size: 0.9375rem; color: var(--text-primary); overflow-wrap: anywhere; }
 
 @media (max-width: 640px) {
-  .entry { grid-template-columns: 1fr; gap: 4px; }
-  .when { flex-direction: row; gap: 6px; }
-  .where { text-align: left; flex-direction: row; gap: 8px; }
+  .entry { grid-template-columns: 32px minmax(0, 1fr) auto; gap: 12px; padding: 12px; }
+  .entry-icon { width: 32px; height: 32px; }
+  .entry-chev { display: none; }
+  .flag { align-items: flex-start; }
+  .controls { width: 100%; }
+  .summary { grid-template-columns: 1fr; }
 }
 
 /* Dialog */

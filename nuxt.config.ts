@@ -32,8 +32,14 @@ export default defineNuxtConfig({
       routes: ['/'],
     },
   },
-  routeRules: {
-    '/api/**': {      proxy: process.env.API_BASE_URL ? `${process.env.API_BASE_URL}/**` : (process.env.NODE_ENV === 'production' ? 'https://api.wellreach.sswoco.org/api/**' : 'http://localhost:8090/api/**') }
+  // /api/** is passed on to the API by server/routes/api/[...path].ts, which
+  // adds the visitor's real IP address for the activity log.
+  runtimeConfig: {
+    apiBaseUrl: process.env.API_BASE_URL
+      || (process.env.NODE_ENV === 'production' ? 'https://api.wellreach.sswoco.org/api' : 'http://localhost:8090/api'),
+    // Shared with the API (its WEB_PROXY_SECRET). Server only; set it on
+    // Vercel as NUXT_WEB_PROXY_SECRET.
+    webProxySecret: '',
   },
   pwa: {
     registerType: 'autoUpdate',

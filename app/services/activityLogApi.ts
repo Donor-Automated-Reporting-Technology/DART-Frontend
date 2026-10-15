@@ -28,6 +28,40 @@ export interface ActivityEntry {
   device_name: string | null
   ip_address: string | null
   client: 'web' | 'app' | null
+  /** What the person used (missing on entries from before it was recorded). */
+  device?: RequestDevice
+  /** The internet provider of ip_address and its approximate place. */
+  location?: RequestLocation
+}
+
+/** The browser and system, or the tablet, a request came from. */
+export interface RequestDevice {
+  kind: 'web' | 'app'
+  /** One line, e.g. "Chrome 141 on Windows". */
+  summary: string
+  type?: 'desktop' | 'phone' | 'tablet' | 'bot'
+  browser?: string
+  browser_version?: string
+  os?: string
+  os_version?: string
+  tablet_name?: string
+  model?: string
+  app_version?: string
+  user_agent?: string
+}
+
+/** Where an IP address is registered: the provider and its approximate place. */
+export interface RequestLocation {
+  /** A home, office or server network address: no place to show. */
+  private: boolean
+  city?: string
+  region?: string
+  country?: string
+  country_code?: string
+  latitude?: number
+  longitude?: number
+  provider?: string
+  asn?: number
 }
 
 export interface ActivityQuery {

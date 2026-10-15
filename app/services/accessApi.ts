@@ -3,6 +3,7 @@
  */
 import { getActivePinia } from 'pinia'
 import { ApiError } from './api'
+import type { RequestDevice, RequestLocation } from './activityLogApi'
 
 const BASE_URL = '/api/v1'
 
@@ -83,6 +84,10 @@ export interface SharingRegisterEntry {
   purpose: string
   recipient: string
   agreement: string
+  /** Where the file was downloaded from (missing on older entries). */
+  ip_address?: string
+  device?: RequestDevice
+  location?: RequestLocation
 }
 
 export interface SharingRegisterPage {
