@@ -62,6 +62,7 @@ const legacy: Record<string, string[]> = {
   'people.assign_locations': ['org_admin', 'program_manager'],
   'roles.manage': ['org_admin'],
   'devices.manage': ['org_admin'],
+  'activity.view': ['org_admin'],
   'data.export': ['org_admin', 'program_manager', 'data_manager'],
 }
 const can = (perm: string) =>
@@ -81,6 +82,9 @@ const groups: { key: string; title: string; cards: Card[] }[] = [
       // the whole organisation. Others add people in People, for their own CFS.
       show: () => (auth.orgRole ? auth.orgRole.scope === 'organisation' : auth.userRole === 'org_admin') },
     { to: '/settings/roles', icon: 'shield', title: 'Roles & permissions', desc: 'Name your roles, set their level, data scope and permissions.', any: ['roles.manage'] },
+    { to: '/settings/activity', icon: 'activity', title: 'Activity log', desc: 'Who did what, when and from which tablet; activity that needs a look.', any: ['activity.view'],
+      // The log covers the whole organisation.
+      show: () => (auth.orgRole ? auth.orgRole.scope === 'organisation' : auth.userRole === 'org_admin') },
   ] },
   { key: 'programmes', title: 'Programmes & M&E', cards: [
     { to: '/settings/projects', icon: 'layers', title: 'Projects & logframe', desc: 'Projects, activities, impacts, indicators and targets.', any: ['projects.manage', 'logframe.view'] },
