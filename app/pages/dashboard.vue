@@ -105,19 +105,15 @@ async function handleSync() {
     }
   }
 
-  syncStatus.value = 'Pulling beneficiaries\u2026'
+  // Uploaded children are not kept in the browser.
   await pullBeneficiaries()
 
-  const pullEntry = syncLog.value.find(l => l.startsWith('Pulled'))
-  const pullCount = pullEntry?.match(/(\d+)/)?.[1] ?? '0'
-
   const details: string[] = []
-  if (parseInt(pullCount) > 0) details.push(`${pullCount} beneficiaries synced for offline use`)
   if (pushed.length) details.push(...pushed)
   if (!details.length) details.push('Everything is up to date')
 
   syncToast.value = {
-    type: parseInt(pullCount) > 0 || pushed.length ? 'sync-toast--success' : 'sync-toast--info',
+    type: pushed.length ? 'sync-toast--success' : 'sync-toast--info',
     title: 'Sync Complete',
     details,
   }

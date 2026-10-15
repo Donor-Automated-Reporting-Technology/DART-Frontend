@@ -61,7 +61,9 @@ const legacy: Record<string, string[]> = {
   'people.view': ['org_admin', 'program_manager', 'supervisor'],
   'people.assign_locations': ['org_admin', 'program_manager'],
   'roles.manage': ['org_admin'],
-  'data.export': ['org_admin', 'program_manager', 'data_manager'],
+  'data.export': ['org_admin', 'data_manager'],
+  'data.sharing_register': ['org_admin', 'director'],
+  'beneficiaries.remove': ['org_admin'],
 }
 const can = (perm: string) =>
   auth.orgRole ? auth.can(perm) : (legacy[perm] ?? []).includes(auth.userRole ?? '')
@@ -84,7 +86,9 @@ const groups: { key: string; title: string; cards: Card[] }[] = [
     { to: '/settings/projects', icon: 'layers', title: 'Projects & logframe', desc: 'Projects, activities, impacts, indicators and targets.', any: ['projects.manage', 'logframe.view'] },
   ] },
   { key: 'reports', title: 'Reports & data', cards: [
-    { to: '/reports', icon: 'download', title: 'Reports & downloads', desc: 'Download project and activity data (Excel).', any: ['data.export'] },
+    { to: '/reports', icon: 'download', title: 'Reports & downloads', desc: 'Counts without names, and lists with names for the download role (Excel).', any: ['data.export', 'reports.view'] },
+    { to: '/settings/sharing-register', icon: 'file-text', title: 'Sharing register', desc: 'Every Excel download: who, when and, for lists with names, why and to whom.', any: ['data.sharing_register'] },
+    { to: '/settings/retention', icon: 'clock', title: 'Retention period', desc: 'How long personal details are kept after a person’s last activity before they are removed.', any: ['beneficiaries.remove'] },
   ] },
 ]
 

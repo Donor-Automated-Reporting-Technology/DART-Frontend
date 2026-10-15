@@ -1,3 +1,4 @@
+import { requestNamedExport } from './namedExport';
 import { getActivePinia } from 'pinia';
 import { ApiError } from './api';
 import type {
@@ -264,37 +265,9 @@ export const cfsApi = {
 
   /**
    * 15. Export Beneficiaries (Excel download)
-   * Downloads the beneficiaries database as an Excel file.
-   * Admin only.
+   * Named export: asks for the reason, then downloads a password-protected file.
    */
-  async exportBeneficiaries(token?: string): Promise<void> {
-    const resolved = resolveToken(token);
-    const headers: Record<string, string> = {
-      ...(resolved ? { Authorization: `Bearer ${resolved}` } : {}),
-    };
-
-    const response = await fetch(`${BASE}/cfs/beneficiaries/export`, { method: 'GET', headers });
-
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new ApiError(response.status, data?.message ?? 'Export failed', data);
-    }
-
-    const blob = await response.blob();
-    const disposition = response.headers.get('Content-Disposition');
-    let filename = 'beneficiaries.xlsx';
-    if (disposition) {
-      const match = disposition.match(/filename[^;=\n]*=\s*"?([^";\n]+)"?/);
-      if (match?.[1]) filename = match[1];
-    }
-
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+  async exportBeneficiaries(): Promise<void> {
+    return requestNamedExport(`${BASE}/cfs/beneficiaries/export`, 'beneficiaries.xlsx');
   },
 };

@@ -8,6 +8,7 @@
           <div>
             <h1 class="page-title">Beneficiaries</h1>
             <p class="page-subtitle">{{ list.total.value }} registered</p>
+            <p v-if="route.query.removed" class="ui-help" role="status">Personal details removed. The person no longer appears in any list.</p>
           </div>
           <div class="header-actions">
             <button v-if="canExport" class="btn-secondary" @click="list.exportExcel" title="Export to Excel">
@@ -112,6 +113,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+const route = useRoute()
 import { useBeneficiaryList } from '../../composables/useBeneficiaryList'
 import { useLocationStore } from '../../stores/location'
 import { useAuthStore } from '../../stores/auth'

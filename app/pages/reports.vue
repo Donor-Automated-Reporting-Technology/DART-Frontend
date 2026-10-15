@@ -41,13 +41,13 @@
             </button>
 
             <ul v-if="open[sec.key]" class="rp-rows">
-              <li v-for="row in sec.rows" :key="row.key" class="rp-row" :class="{ 'rp-row--wide': row.key === 'beneficiaries' }">
+              <li v-for="row in sec.rows" :key="row.key" class="rp-row" :class="{ 'rp-row--wide': row.key === 'beneficiary-counts' }">
                 <span class="rp-kind" :class="row.kind === 'Excel' ? 'rp-kind--excel' : ''">{{ row.kind }}</span>
                 <span class="rp-row-text">
                   <span class="rp-row-title">{{ row.title }}</span>
                   <span class="tu-muted">{{ row.description }}</span>
                 </span>
-                <template v-if="row.key === 'beneficiaries'">
+                <template v-if="row.key === 'beneficiary-counts'">
                   <label for="rp-loc" class="sr-only">Location</label>
                   <select id="rp-loc" v-model="locationId" class="tu-select rp-loc">
                     <option value="">All locations</option>
@@ -67,7 +67,7 @@
           </section>
         </div>
 
-        <p v-if="!canExport" class="tu-muted">Excel data downloads are for admins, programme managers and M&amp;E.</p>
+        <p v-if="!canExport" class="tu-muted">Excel lists with names are for the role SSWOCO chose (M&amp;E by default).</p>
         <p v-if="sections.length === 0" class="tu-muted">This project has no reporting activities yet.</p>
       </template>
     </div>
@@ -80,6 +80,7 @@ import { useAuthStore } from '../stores/auth'
 import { frameworkApi } from '../services/frameworkApi'
 import { beneficiaryApi, type OrgLocation } from '../services/beneficiaryApi'
 import { canDownloadData, downloadFile } from '../services/teamupApi'
+import { downloadCounts } from '../services/namedExport'
 import { cohortProgramOf } from '../utils/cohortPrograms'
 import { isPssActivityCode, isPssActivityName } from '../utils/activityConfig'
 
@@ -89,7 +90,7 @@ interface ProjectActivity { id: string; name: string; code: string; module: stri
 interface Project { id: string; name: string; activities: ProjectActivity[] }
 
 const auth = useAuthStore()
-const canExport = computed(() => canDownloadData(auth.userRole))
+const canExport = computed(() => (auth.orgRole ? auth.can('data.export') : canDownloadData(auth.userRole)))
 
 const projects = ref<Project[]>([])
 const projectId = ref('')
@@ -125,21 +126,28 @@ const sections = computed<ReportSection[]>(() => {
   if (!p) return []
   const out: ReportSection[] = []
 
+  // Counts hold no names, so anyone who sees reports can download them.
+  // Lists with names need the download permission, a reason and a password.
+  const dataRows: ReportRow[] = [
+    { key: 'beneficiary-counts', kind: 'Excel', title: 'Beneficiary counts (no names)', description: 'Totals per location by sex, age group and disability. Safe to share. The location chosen here also applies to the list with names.',
+      run: downloadBeneficiaryCounts },
+  ]
   if (canExport.value) {
-    out.push({
-      key: 'project',
-      title: 'Project & beneficiaries',
-      subtitle: 'Whole-project data in the DRA database format',
-      icon: 'layers',
-      iconClass: 'rp-icon--excel',
-      rows: [
-        { key: 'project', kind: 'Excel', title: 'Project database', description: 'Activities, beneficiaries from every location and a sheet per activity.',
-          run: () => download('project', `/api/v1/frameworks/${p.id}/export`, 'project.xlsx') },
-        { key: 'beneficiaries', kind: 'Excel', title: 'Beneficiaries', description: 'Everyone registered, with location and attendance.',
-          run: downloadBeneficiaries },
-      ],
-    })
+    dataRows.push(
+      { key: 'project', kind: 'Excel', title: 'Project database (with names)', description: 'Activities, beneficiaries from every location and a sheet per activity. Asks for a reason; password-protected.',
+        run: () => download('project', `/api/v1/frameworks/${p.id}/export`, 'project.xlsx') },
+      { key: 'beneficiaries', kind: 'Excel', title: 'Beneficiary list (with names)', description: 'Everyone registered, with location and attendance. Asks for a reason; password-protected.',
+        run: downloadBeneficiaries },
+    )
   }
+  out.push({
+    key: 'project',
+    title: 'Project & beneficiaries',
+    subtitle: 'Counts to share, and whole-project data in the DRA database format',
+    icon: 'layers',
+    iconClass: 'rp-icon--excel',
+    rows: dataRows,
+  })
 
   let pssAdded = false
   for (const a of p.activities) {
@@ -195,8 +203,22 @@ async function download(key: string, url: string, filename: string) {
   }
 }
 
+const locationQuery = () => (locationId.value ? `?cfs_location_id=${locationId.value}` : '')
+
+async function downloadBeneficiaryCounts() {
+  busy.value = 'beneficiary-counts'
+  error.value = null
+  try {
+    await downloadCounts(`/api/v1/beneficiaries/export/counts${locationQuery()}`, 'beneficiary_counts.xlsx')
+  } catch (e: any) {
+    error.value = e?.message ?? 'Download failed'
+  } finally {
+    busy.value = ''
+  }
+}
+
 const downloadBeneficiaries = () =>
-  download('beneficiaries', `/api/v1/beneficiaries/export${locationId.value ? `?cfs_location_id=${locationId.value}` : ''}`, 'beneficiaries.xlsx')
+  download('beneficiaries', `/api/v1/beneficiaries/export${locationQuery()}`, 'beneficiaries.xlsx')
 
 async function loadActivities(p: Project) {
   if (p.activities.length) return

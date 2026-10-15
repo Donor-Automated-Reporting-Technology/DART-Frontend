@@ -15,6 +15,7 @@
  * middleware checks `accessToken` it is already populated — no redirect loop.
  */
 
+import { redactUploadedChildren } from '../utils/localChildData'
 import type { Pinia } from 'pinia'
 import { useAuthStore } from '../stores/auth'
 
@@ -47,8 +48,11 @@ export default defineNuxtPlugin({
     //    middleware runs — prevents Pinia's SSR hydration from wiping state.
     authStore.restoreFromStorage()
 
-    // If the restored token is still valid (not expired), skip the refresh
-    // call entirely. This keeps the user logged in offline and on hard refresh.
+    // Blank any children's details an older version left in this browser.
+    void redactUploadedChildren()
+
+    // The token lives in memory only, so after a reload it is gone and is
+    // fetched again from the httpOnly refresh cookie below.
     if (authStore.hasValidToken()) return
 
     // Token missing or expired — try a silent refresh via httpOnly cookie.

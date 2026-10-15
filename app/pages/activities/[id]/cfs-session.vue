@@ -187,7 +187,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { activityApi } from '../../../services/activityApi'
 import type { AttendanceBeneficiary } from '../../../services/activityApi'
-import { getBeneficiariesOffline, saveSessionOffline, saveAttendanceRecordsOffline } from '../../../services/offlineDb'
+import { saveSessionOffline, saveAttendanceRecordsOffline } from '../../../services/offlineDb'
 import { useAuthStore } from '../../../stores/auth'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -253,17 +253,10 @@ async function fetchBeneficiaries() {
   error.value = null
   try {
     if (!navigator.onLine) {
-      const offline = await getBeneficiariesOffline()
-      rows.value = offline.map(b => ({
-        id: b.serverId ?? b.id,
-        full_name: [b.personalName, b.fatherName, b.grandfatherName, b.familyName]
-          .filter(Boolean).join(' '),
-        age: b.ageAtRegistration,
-        sex: b.sex,
-        disability_status: b.disabilityStatus,
-        already_present: false,
-        selected: false,
-      }))
+      // The browser keeps no list of children; offline attendance is taken
+      // on the CFS tablet.
+      rows.value = []
+      error.value = 'No connection. Take attendance on the CFS tablet, or reconnect to load the children.'
       return
     }
     const list = await activityApi.getAttendanceBeneficiaries()

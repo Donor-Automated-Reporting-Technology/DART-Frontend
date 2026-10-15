@@ -1,3 +1,4 @@
+import { clearLocalChildData } from '../utils/localChildData';
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import type { FrameworkActivity, Framework } from '../interfaces/framework'
@@ -6,11 +7,11 @@ import type { FrameworkActivity, Framework } from '../interfaces/framework'
  * Auth store
  *
  * Holds the authentication state for the current session.
- * The access token is persisted to localStorage so the user stays logged in
- * across page refreshes and while offline, as long as the JWT hasn't expired.
- * On page refresh the Nuxt plugin first checks the stored token's `exp` claim;
- * if valid, it skips the network refresh call entirely (offline-safe).
- * If expired, it attempts POST /api/v1/auth/refresh (httpOnly cookie).
+ * The access token is kept in memory only, never in browser storage, so a
+ * script or someone at a shared computer cannot read it (data security rule).
+ * On page refresh the Nuxt plugin gets a new one from POST /api/v1/auth/refresh
+ * with the httpOnly refresh cookie. The website therefore needs a connection;
+ * offline work happens on the CFS tablet.
  *
  * Non-sensitive display fields (userName, orgName, userEmail, orgId, userId,
  * userRole) ARE persisted to localStorage so they survive the refresh-token
@@ -18,6 +19,7 @@ import type { FrameworkActivity, Framework } from '../interfaces/framework'
  */
 
 const STORAGE_KEYS = {
+  // Only removed now (older versions stored the token here).
   accessToken: "dart_access_token",
   userName: "dart_user_name",
   orgName: "dart_org_name",
@@ -119,8 +121,8 @@ export function isTokenValid(token: string | null): boolean {
 export const useAuthStore = defineStore("auth", () => {
   // ── State ────────────────────────────────────────────────────────────────
 
-  /** JWT access token — persisted to localStorage for offline survival */
-  const accessToken = ref<string | null>(getStored(STORAGE_KEYS.accessToken));
+  /** JWT access token — memory only; refreshed from the httpOnly cookie on reload */
+  const accessToken = ref<string | null>(null);
 
   /** User's full display name — persisted to localStorage */
   const userName = ref<string | null>(getStored(STORAGE_KEYS.userName));
@@ -207,7 +209,6 @@ export const useAuthStore = defineStore("auth", () => {
   /** Store the JWT access token returned after login / register */
   function setToken(token: string): void {
     accessToken.value = token;
-    setStored(STORAGE_KEYS.accessToken, token);
   }
 
   /** Store the authenticated user's display name and persist it */
@@ -335,6 +336,8 @@ export const useAuthStore = defineStore("auth", () => {
     activeFramework.value = null;
 
     Object.values(STORAGE_KEYS).forEach(removeStored);
+    // Children's data must not stay on a shared computer after sign-out.
+    void clearLocalChildData();
   }
 
   /**
@@ -344,17 +347,9 @@ export const useAuthStore = defineStore("auth", () => {
    */
   function restoreFromStorage(): void {
     if (import.meta.client) {
-      // Restore token — keep it unless we can confirm it's expired
-      const storedToken = getStored(STORAGE_KEYS.accessToken);
-      if (storedToken) {
-        if (isTokenValid(storedToken)) {
-          accessToken.value = storedToken;
-        } else {
-          // Token is expired — clean up
-          removeStored(STORAGE_KEYS.accessToken);
-          accessToken.value = null;
-        }
-      }
+      // The token is never restored from storage; remove one an older
+      // version left there. The auth plugin refreshes it from the cookie.
+      removeStored(STORAGE_KEYS.accessToken);
 
       userName.value  = getStored(STORAGE_KEYS.userName) || userName.value;
       orgName.value   = getStored(STORAGE_KEYS.orgName) || orgName.value;

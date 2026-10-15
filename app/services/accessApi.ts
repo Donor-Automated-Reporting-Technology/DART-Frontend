@@ -69,6 +69,29 @@ export interface PinResult {
   email_sent: boolean
 }
 
+/** One Excel download in the sharing register. */
+export interface SharingRegisterEntry {
+  id: string
+  at: string
+  by: string
+  export: string
+  file: string
+  /** The file lists people (password-protected, asked for a reason). */
+  named: boolean
+  /** Rows in the file, header rows included. 0 for counts-only files. */
+  rows: number
+  purpose: string
+  recipient: string
+  agreement: string
+}
+
+export interface SharingRegisterPage {
+  entries: SharingRegisterEntry[]
+  total: number
+  page: number
+  page_size: number
+}
+
 export interface RoleInput {
   name: string
   description: string
@@ -99,6 +122,15 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const accessApi = {
+  /** Every Excel download, newest first. Dates are YYYY-MM-DD, both inclusive. */
+  sharingRegister: (q: { named?: boolean; from?: string; to?: string; page?: number }) => {
+    const qs = new URLSearchParams()
+    if (q.named) qs.set('named', 'true')
+    if (q.from) qs.set('from', q.from)
+    if (q.to) qs.set('to', q.to)
+    if (q.page && q.page > 1) qs.set('page', String(q.page))
+    return request<SharingRegisterPage>(`${BASE_URL}/sharing-register${qs.size ? `?${qs}` : ''}`)
+  },
   roles: () => request<{ roles: OrgRole[]; catalogue: PermissionCategory[] }>(`${BASE_URL}/roles`),
   createRole: (body: RoleInput) => request<OrgRole>(`${BASE_URL}/roles`, { method: 'POST', body: JSON.stringify(body) }),
   updateRole: (id: string, body: RoleInput) => request<OrgRole>(`${BASE_URL}/roles/${id}`, { method: 'PUT', body: JSON.stringify(body) }),

@@ -56,18 +56,33 @@
             <dl class="facts">
               <div><dt>Registered at</dt><dd>{{ b.cfs_location?.name ?? 'Not enrolled at a CFS' }}</dd></div>
               <div><dt>Registered on</dt><dd>{{ formatDate(b.registration_date) }}</dd></div>
-              <div><dt>Primero case ID</dt><dd>{{ b.primero_case_id || '—' }}</dd></div>
+              <div v-if="!b.sensitive_hidden"><dt>Primero case ID</dt><dd>{{ b.primero_case_id || '—' }}</dd></div>
               <div><dt>Beneficiary ID</dt><dd class="mono">{{ b.id }}</dd></div>
             </dl>
           </section>
 
           <section class="card" aria-labelledby="nt-h">
             <h2 id="nt-h" class="section-title">Notes</h2>
-            <dl class="facts facts--wide">
+            <p v-if="b.sensitive_hidden" class="hidden-note">
+              Medical issues, learning difficulties, notes and the Primero case ID are hidden.
+              Only roles with “View sensitive details” can see them.
+            </p>
+            <dl v-else class="facts facts--wide">
               <div><dt>Known medical issues</dt><dd>{{ b.known_medical_issues || '—' }}</dd></div>
               <div><dt>Known learning difficulties</dt><dd>{{ b.known_learning_difficulties || '—' }}</dd></div>
               <div><dt>Additional notes</dt><dd>{{ b.additional_notes || '—' }}</dd></div>
             </dl>
+          </section>
+
+          <section v-if="canRemove" class="card remove-card" aria-labelledby="rm-h">
+            <h2 id="rm-h" class="section-title">Remove personal details</h2>
+            <p class="hidden-note">
+              Removes this person's names, guardian, phone, notes and Primero case ID, and the concerns recorded about them.
+              Age, sex, disability and CFS stay, so attendance totals in reports stay right. This cannot be undone.
+            </p>
+            <div class="actions actions--left">
+              <button type="button" class="ui-btn ui-btn--outline remove-btn" @click="openRemove">Remove personal details…</button>
+            </div>
           </section>
         </template>
 
@@ -134,12 +149,13 @@
               <label class="ui-label" for="bp-guardian-phone">Guardian phone <span class="ui-optional">(optional)</span></label>
               <input id="bp-guardian-phone" v-model="form.guardian_phone" class="ui-input" type="tel" inputmode="tel" autocomplete="off" maxlength="50">
             </div>
-            <div class="ui-field">
+            <div v-if="!b?.sensitive_hidden" class="ui-field">
               <label class="ui-label" for="bp-primero">Primero case ID <span class="ui-optional">(optional)</span></label>
               <input id="bp-primero" v-model="form.primero_case_id" class="ui-input" type="text" autocomplete="off" maxlength="100">
             </div>
           </div>
 
+          <template v-if="!b?.sensitive_hidden">
           <div class="ui-field">
             <label class="ui-label" for="bp-medical">Known medical issues <span class="ui-optional">(optional)</span></label>
             <textarea id="bp-medical" v-model="form.known_medical_issues" class="ui-textarea" rows="2" />
@@ -152,6 +168,7 @@
             <label class="ui-label" for="bp-notes">Additional notes <span class="ui-optional">(optional)</span></label>
             <textarea id="bp-notes" v-model="form.additional_notes" class="ui-textarea" rows="3" />
           </div>
+          </template>
 
           <div class="actions">
             <button type="button" class="ui-btn ui-btn--outline" :disabled="saving" @click="editing = false">Cancel</button>
@@ -162,6 +179,36 @@
         </form>
       </template>
     </div>
+
+    <Teleport to="body">
+      <div v-if="removing" class="rm-backdrop" role="dialog" aria-modal="true" aria-labelledby="rm-dlg-h">
+        <form class="rm-card ui-form" @submit.prevent="confirmRemove">
+          <h2 id="rm-dlg-h" class="section-title">Remove {{ fullName }}'s personal details?</h2>
+          <p class="hidden-note">
+            The person disappears from every list. The removal is recorded with your name, the time and the reason.
+            It cannot be undone.
+          </p>
+          <fieldset class="ui-field rm-reasons">
+            <legend class="ui-label">Why are the details removed?</legend>
+            <label v-for="r in REMOVAL_REASONS" :key="r.value" class="rm-reason">
+              <input v-model="removeReason" type="radio" name="rm-reason" :value="r.value">
+              <span>{{ r.label }}</span>
+            </label>
+          </fieldset>
+          <label class="rm-reason">
+            <input v-model="removeConfirmed" type="checkbox">
+            <span>I understand this cannot be undone.</span>
+          </label>
+          <p v-if="removeError" class="ui-alert" role="alert">{{ removeError }}</p>
+          <div class="actions">
+            <button type="button" class="ui-btn ui-btn--outline" :disabled="removeBusy" @click="removing = false">Cancel</button>
+            <button type="submit" class="ui-btn ui-btn--primary remove-confirm" :disabled="removeBusy || !removeReason || !removeConfirmed">
+              {{ removeBusy ? 'Removing…' : 'Remove details' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </Teleport>
   </NuxtLayout>
 </template>
 
@@ -171,6 +218,7 @@ import { beneficiaryApi, type BeneficiaryProfile } from '../../services/benefici
 import { ApiError } from '../../services/api'
 import { useAuthStore } from '../../stores/auth'
 import FieldError from '../../components/interfaces/FieldError.vue'
+import { privacyApi, REMOVAL_REASONS, type RemovalReason } from '../../services/privacyApi'
 
 definePageMeta({ layout: false, middleware: ['auth'] })
 
@@ -206,6 +254,38 @@ const optionLabel = (options: { value: string; label: string }[], value: string)
 const formatDate = (iso: string) => {
   const d = new Date(iso)
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+// ── Remove personal details (Settings → Roles: beneficiaries.remove) ─────────
+const canRemove = computed(() => auth.can('beneficiaries.remove'))
+const removing = ref(false)
+const removeReason = ref<RemovalReason | ''>('')
+const removeConfirmed = ref(false)
+const removeBusy = ref(false)
+const removeError = ref('')
+
+function openRemove() {
+  removeReason.value = ''
+  removeConfirmed.value = false
+  removeError.value = ''
+  removing.value = true
+}
+
+async function confirmRemove() {
+  if (!removeReason.value || !removeConfirmed.value) return
+  removeBusy.value = true
+  removeError.value = ''
+  try {
+    await privacyApi.removeDetails(id.value, removeReason.value)
+    removing.value = false
+    await navigateTo({ path: '/beneficiaries', query: { removed: '1' } })
+  } catch (e) {
+    removeError.value = e instanceof ApiError
+      ? (e.status === 403 ? 'Your role cannot remove personal details.' : e.status === 404 ? 'This person was not found or was already removed.' : e.message)
+      : 'Connection failed — try again.'
+  } finally {
+    removeBusy.value = false
+  }
 }
 
 // ── Edit ─────────────────────────────────────────────────────────────────────
@@ -270,10 +350,13 @@ async function save() {
       disability_status: form.disability_status,
       guardian_name: form.guardian_name.trim(),
       guardian_phone: optional(form.guardian_phone),
-      known_medical_issues: optional(form.known_medical_issues),
-      known_learning_difficulties: optional(form.known_learning_difficulties),
-      additional_notes: optional(form.additional_notes),
-      primero_case_id: optional(form.primero_case_id),
+      // Hidden details are not sent; the server keeps the stored ones.
+      ...(b.value?.sensitive_hidden ? {} : {
+        known_medical_issues: optional(form.known_medical_issues),
+        known_learning_difficulties: optional(form.known_learning_difficulties),
+        additional_notes: optional(form.additional_notes),
+        primero_case_id: optional(form.primero_case_id),
+      }),
     })
     editing.value = false
     savedNote.value = 'Profile saved.'
@@ -328,4 +411,15 @@ onMounted(async () => {
   .actions { flex-direction: column-reverse; }
   .actions .ui-btn { width: 100%; }
 }
+.hidden-note { color: var(--text-secondary); font-size: 0.875rem; margin: 0; }
+
+.remove-card { border-color: color-mix(in srgb, var(--error) 35%, var(--border-color)); }
+.actions--left { justify-content: flex-start; border-top: 0; padding-top: 16px; }
+.remove-btn { color: var(--error-text); border-color: color-mix(in srgb, var(--error) 50%, transparent); }
+.remove-confirm { background: var(--error-text); border-color: var(--error-text); }
+.rm-backdrop { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(15, 15, 26, 0.72); }
+.rm-card { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 16px; padding: 24px; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 16px; color: var(--text-primary); }
+.rm-reasons { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.rm-reason { display: flex; align-items: flex-start; gap: 8px; font-size: 0.9375rem; cursor: pointer; }
+.rm-reason input { margin-top: 3px; }
 </style>

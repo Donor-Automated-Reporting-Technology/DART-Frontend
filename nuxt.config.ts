@@ -69,33 +69,10 @@ export default defineNuxtConfig({
       navigateFallback: '/',
       // Precache JS, CSS, HTML shell, and static assets
       globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-      // Runtime caching for pages and API
-      runtimeCaching: [
-        {
-          urlPattern: /^\/api\/v1\/cfs\/beneficiaries$/,
-          handler: 'NetworkFirst',
-          options: {
-            cacheName: 'api-beneficiaries',
-            expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 },
-          },
-        },
-        {
-          urlPattern: /^\/api\/v1\/dashboard/,
-          handler: 'NetworkFirst',
-          options: {
-            cacheName: 'api-dashboard',
-            expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 },
-          },
-        },
-        {
-          urlPattern: /^\/api\/v1\/cfs\/dashboard/,
-          handler: 'NetworkFirst',
-          options: {
-            cacheName: 'api-cfs-dashboard',
-            expiration: { maxEntries: 5, maxAgeSeconds: 60 * 60 },
-          },
-        },
-      ],
+      // No API responses are cached: they can hold children's names, and
+      // the browser keeps no copy of children's data (offline work is on the
+      // CFS tablet). Old 'api-*' caches are deleted at start-up and sign-out.
+      runtimeCaching: [],
     },
     devOptions: {
       enabled: false,

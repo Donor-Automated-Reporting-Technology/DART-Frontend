@@ -1,5 +1,6 @@
 import { getActivePinia } from 'pinia'
 import { ApiError } from './api'
+import { requestNamedExport } from './namedExport'
 import { COHORT_PROGRAMS, type CohortProgramKey } from '../utils/cohortPrograms'
 import type {
   CreateTeamUpGroupRequest,
@@ -50,23 +51,8 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
   return (data?.data !== undefined ? data.data : data) as T
 }
 
-async function download(url: string, fallbackName: string): Promise<void> {
-  const token = resolveToken()
-  const response = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    throw new ApiError(response.status, data?.message ?? 'Download failed', data)
-  }
-  const blob = await response.blob()
-  const match = response.headers.get('Content-Disposition')?.match(/filename[^;=\n]*=\s*"?([^";\n]+)"?/)
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(blob)
-  a.download = match?.[1] ?? fallbackName
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  URL.revokeObjectURL(a.href)
-}
+/** Every Excel file served here lists people: ask for the reason first. */
+const download = (url: string, fallbackName: string): Promise<void> => requestNamedExport(url, fallbackName)
 
 const json = (body: unknown) => JSON.stringify(body)
 
@@ -158,10 +144,11 @@ export const teamupApi = cohortApi('teamup')
  * Roles allowed to download activity databases (Excel). Facilitators and other
  * field roles use Word reports instead. Mirrors dataExportRoles in the API.
  */
-export const DATA_EXPORT_ROLES = ['org_admin', 'program_manager', 'data_manager']
+// Lists with names: one role (M&E) plus the admin, unless the roles editor says otherwise.
+export const DATA_EXPORT_ROLES = ['org_admin', 'data_manager']
 export const canDownloadData = (role?: string | null) => !!role && DATA_EXPORT_ROLES.includes(role)
 
-/** Download any authenticated file endpoint (used for the project workbook). */
+/** Download a named Excel export (used for the project workbook and the beneficiary list). */
 export const downloadFile = (url: string, fallbackName: string) => download(url, fallbackName)
 
 export const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']

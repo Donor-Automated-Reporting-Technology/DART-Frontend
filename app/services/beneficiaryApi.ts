@@ -1,5 +1,6 @@
 import { getActivePinia } from 'pinia'
 import { ApiError } from './api'
+import { requestNamedExport } from './namedExport'
 import type {
   RegisterBeneficiaryRequest,
   BeneficiaryListResponse,
@@ -52,6 +53,8 @@ export interface BeneficiaryProfile {
   known_learning_difficulties?: string | null
   additional_notes?: string | null
   primero_case_id?: string | null
+  /** The role lacks "View sensitive details": the four fields above were left out by the server. */
+  sensitive_hidden?: boolean
   cfs_location?: { id: string; name: string } | null
   registration_date: string
   is_enrolled: boolean
@@ -118,23 +121,12 @@ export const beneficiaryApi = {
     return request<BeneficiaryListResponse>(`${BASE_URL}/beneficiaries/list${query}`, { method: 'GET' }, token)
   },
 
-  async exportExcel(params?: BeneficiaryFilter, token?: string): Promise<Blob> {
-    const resolved = resolveToken(token)
+  /** Named export: asks for the reason, then downloads a password-protected file. */
+  async exportExcel(params?: BeneficiaryFilter): Promise<void> {
     const qs = new URLSearchParams()
     if (params?.cfs_location_id) qs.set('cfs_location_id', params.cfs_location_id)
-    if (params?.search) qs.set('search', params.search)
-    if (params?.sex) qs.set('sex', params.sex)
-    if (params?.disability_status) qs.set('disability_status', params.disability_status)
     const query = qs.toString() ? `?${qs.toString()}` : ''
-    const response = await fetch(`${BASE_URL}/beneficiaries/export${query}`, {
-      headers: {
-        ...(resolved ? { Authorization: `Bearer ${resolved}` } : {}),
-      },
-    })
-    if (!response.ok) {
-      throw new ApiError(response.status, 'Export failed')
-    }
-    return response.blob()
+    return requestNamedExport(`${BASE_URL}/beneficiaries/export${query}`, 'beneficiaries.xlsx')
   },
 
   async assignToServicePoint(beneficiaryId: string, servicePointId: string, token?: string) {

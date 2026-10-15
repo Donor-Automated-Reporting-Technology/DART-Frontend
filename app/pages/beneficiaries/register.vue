@@ -263,8 +263,6 @@ import { useRouter } from 'vue-router'
 import { beneficiaryApi, type OrgLocation } from '../../services/beneficiaryApi'
 import { useAuthStore } from '../../stores/auth'
 import { ApiError } from '../../services/api'
-import { saveBeneficiaryOffline } from '../../services/offlineDb'
-import { v4 as uuidv4 } from 'uuid'
 import type { BentoGroup } from '../../components/beneficiaries/SummaryBento.vue'
 
 definePageMeta({
@@ -446,37 +444,11 @@ async function onSubmit() {
   saving.value = true
   try {
     if (!navigator.onLine) {
-      // Save beneficiary to IndexedDB; CFS enrollment happens in a separate flow.
-      const id = uuidv4()
-      await saveBeneficiaryOffline({
-        id,
-        personalName: form.personal_name.trim(),
-        fatherName: form.father_name.trim(),
-        grandfatherName: form.grandfather_name.trim(),
-        familyName: form.family_name.trim(),
-        ageAtRegistration: Number(form.age_at_registration),
-        sex: form.sex,
-        language: form.language.trim() || 'Arabic',
-        disabilityStatus: form.disability_status,
-        guardianName: isChild.value ? form.guardian_name.trim() : '',
-        guardianPhone: form.guardian_phone.trim(),
-        knownMedicalIssues: form.known_medical_issues.trim(),
-        knownLearningDifficulties: form.known_learning_difficulties.trim(),
-        beneficiaryType: form.beneficiary_type,
-        cfsLocationId: form.cfs_location_id,
-        mailingAddress: form.mailing_address.trim(),
-        immunisationRecords: form.immunisation_records || undefined,
-        otherChildrenCount: countOrUndefined(),
-        adultsAtHome: form.adults_at_home.trim(),
-        additionalNotes: form.additional_notes.trim(),
-        primeroCaseId: '',
-        syncStatus: 'pending',
-        clientTimestamp: new Date().toISOString(),
-      })
-      router.push('/beneficiaries')
+      // Children's details are not kept in the browser: register on the CFS
+      // tablet (encrypted, works offline) or once the connection is back.
+      apiError.value = 'No connection. Register on the CFS tablet, or try again when you are back online. Nothing was saved on this computer.'
       return
     }
-
     const result = await beneficiaryApi.register({
       personal_name: form.personal_name.trim(),
       father_name: form.father_name.trim(),

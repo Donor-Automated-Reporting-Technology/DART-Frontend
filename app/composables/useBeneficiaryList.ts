@@ -62,20 +62,10 @@ export function useBeneficiaryList() {
     fetchBeneficiaries()
   }
 
+  // Named export: the dialog asks for the reason before the file is built.
   async function exportExcel() {
     try {
-      const params: BeneficiaryFilter = {}
-      if (search.value.trim()) params.search = search.value.trim()
-      if (centreId.value) params.cfs_location_id = centreId.value
-      if (sex.value) params.sex = sex.value
-      if (disabilityStatus.value) params.disability_status = disabilityStatus.value
-      const blob = await beneficiaryApi.exportExcel(params)
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `beneficiaries_${new Date().toISOString().slice(0, 10)}.xlsx`
-      a.click()
-      URL.revokeObjectURL(url)
+      await beneficiaryApi.exportExcel(centreId.value ? { cfs_location_id: centreId.value } : {})
     } catch (e: any) {
       error.value = e?.message ?? 'Export failed'
     }

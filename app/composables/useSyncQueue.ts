@@ -1,3 +1,4 @@
+import { redactUploadedChildren } from '../utils/localChildData';
 import { ref } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
 import { cfsApi } from '../services/cfsApi';
@@ -14,7 +15,6 @@ import {
   updateAttendanceSyncStatus,
   getPendingCount,
   getConflictCount,
-  seedBeneficiaries,
 } from '../services/offlineDb';
 import type {
   OfflineBeneficiary,
@@ -53,18 +53,13 @@ export const useSyncQueue = () => {
     conflictCount.value = await getConflictCount();
   }
 
-  /** Pull server beneficiaries into local IndexedDB cache */
-  async function pullBeneficiaries(token?: string) {
-    try {
-      const response = await cfsApi.getBeneficiaries(token);
-      const list = Array.isArray(response.beneficiaries)
-        ? response.beneficiaries
-        : Array.isArray(response) ? response : [];
-      await seedBeneficiaries(list);
-      syncLog.value.push(`Pulled ${list.length} beneficiaries from server`);
-    } catch (e: any) {
-      syncLog.value.push(`Pull failed: ${e.message || 'unknown error'}`);
-    }
+  /**
+   * The browser no longer keeps a copy of the children list (offline work is
+   * on the CFS tablet). This only blanks the details of children already
+   * uploaded by an older version.
+   */
+  async function pullBeneficiaries(_token?: string) {
+    await redactUploadedChildren();
   }
 
   /** Sync all pending records in correct order */
