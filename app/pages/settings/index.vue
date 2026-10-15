@@ -61,6 +61,7 @@ const legacy: Record<string, string[]> = {
   'people.view': ['org_admin', 'program_manager', 'supervisor'],
   'people.assign_locations': ['org_admin', 'program_manager'],
   'roles.manage': ['org_admin'],
+  'devices.manage': ['org_admin'],
   'data.export': ['org_admin', 'program_manager', 'data_manager'],
 }
 const can = (perm: string) =>
@@ -71,6 +72,7 @@ const groups: { key: string; title: string; cards: Card[] }[] = [
   { key: 'org', title: 'Organisation', cards: [
     { to: '/settings/organization', icon: 'building', title: 'Organisation profile', desc: 'Name, country and description.', any: ['org.manage'] },
     { to: '/settings/locations', icon: 'map-pin', title: 'Locations', desc: 'Locations, CFS centres and service points.', any: ['locations.manage'] },
+    { to: '/settings/tablets', icon: 'tablet', title: 'Tablets', desc: 'Authorise the tablets that run the app; revoke a lost one.', any: ['devices.manage'] },
   ] },
   { key: 'people', title: 'People & access', cards: [
     { to: '/settings/people', icon: 'users', title: 'People', desc: 'Who has which role, and who can sign in.', any: ['people.view'] },

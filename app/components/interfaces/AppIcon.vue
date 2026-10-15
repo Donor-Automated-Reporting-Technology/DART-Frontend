@@ -16,6 +16,12 @@
       <polyline points="9 22 9 12 15 12 15 22" />
     </template>
 
+    <!-- Tablet (Settings → Tablets) -->
+    <template v-else-if="name === 'tablet'">
+      <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+      <line x1="12" y1="18" x2="12.01" y2="18" />
+    </template>
+
     <!-- Donors / Users -->
     <template v-else-if="name === 'users'">
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
