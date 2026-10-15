@@ -61,6 +61,8 @@ const legacy: Record<string, string[]> = {
   'people.view': ['org_admin', 'program_manager', 'supervisor'],
   'people.assign_locations': ['org_admin', 'program_manager'],
   'roles.manage': ['org_admin'],
+  'devices.manage': ['org_admin'],
+  'activity.view': ['org_admin'],
   'data.export': ['org_admin', 'data_manager'],
   'data.sharing_register': ['org_admin', 'director'],
   'beneficiaries.remove': ['org_admin'],
@@ -73,6 +75,7 @@ const groups: { key: string; title: string; cards: Card[] }[] = [
   { key: 'org', title: 'Organisation', cards: [
     { to: '/settings/organization', icon: 'building', title: 'Organisation profile', desc: 'Name, country and description.', any: ['org.manage'] },
     { to: '/settings/locations', icon: 'map-pin', title: 'Locations', desc: 'Locations, CFS centres and service points.', any: ['locations.manage'] },
+    { to: '/settings/tablets', icon: 'tablet', title: 'Tablets', desc: 'Authorise the tablets that run the app; revoke a lost one.', any: ['devices.manage'] },
   ] },
   { key: 'people', title: 'People & access', cards: [
     { to: '/settings/people', icon: 'users', title: 'People', desc: 'Who has which role, and who can sign in.', any: ['people.view'] },
@@ -81,6 +84,9 @@ const groups: { key: string; title: string; cards: Card[] }[] = [
       // the whole organisation. Others add people in People, for their own CFS.
       show: () => (auth.orgRole ? auth.orgRole.scope === 'organisation' : auth.userRole === 'org_admin') },
     { to: '/settings/roles', icon: 'shield', title: 'Roles & permissions', desc: 'Name your roles, set their level, data scope and permissions.', any: ['roles.manage'] },
+    { to: '/settings/activity', icon: 'activity', title: 'Activity log', desc: 'Who did what, when and from which tablet; activity that needs a look.', any: ['activity.view'],
+      // The log covers the whole organisation.
+      show: () => (auth.orgRole ? auth.orgRole.scope === 'organisation' : auth.userRole === 'org_admin') },
   ] },
   { key: 'programmes', title: 'Programmes & M&E', cards: [
     { to: '/settings/projects', icon: 'layers', title: 'Projects & logframe', desc: 'Projects, activities, impacts, indicators and targets.', any: ['projects.manage', 'logframe.view'] },
